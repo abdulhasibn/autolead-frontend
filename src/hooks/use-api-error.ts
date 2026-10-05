@@ -3,6 +3,7 @@
 import { useCallback } from "react"
 import { toast } from "sonner"
 import { ApiError } from "@/lib/api-error"
+import { isApiError } from "@/types/api"
 
 const ERROR_CODE_MESSAGES: Record<string, string> = {
   AUTHENTICATION_FAILED: "Your session has expired. Please sign in again.",
@@ -15,6 +16,13 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
   VALIDATION_ERROR: "Please check your input and try again.",
   INVALID_LEAD_STATUS_TRANSITION:
     "This status transition is not allowed for leads.",
+  LEAD_REQUIRES_VEHICLE:
+    "Link a vehicle to this lead before moving it to this status.",
+  LEAD_STATUS_SYSTEM_MANAGED: "This status is set automatically.",
+  LEAD_CLOSED: "This lead is closed and can no longer be changed.",
+  VEHICLE_NOT_LINKABLE: "Only open or linked vehicles can be linked to a lead.",
+  SHOWROOM_REQUIRED:
+    "Your account has no home showroom. Ask an admin to configure a default showroom.",
   INVALID_VEHICLE_STATUS_TRANSITION:
     "This status transition is not allowed for vehicles.",
   DB_UNAVAILABLE: "Service temporarily unavailable. Please try again.",
@@ -23,7 +31,8 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
 
 export function useApiError() {
   const handleError = useCallback((err: unknown, fallback?: string) => {
-    if (ApiError.isApiError(err)) {
+    // ApiError instances (thrown) or plain `ActionError`s (returned by Server Actions)
+    if (ApiError.isApiError(err) || isApiError(err)) {
       const message =
         ERROR_CODE_MESSAGES[err.code] ??
         err.message ??

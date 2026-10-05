@@ -1,27 +1,14 @@
-export type LeadSource =
-  | "marketplace"
-  | "mobile_app"
-  | "website"
-  | "phone"
-  | "walkin"
-  | "whatsapp"
-  | "instagram"
-  | "facebook"
-  | "referral"
-  | "other"
+import type {
+  FOLLOW_UP_TASK_TYPES,
+  LEAD_SOURCES,
+  LEAD_STATUSES,
+} from "./constants"
 
-export type LeadStatus =
-  | "new"
-  | "contacted"
-  | "interested"
-  | "follow_up"
-  | "test_drive"
-  | "negotiation"
-  | "booking_confirmed"
-  | "sold"
-  | "lost"
-  | "not_interested"
-  | "no_response"
+export type LeadSource = (typeof LEAD_SOURCES)[number]
+
+export type LeadStatus = (typeof LEAD_STATUSES)[number]
+
+export type FollowUpTaskType = (typeof FOLLOW_UP_TASK_TYPES)[number]
 
 export interface NextFollowUp {
   id: string
@@ -34,6 +21,7 @@ export interface LeadReadModel {
   id: string
   showroomId: string
   vehicleId: string | null
+  assignedTo: string | null
   contactId: string
   contactFullName: string
   contactPhone: string
@@ -51,10 +39,6 @@ export interface LeadReadModel {
   createdBy: string
   createdAt: string
   updatedAt: string
-}
-
-export interface FollowUpTaskType {
-  type: "call" | "whatsapp" | "meeting" | "test_drive" | "send_quotation" | "other"
 }
 
 export interface FollowUpDto {

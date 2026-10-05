@@ -1,9 +1,4 @@
-import type { PaginationParams } from "@/types/api"
-
-interface LeadsListParams extends PaginationParams {
-  status?: string
-  vehicleId?: string
-}
+import type { LeadsListParams } from "./api"
 
 export const leadsQueryKeys = {
   all: ["leads"] as const,
