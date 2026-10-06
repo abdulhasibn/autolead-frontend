@@ -9,6 +9,11 @@ const credentialsSchema = z.object({
   password: z.string().min(1),
 })
 
+// How long before expiry we proactively refresh (60 seconds)
+const REFRESH_BUFFER_MS = 60_000
+// Default access token lifespan when the API doesn't return expiresIn
+const DEFAULT_TOKEN_TTL_MS = 15 * 60 * 1000
+
 async function refreshAccessToken(refreshToken: string) {
   const res = await fetch(`${env.API_BASE_URL}/auth/refresh`, {
     method: "POST",
@@ -16,7 +21,16 @@ async function refreshAccessToken(refreshToken: string) {
     body: JSON.stringify({ refreshToken }),
   })
   if (!res.ok) throw new Error("RefreshTokenError")
-  return (await res.json()) as { accessToken: string; refreshToken: string }
+  const data = (await res.json()) as {
+    accessToken: string
+    refreshToken: string
+    expiresIn?: number
+  }
+  return {
+    accessToken: data.accessToken,
+    refreshToken: data.refreshToken,
+    accessTokenExpiresAt: Date.now() + (data.expiresIn ? data.expiresIn * 1000 : DEFAULT_TOKEN_TTL_MS),
+  }
 }
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
@@ -38,14 +52,14 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 
         if (!res.ok) return null
 
-        const { accessToken, refreshToken } = (await res.json()) as {
+        const data = (await res.json()) as {
           accessToken: string
           refreshToken: string
+          expiresIn?: number
         }
 
-        // Fetch the user profile using the new token
         const meRes = await fetch(`${env.API_BASE_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
+          headers: { Authorization: `Bearer ${data.accessToken}` },
         })
         if (!meRes.ok) return null
 
@@ -65,41 +79,56 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           phone: me.phone,
           avatarUrl: me.avatarUrl,
           roles: me.roles,
-          accessToken,
-          refreshToken,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+          accessTokenExpiresAt: Date.now() + (data.expiresIn ? data.expiresIn * 1000 : DEFAULT_TOKEN_TTL_MS),
         }
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
-      // Initial sign in — persist tokens and roles
+      // Initial sign in — store everything from the user object
       if (user) {
-        token.accessToken = user.accessToken
-        token.refreshToken = user.refreshToken
-        token.roles = user.roles
-        return token
+        return {
+          ...token,
+          accessToken: user.accessToken,
+          refreshToken: user.refreshToken,
+          accessTokenExpiresAt: user.accessTokenExpiresAt,
+          phone: user.phone,
+          avatarUrl: user.avatarUrl,
+          roles: user.roles,
+          error: undefined,
+        }
       }
 
-      // Subsequent calls — attempt token refresh if error flag is set
+      // Token refresh previously failed — don't retry, force re-login
       if (token.error === "RefreshTokenError") return token
 
+      // Access token still valid — return as-is
+      if (Date.now() < token.accessTokenExpiresAt - REFRESH_BUFFER_MS) return token
+
+      // Access token expired or close to expiry — refresh it
       try {
         const refreshed = await refreshAccessToken(token.refreshToken)
         return {
           ...token,
           accessToken: refreshed.accessToken,
           refreshToken: refreshed.refreshToken,
+          accessTokenExpiresAt: refreshed.accessTokenExpiresAt,
           error: undefined,
         }
       } catch {
         return { ...token, error: "RefreshTokenError" as const }
       }
     },
+
     async session({ session, token }) {
       session.accessToken = token.accessToken
       session.error = token.error
       session.user.id = token.sub ?? ""
+      session.user.phone = token.phone
+      session.user.avatarUrl = token.avatarUrl
       session.user.roles = token.roles ?? []
       return session
     },

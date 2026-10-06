@@ -52,19 +52,19 @@ export function LeadsToolbar({ params, vehicles }: LeadsToolbarProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div className="relative w-full sm:w-64">
-        <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
+        <Search className="pointer-events-none text-[#9CA3AF] absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
         <Input
           type="search"
           placeholder="Search name, phone or email"
           aria-label="Search leads"
-          className="pl-8"
+          className="h-9 border-[#E5E7EB] bg-white pl-8"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
       <OptionSelect
         aria-label="Filter by status"
-        className="sm:w-48"
+        className="h-9 border-[#E5E7EB] bg-white sm:w-48"
         value={params.status ?? ALL}
         options={STATUS_OPTIONS}
         onValueChange={(value) =>
@@ -73,7 +73,7 @@ export function LeadsToolbar({ params, vehicles }: LeadsToolbarProps) {
       />
       <OptionSelect
         aria-label="Filter by vehicle"
-        className="sm:w-64"
+        className="h-9 border-[#E5E7EB] bg-white sm:w-64"
         value={params.vehicleId ?? ALL}
         options={vehicleOptions}
         onValueChange={(value) =>
@@ -84,6 +84,7 @@ export function LeadsToolbar({ params, vehicles }: LeadsToolbarProps) {
         <Button
           variant="ghost"
           size="sm"
+          className="text-[#6B7280] hover:text-[#0D9488]"
           onClick={() => {
             setSearch("")
             startTransition(() => router.push("/leads"))
@@ -94,7 +95,7 @@ export function LeadsToolbar({ params, vehicles }: LeadsToolbarProps) {
         </Button>
       )}
       {isPending && (
-        <Loader2 className="text-muted-foreground size-4 animate-spin" aria-label="Loading" />
+        <Loader2 className="size-4 text-[#0D9488] animate-spin" aria-label="Loading" />
       )}
     </div>
   )

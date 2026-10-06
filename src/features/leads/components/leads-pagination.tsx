@@ -19,6 +19,7 @@ export function LeadsPagination({ params, total, pageSize }: LeadsPaginationProp
   const linkClass = (disabled: boolean) =>
     cn(
       buttonVariants({ variant: "outline", size: "sm" }),
+      "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#CCFBF1] hover:bg-[#F0FDFA] hover:text-[#0D9488]",
       disabled && "pointer-events-none opacity-50"
     )
 
@@ -27,7 +28,7 @@ export function LeadsPagination({ params, total, pageSize }: LeadsPaginationProp
       aria-label="Pagination"
       className="flex items-center justify-between gap-4 text-sm"
     >
-      <p className="text-muted-foreground">
+      <p className="text-xs text-[#6B7280]">
         Showing {from}–{to} of {total}
       </p>
       <div className="flex items-center gap-2">
@@ -40,7 +41,7 @@ export function LeadsPagination({ params, total, pageSize }: LeadsPaginationProp
           <ChevronLeft />
           Previous
         </Link>
-        <span className="text-muted-foreground tabular-nums">
+        <span className="font-mono-data text-xs text-[#6B7280]">
           Page {page} of {pageCount}
         </span>
         <Link

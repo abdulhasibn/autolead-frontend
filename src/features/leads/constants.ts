@@ -48,16 +48,14 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   vehicle_unavailable: "Vehicle unavailable",
 }
 
-export const LEAD_STATUS_BADGE_VARIANTS: Record<
-  LeadStatus,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  new: "default",
-  not_now: "secondary",
-  booking_confirmed: "outline",
-  converted: "default",
-  lost: "destructive",
-  vehicle_unavailable: "secondary",
+/** Pill colors for each status; matches the dashboard palette. */
+export const LEAD_STATUS_BADGE_CLASSES: Record<LeadStatus, string> = {
+  new: "bg-[#DBEAFE] text-[#1D4ED8]",
+  not_now: "bg-[#FEF3C7] text-[#D97706]",
+  booking_confirmed: "bg-[#CCFBF1] text-[#0F766E]",
+  converted: "bg-[#DCFCE7] text-[#15803D]",
+  lost: "bg-[#FEE2E2] text-[#DC2626]",
+  vehicle_unavailable: "bg-[#F3F4F6] text-[#6B7280]",
 }
 
 export const LEAD_SOURCE_LABELS: Record<LeadSource, string> = {

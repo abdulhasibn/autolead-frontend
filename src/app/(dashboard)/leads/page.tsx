@@ -47,11 +47,11 @@ export default async function LeadsPage({
   const resultCount = params.q ? leads.length : leadsPage.total
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="text-2xl font-bold tracking-tight text-[#111827]">Leads</h1>
+          <p className="mt-0.5 text-sm text-[#6B7280]">
             {resultCount} {resultCount === 1 ? "lead" : "leads"}
             {hasFilters ? " match the filters" : ""}
           </p>
@@ -62,10 +62,12 @@ export default async function LeadsPage({
       <LeadsToolbar params={params} vehicles={vehicles} />
 
       {leads.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
-          <Users2 className="text-muted-foreground size-8" />
-          <p className="font-medium">No leads found</p>
-          <p className="text-muted-foreground text-sm">
+        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-white py-16 text-center">
+          <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-[#F0FDFA]">
+            <Users2 className="size-5 text-[#0D9488]" />
+          </div>
+          <p className="text-sm font-semibold text-[#111827]">No leads found</p>
+          <p className="text-xs text-[#9CA3AF]">
             {hasFilters
               ? "Try a different search or clear the filters."
               : "Create your first lead to get started."}
@@ -77,7 +79,7 @@ export default async function LeadsPage({
 
       {params.q ? (
         searchTruncated && (
-          <p className="text-muted-foreground text-sm">
+          <p className="text-xs text-[#9CA3AF]">
             Search covers the {LEADS_SEARCH_SCAN_LIMIT} most recent leads.
             Narrow it with the status or vehicle filter.
           </p>

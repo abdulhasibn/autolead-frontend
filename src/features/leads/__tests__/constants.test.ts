@@ -4,15 +4,15 @@ import {
   isLeadClosed,
   isLeadStatus,
   LEAD_STATUSES,
-  LEAD_STATUS_BADGE_VARIANTS,
+  LEAD_STATUS_BADGE_CLASSES,
   LEAD_STATUS_LABELS,
 } from "../constants"
 
 describe("lead status rules", () => {
-  it("has a label and badge variant for every status", () => {
+  it("has a label and badge color for every status", () => {
     for (const status of LEAD_STATUSES) {
       expect(LEAD_STATUS_LABELS[status]).toBeTruthy()
-      expect(LEAD_STATUS_BADGE_VARIANTS[status]).toBeTruthy()
+      expect(LEAD_STATUS_BADGE_CLASSES[status]).toBeTruthy()
     }
   })
 
