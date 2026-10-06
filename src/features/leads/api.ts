@@ -1,11 +1,13 @@
 import { serverApiClient } from "@/lib/api-client.server"
 import type { Page, PaginationParams } from "@/types/api"
-import type { LeadReadModel, FollowUpDto } from "./types"
+import type { LeadReadModel, LeadStatus, FollowUpDto } from "./types"
 import type { CreateLeadInput, ChangeLeadStatusInput, ScheduleFollowUpInput } from "./schemas"
 
-interface LeadsListParams extends PaginationParams {
-  status?: string
+export interface LeadsListParams extends PaginationParams {
+  status?: LeadStatus
   vehicleId?: string
+  /** Admin-only; salespeople always get their own leads. */
+  assignedTo?: string
 }
 
 export async function getLeads(
@@ -16,6 +18,7 @@ export async function getLeads(
   if (params.offset) query.set("offset", String(params.offset))
   if (params.status) query.set("status", params.status)
   if (params.vehicleId) query.set("vehicleId", params.vehicleId)
+  if (params.assignedTo) query.set("assignedTo", params.assignedTo)
   return serverApiClient.get<Page<LeadReadModel>>(`/leads?${query}`)
 }
 

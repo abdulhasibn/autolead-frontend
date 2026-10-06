@@ -1,14 +1,4 @@
-export type VehicleStatus =
-  | "submitted"
-  | "inspection_pending"
-  | "under_inspection"
-  | "approved"
-  | "on_hold"
-  | "rejected"
-  | "removed"
-  | "available"
-  | "reserved"
-  | "sold"
+export type VehicleStatus = "open" | "linked" | "dropped" | "sold"
 
 export type FuelType = "petrol" | "diesel" | "cng" | "electric" | "hybrid"
 export type Transmission = "manual" | "automatic" | "amt" | "cvt" | "dct"
@@ -57,6 +47,7 @@ export interface VehicleDto {
   location: string | null
   description: string | null
   status: VehicleStatus
+  soldLeadId: string | null
   acquisitionType: AcquisitionType
   submittedBy: string
   createdAt: string
