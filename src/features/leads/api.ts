@@ -1,6 +1,12 @@
 import { serverApiClient } from "@/lib/api-client.server"
 import type { Page, PaginationParams } from "@/types/api"
-import type { LeadReadModel, LeadStatus, FollowUpDto } from "./types"
+import type {
+  AssociateVehicleResult,
+  ChangeLeadStatusResult,
+  FollowUpDto,
+  LeadReadModel,
+  LeadStatus,
+} from "./types"
 import type { CreateLeadInput, ChangeLeadStatusInput, ScheduleFollowUpInput } from "./schemas"
 
 export interface LeadsListParams extends PaginationParams {
@@ -33,8 +39,8 @@ export async function createLead(body: CreateLeadInput): Promise<LeadReadModel> 
 export async function changeLeadStatus(
   id: string,
   body: ChangeLeadStatusInput
-): Promise<LeadReadModel> {
-  return serverApiClient.post<LeadReadModel>(`/leads/${id}/status`, body)
+): Promise<ChangeLeadStatusResult> {
+  return serverApiClient.post<ChangeLeadStatusResult>(`/leads/${id}/status`, body)
 }
 
 export async function scheduleFollowUp(
@@ -47,8 +53,8 @@ export async function scheduleFollowUp(
 export async function associateVehicle(
   id: string,
   vehicleId: string
-): Promise<LeadReadModel> {
-  return serverApiClient.patch<LeadReadModel>(`/leads/${id}/vehicle`, {
+): Promise<AssociateVehicleResult> {
+  return serverApiClient.patch<AssociateVehicleResult>(`/leads/${id}/vehicle`, {
     vehicleId,
   })
 }

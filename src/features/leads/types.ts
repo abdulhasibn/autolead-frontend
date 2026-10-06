@@ -51,3 +51,13 @@ export interface FollowUpDto {
   notificationId: string
   dueAt: string
 }
+
+export interface ChangeLeadStatusResult {
+  status: LeadStatus
+  /** True when converting this lead sold its vehicle. */
+  vehicleSold: boolean
+}
+
+export interface AssociateVehicleResult {
+  vehicleId: string
+}

@@ -76,7 +76,11 @@ export function ChangeStatusDialog({
         handleError(result.error, "Could not change the status.")
         return
       }
-      toast.success(`Status changed to ${LEAD_STATUS_LABELS[values.status]}.`)
+      toast.success(
+        result.data.vehicleSold
+          ? `Status changed to ${LEAD_STATUS_LABELS[values.status]}. The vehicle is now marked as sold.`
+          : `Status changed to ${LEAD_STATUS_LABELS[values.status]}.`
+      )
       reset(DEFAULT_VALUES)
       setOpen(false)
     })

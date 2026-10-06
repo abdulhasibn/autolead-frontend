@@ -23,7 +23,12 @@ import {
   createLeadSchema,
   scheduleFollowUpSchema,
 } from "./schemas"
-import type { FollowUpDto, LeadReadModel } from "./types"
+import type {
+  AssociateVehicleResult,
+  ChangeLeadStatusResult,
+  FollowUpDto,
+  LeadReadModel,
+} from "./types"
 
 const leadIdSchema = z.guid()
 
@@ -76,16 +81,16 @@ export async function createLeadAction(
 export async function changeLeadStatusAction(
   leadId: string,
   input: unknown
-): Promise<ActionResult<LeadReadModel>> {
+): Promise<ActionResult<ChangeLeadStatusResult>> {
   try {
     await requireSession()
     const id = leadIdSchema.safeParse(leadId)
     const parsed = changeLeadStatusSchema.safeParse(input)
     if (!id.success || !parsed.success) return validationError()
 
-    const lead = await changeLeadStatus(id.data, parsed.data)
+    const result = await changeLeadStatus(id.data, parsed.data)
     revalidateLeads()
-    return actionOk(lead)
+    return actionOk(result)
   } catch (err) {
     return actionError(err)
   }
@@ -112,16 +117,16 @@ export async function scheduleFollowUpAction(
 export async function associateVehicleAction(
   leadId: string,
   input: unknown
-): Promise<ActionResult<LeadReadModel>> {
+): Promise<ActionResult<AssociateVehicleResult>> {
   try {
     await requireSession()
     const id = leadIdSchema.safeParse(leadId)
     const parsed = associateVehicleSchema.safeParse(input)
     if (!id.success || !parsed.success) return validationError()
 
-    const lead = await associateVehicle(id.data, parsed.data.vehicleId)
+    const result = await associateVehicle(id.data, parsed.data.vehicleId)
     revalidateLeads()
-    return actionOk(lead)
+    return actionOk(result)
   } catch (err) {
     return actionError(err)
   }

@@ -1,14 +1,17 @@
 import type { Metadata } from "next"
+import { redirect } from "next/navigation"
 import { Users2 } from "lucide-react"
-import { getLeads } from "@/features/leads/api"
+import { getLeads, type LeadsListParams } from "@/features/leads/api"
 import {
   LEADS_PAGE_SIZE,
   LEADS_SEARCH_SCAN_LIMIT,
 } from "@/features/leads/constants"
 import {
+  buildLeadsHref,
   matchesLeadSearch,
   pageToOffset,
   parseLeadsSearchParams,
+  type LeadsSearchParams,
   type RawSearchParams,
 } from "@/features/leads/search-params"
 import { getVehicleOptions } from "@/features/leads/vehicle-options"
@@ -18,6 +21,23 @@ import { LeadsTable } from "@/features/leads/components/leads-table"
 import { LeadsToolbar } from "@/features/leads/components/leads-toolbar"
 
 export const metadata: Metadata = { title: "Leads" }
+
+/**
+ * Fetches one page of leads. The API errors (instead of returning an empty
+ * page) when the offset is past the last lead — e.g. a stale or hand-edited
+ * `?page=` — so on failure we check the total and redirect to the last page.
+ */
+async function getLeadsPage(params: LeadsSearchParams, query: LeadsListParams) {
+  try {
+    return await getLeads(query)
+  } catch (err) {
+    if (!query.offset) throw err
+    const { total } = await getLeads({ ...query, limit: 1, offset: 0 })
+    const lastPage = Math.max(1, Math.ceil(total / LEADS_PAGE_SIZE))
+    if (lastPage >= params.page) throw err
+    redirect(buildLeadsHref({ ...params, page: lastPage }))
+  }
+}
 
 export default async function LeadsPage({
   searchParams,
@@ -29,7 +49,7 @@ export default async function LeadsPage({
   // The API has no text search, so a search scans the newest leads (with the
   // other filters applied) and matches on the server instead of paginating.
   const [leadsPage, vehicles] = await Promise.all([
-    getLeads({
+    getLeadsPage(params, {
       status: params.status,
       vehicleId: params.vehicleId,
       limit: params.q ? LEADS_SEARCH_SCAN_LIMIT : LEADS_PAGE_SIZE,
