@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation"
 import { LayoutGrid, List, Loader2, Search, SlidersHorizontal, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Toggle } from "@/components/ui/toggle"
 import { OptionSelect } from "@/features/leads/components/option-select"
 import type { MakeReadModel, ModelReadModel } from "@/features/catalog/types"
 import { cn } from "@/lib/utils"
@@ -66,19 +68,9 @@ function ChoiceChip({
   children: React.ReactNode
 }) {
   return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={onClick}
-      className={cn(
-        "rounded-full border px-2.5 py-1 text-xs transition-colors",
-        selected
-          ? "border-[#0D9488] bg-[#F0FDFA] font-semibold text-[#0D9488]"
-          : "border-[#E5E7EB] text-[#4B5563] hover:border-[#99F6E4]"
-      )}
-    >
+    <Toggle variant="chip" size="sm" pressed={selected} onPressedChange={onClick} className="text-xs">
       {children}
-    </button>
+    </Toggle>
   )
 }
 
@@ -179,17 +171,18 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="relative w-full sm:w-72">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-[#9CA3AF]" />
-        <Input
+      <InputGroup className="h-9 w-full bg-background sm:w-72">
+        <InputGroupAddon>
+          <Search />
+        </InputGroupAddon>
+        <InputGroupInput
           type="search"
           placeholder="Search plate, make or model"
           aria-label="Search vehicles"
-          className="h-9 border-[#E5E7EB] bg-white pl-8"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-      </div>
+      </InputGroup>
 
       <Popover
         open={open}

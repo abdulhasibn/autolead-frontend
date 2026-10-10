@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
-import { cn } from "@/lib/utils"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export interface VehicleTab {
   id: string
@@ -41,68 +41,42 @@ export function VehicleTabs({ tabs }: { tabs: VehicleTab[] }) {
     window.history.replaceState(null, "", qs ? `${pathname}?${qs}` : pathname)
   }
 
-  function onKeyDown(e: React.KeyboardEvent, index: number) {
-    const delta = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0
-    if (!delta) return
-    e.preventDefault()
-    const next = tabs[(index + delta + tabs.length) % tabs.length]
-    if (!next) return
-    select(next.id)
-    document.getElementById(`vehicle-tab-${next.id}`)?.focus()
-  }
-
   return (
-    <div id="vehicle-tabs" className="scroll-mt-20 rounded-xl border border-[#E5E7EB] bg-white">
-      <div
-        role="tablist"
+    <Tabs
+      id="vehicle-tabs"
+      value={active}
+      onValueChange={(value) => select(String(value))}
+      className="scroll-mt-20 gap-0 rounded-xl border border-border bg-card"
+    >
+      <TabsList
+        variant="line"
         aria-label="Vehicle sections"
-        className="flex gap-5 overflow-x-auto border-b border-[#F3F4F6] px-4 text-sm font-medium text-[#6B7280]"
+        className="h-auto w-full justify-start gap-5 overflow-x-auto rounded-none border-b border-muted p-0 px-4"
       >
-        {tabs.map((tab, i) => {
-          const selected = tab.id === active
-          return (
-            <button
-              key={tab.id}
-              id={`vehicle-tab-${tab.id}`}
-              type="button"
-              role="tab"
-              aria-selected={selected}
-              aria-controls={`vehicle-panel-${tab.id}`}
-              tabIndex={selected ? 0 : -1}
-              onClick={() => select(tab.id)}
-              onKeyDown={(e) => onKeyDown(e, i)}
-              className={cn(
-                "-mb-px flex items-center gap-1.5 border-b-2 py-3 whitespace-nowrap transition-colors",
-                selected
-                  ? "border-[#0D9488] text-[#0D9488]"
-                  : "border-transparent hover:text-[#111827]"
-              )}
-            >
-              {tab.label}
-              {tab.count !== undefined &&
-                (tab.highlight && tab.count > 0 ? (
-                  <span className="rounded-full bg-[#EFF6FF] px-1.5 text-[11px] font-semibold text-[#2563EB]">
-                    {tab.count}
-                  </span>
-                ) : (
-                  <span className="font-mono-data text-xs text-[#9CA3AF]">{tab.count}</span>
-                ))}
-            </button>
-          )
-        })}
-      </div>
+        {tabs.map((tab) => (
+          <TabsTrigger
+            key={tab.id}
+            value={tab.id}
+            className="h-auto flex-none rounded-none px-0 py-3 text-muted-foreground after:bottom-[-1px] hover:text-foreground"
+          >
+            {tab.label}
+            {tab.count !== undefined &&
+              (tab.highlight && tab.count > 0 ? (
+                <span className="rounded-full bg-[#EFF6FF] px-1.5 text-[11px] font-semibold text-[#2563EB]">
+                  {tab.count}
+                </span>
+              ) : (
+                <span className="font-mono-data text-xs text-subtle-foreground">{tab.count}</span>
+              ))}
+          </TabsTrigger>
+        ))}
+      </TabsList>
       {tabs.map((tab) => (
-        <div
-          key={tab.id}
-          id={`vehicle-panel-${tab.id}`}
-          role="tabpanel"
-          aria-labelledby={`vehicle-tab-${tab.id}`}
-          hidden={tab.id !== active}
-          className="p-5"
-        >
+        // Panels stay mounted so in-progress uploads and form state survive switching.
+        <TabsContent key={tab.id} value={tab.id} keepMounted className="p-5">
           {tab.content}
-        </div>
+        </TabsContent>
       ))}
-    </div>
+    </Tabs>
   )
 }

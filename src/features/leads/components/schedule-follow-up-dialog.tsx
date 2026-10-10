@@ -15,23 +15,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { useApiError } from "@/hooks/use-api-error"
 import { scheduleFollowUpAction } from "../actions"
-import { FOLLOW_UP_TASK_TYPES, FOLLOW_UP_TASK_TYPE_LABELS } from "../constants"
 import {
   scheduleFollowUpFormSchema,
   type ScheduleFollowUpFormInput,
   type ScheduleFollowUpInput,
 } from "../schemas"
-import { FormField } from "./form-field"
-import { OptionSelect } from "./option-select"
-
-const TASK_TYPE_OPTIONS = FOLLOW_UP_TASK_TYPES.map((t) => ({
-  value: t,
-  label: FOLLOW_UP_TASK_TYPE_LABELS[t],
-}))
+import { FollowUpFields } from "./follow-up-fields"
 
 const DEFAULT_VALUES: ScheduleFollowUpFormInput = {
   scheduledAt: "",
@@ -101,32 +92,29 @@ export function ScheduleFollowUpDialog({
           className="space-y-4"
           noValidate
         >
-          <FormField id="scheduledAt" label="Date and time" error={errors.scheduledAt?.message}>
-            <Input
-              id="scheduledAt"
-              type="datetime-local"
-              aria-invalid={!!errors.scheduledAt}
-              {...register("scheduledAt")}
-            />
-          </FormField>
-          <FormField id="taskType" label="Task" error={errors.taskType?.message}>
-            <Controller
-              control={control}
-              name="taskType"
-              render={({ field }) => (
-                <OptionSelect
-                  id="taskType"
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  options={TASK_TYPE_OPTIONS}
-                  invalid={!!errors.taskType}
-                />
-              )}
-            />
-          </FormField>
-          <FormField id="follow-up-notes" label="Notes">
-            <Textarea id="follow-up-notes" rows={3} {...register("notes")} />
-          </FormField>
+          <Controller
+            control={control}
+            name="scheduledAt"
+            render={({ field: scheduledAt }) => (
+              <Controller
+                control={control}
+                name="taskType"
+                render={({ field: taskType }) => (
+                  <FollowUpFields
+                    idPrefix="schedule"
+                    scheduledAt={{ value: scheduledAt.value, onChange: scheduledAt.onChange }}
+                    notes={register("notes")}
+                    taskType={taskType.value}
+                    onTaskTypeChange={taskType.onChange}
+                    errors={{
+                      scheduledAt: errors.scheduledAt?.message,
+                      taskType: errors.taskType?.message,
+                    }}
+                  />
+                )}
+              />
+            )}
+          />
         </form>
         <DialogFooter>
           <Button type="submit" form="follow-up-form" disabled={isPending}>

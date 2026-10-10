@@ -5,6 +5,10 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { ArrowRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Spinner } from "@/components/ui/spinner"
 import { loginSchema, type LoginInput } from "@/features/auth/schemas"
 
 export function LoginForm() {
@@ -163,39 +167,30 @@ export function LoginForm() {
         {/* Keep me signed in */}
         <div className="flex items-center pt-0.5">
           <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              defaultChecked
-              className="w-4 h-4 rounded-[3px] border-[#D1D5DB] cursor-pointer accent-[#0D9488]"
-            />
-            <span className="text-xs text-[#374151]">Keep me signed in</span>
+            <Checkbox defaultChecked />
+            <span className="text-xs text-secondary-foreground">Keep me signed in</span>
           </label>
         </div>
 
         {/* Submit button */}
         <div className="pt-2">
-          <button
+          <Button
             type="submit"
             disabled={isPending}
-            className="w-full h-10 px-4 bg-[#0D9488] hover:bg-[#0F766E] disabled:bg-[#0D9488]/80 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-[4px] shadow-sm flex items-center justify-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#CCFBF1] focus:ring-offset-2"
+            className="h-10 w-full rounded-[4px] text-sm font-semibold shadow-sm hover:bg-[#0F766E]"
           >
             {isPending ? (
               <>
-                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
+                <Spinner />
                 <span>Signing in…</span>
               </>
             ) : (
               <>
                 <span>Sign in</span>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
+                <ArrowRight />
               </>
             )}
-          </button>
+          </Button>
         </div>
       </form>
 

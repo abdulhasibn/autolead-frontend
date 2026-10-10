@@ -1,5 +1,7 @@
 "use client"
 
+import { Button } from "@/components/ui/button"
+
 import { useEffect } from "react"
 import { ApiError } from "@/lib/api-error"
 
@@ -40,12 +42,7 @@ export default function DashboardError({
         Failed to load dashboard
       </h2>
       <p className="text-sm text-[#6B7280] max-w-sm mb-5">{message}</p>
-      <button
-        onClick={reset}
-        className="px-4 py-2 bg-[#0D9488] hover:bg-[#0F766E] text-white text-sm font-medium rounded-lg transition-colors"
-      >
-        Try again
-      </button>
+      <Button onClick={reset}>Try again</Button>
     </div>
   )
 }

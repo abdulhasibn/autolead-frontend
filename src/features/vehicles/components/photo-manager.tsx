@@ -17,7 +17,7 @@ import {
 import type { MediaCategory, VehicleMediaDto } from "../types"
 import { checkFile, putToSignedUrl } from "../upload"
 import { orderPhotos, photoCaption } from "../utils"
-import { ConfirmDialog } from "./confirm-dialog"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { PhotoLightbox } from "./photo-lightbox"
 
 interface PendingUpload {

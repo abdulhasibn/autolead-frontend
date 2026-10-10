@@ -13,7 +13,9 @@ import {
 } from "@/lib/action-result"
 import {
   associateVehicle,
+  cancelFollowUp,
   changeLeadStatus,
+  completeFollowUp,
   createLead,
   scheduleFollowUp,
   updateLeadPreference,
@@ -21,11 +23,17 @@ import {
 import {
   associateVehicleSchema,
   changeLeadStatusSchema,
+  completeFollowUpSchema,
   createLeadSchema,
   leadPreferenceSchema,
   scheduleFollowUpSchema,
 } from "./schemas"
-import type { FollowUpDto, LeadPreference, LeadReadModel } from "./types"
+import type {
+  CompleteFollowUpResult,
+  FollowUpDto,
+  LeadPreference,
+  LeadReadModel,
+} from "./types"
 
 const leadIdSchema = z.guid()
 
@@ -38,6 +46,8 @@ async function requireSession() {
 
 function revalidateLeads() {
   revalidatePath("/leads", "layout")
+  // The dashboard lists overdue / today's follow-ups and leads without one.
+  revalidatePath("/dashboard")
   // Car pages show linked and suggested leads with match scores.
   revalidatePath("/vehicles", "layout")
 }
@@ -144,6 +154,44 @@ export async function updateLeadPreferenceAction(
     const preference = await updateLeadPreference(id.data, parsed.data)
     revalidateLeads()
     return actionOk(preference)
+  } catch (err) {
+    return actionError(err)
+  }
+}
+
+export async function completeFollowUpAction(
+  leadId: string,
+  followUpId: string,
+  input: unknown
+): Promise<ActionResult<CompleteFollowUpResult>> {
+  try {
+    await requireSession()
+    const lead = leadIdSchema.safeParse(leadId)
+    const followUp = leadIdSchema.safeParse(followUpId)
+    const parsed = completeFollowUpSchema.safeParse(input)
+    if (!lead.success || !followUp.success || !parsed.success) return validationError()
+
+    const result = await completeFollowUp(lead.data, followUp.data, parsed.data)
+    revalidateLeads()
+    return actionOk(result)
+  } catch (err) {
+    return actionError(err)
+  }
+}
+
+export async function cancelFollowUpAction(
+  leadId: string,
+  followUpId: string
+): Promise<ActionResult<FollowUpDto>> {
+  try {
+    await requireSession()
+    const lead = leadIdSchema.safeParse(leadId)
+    const followUp = leadIdSchema.safeParse(followUpId)
+    if (!lead.success || !followUp.success) return validationError()
+
+    const result = await cancelFollowUp(lead.data, followUp.data)
+    revalidateLeads()
+    return actionOk(result)
   } catch (err) {
     return actionError(err)
   }

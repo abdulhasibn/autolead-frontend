@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { VEHICLE_STATUS_LABELS, VEHICLE_STATUS_STYLES } from "../constants"
 import type { VehicleStatus } from "../types"
@@ -17,9 +18,10 @@ export function VehicleStatusBadge({
 }) {
   const style = VEHICLE_STATUS_STYLES[status]
   return (
-    <span
+    <Badge
+      variant="secondary"
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap",
+        "rounded-full px-2 text-[11px] font-semibold",
         style.text,
         variant === "overlay" ? "bg-white/95 shadow-sm" : style.soft,
         className
@@ -27,6 +29,6 @@ export function VehicleStatusBadge({
     >
       <span aria-hidden className={cn("size-1.5 rounded-full", style.dot)} />
       {VEHICLE_STATUS_LABELS[status]}
-    </span>
+    </Badge>
   )
 }

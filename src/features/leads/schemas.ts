@@ -2,6 +2,7 @@ import { z } from "zod"
 import { FUEL_TYPES, TRANSMISSIONS } from "@/features/vehicles/constants"
 import {
   BODY_TYPES,
+  FOLLOW_UP_OUTCOMES,
   FOLLOW_UP_TASK_TYPES,
   LEAD_SOURCES,
   LEAD_STATUSES,
@@ -89,6 +90,14 @@ export const scheduleFollowUpSchema = z.object({
 })
 
 export type ScheduleFollowUpInput = z.infer<typeof scheduleFollowUpSchema>
+
+export const completeFollowUpSchema = z.object({
+  outcome: z.enum(FOLLOW_UP_OUTCOMES),
+  notes: z.string().nullable().optional(),
+  next: scheduleFollowUpSchema.nullable(),
+})
+
+export type CompleteFollowUpInput = z.infer<typeof completeFollowUpSchema>
 
 export const associateVehicleSchema = z.object({
   vehicleId: z.guid("Select a vehicle"),
@@ -214,3 +223,31 @@ export const scheduleFollowUpFormSchema = z.object({
 })
 
 export type ScheduleFollowUpFormInput = z.input<typeof scheduleFollowUpFormSchema>
+
+export const completeFollowUpFormSchema = z
+  .object({
+    outcome: z.enum(FOLLOW_UP_OUTCOMES, { error: "Select an outcome" }),
+    notes: optionalText,
+    scheduleNext: z.boolean(),
+    next: z.object({
+      scheduledAt: z.string(),
+      taskType: z.enum(FOLLOW_UP_TASK_TYPES, { error: "Select a task type" }),
+      notes: z.string(),
+    }),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.scheduleNext) return
+    const parsed = scheduleFollowUpFormSchema.safeParse(value.next)
+    for (const issue of parsed.error?.issues ?? []) {
+      ctx.addIssue({ code: "custom", message: issue.message, path: ["next", ...issue.path] })
+    }
+  })
+  .transform(
+    (value): CompleteFollowUpInput => ({
+      outcome: value.outcome,
+      notes: value.notes,
+      next: value.scheduleNext ? scheduleFollowUpFormSchema.parse(value.next) : null,
+    })
+  )
+
+export type CompleteFollowUpFormInput = z.input<typeof completeFollowUpFormSchema>
