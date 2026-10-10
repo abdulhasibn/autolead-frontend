@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { Users2 } from "lucide-react"
+import { getMakes } from "@/features/catalog/api"
 import { getLeads } from "@/features/leads/api"
 import {
   LEADS_PAGE_SIZE,
@@ -12,7 +13,7 @@ import {
   type RawSearchParams,
 } from "@/features/leads/search-params"
 import { getVehicleOptions } from "@/features/leads/vehicle-options"
-import { CreateLeadDialog } from "@/features/leads/components/create-lead-dialog"
+import { CreateLeadSheet } from "@/features/leads/components/create-lead-sheet"
 import { LeadsPagination } from "@/features/leads/components/leads-pagination"
 import { LeadsTable } from "@/features/leads/components/leads-table"
 import { LeadsToolbar } from "@/features/leads/components/leads-toolbar"
@@ -28,7 +29,7 @@ export default async function LeadsPage({
 
   // The API has no text search, so a search scans the newest leads (with the
   // other filters applied) and matches on the server instead of paginating.
-  const [leadsPage, vehicles] = await Promise.all([
+  const [leadsPage, vehicles, makes] = await Promise.all([
     getLeads({
       status: params.status,
       vehicleId: params.vehicleId,
@@ -36,6 +37,8 @@ export default async function LeadsPage({
       offset: params.q ? 0 : pageToOffset(params.page),
     }),
     getVehicleOptions(),
+    // The preference make picker degrades to "any" if the catalog is down.
+    getMakes().then((page) => page.items).catch(() => []),
   ])
 
   const leads = params.q
@@ -56,7 +59,7 @@ export default async function LeadsPage({
             {hasFilters ? " match the filters" : ""}
           </p>
         </div>
-        <CreateLeadDialog vehicles={vehicles} />
+        <CreateLeadSheet vehicles={vehicles} makes={makes} />
       </div>
 
       <LeadsToolbar params={params} vehicles={vehicles} />

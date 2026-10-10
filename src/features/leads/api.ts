@@ -1,7 +1,18 @@
 import { serverApiClient } from "@/lib/api-client.server"
 import type { Page, PaginationParams } from "@/types/api"
-import type { LeadReadModel, LeadStatus, FollowUpDto } from "./types"
-import type { CreateLeadInput, ChangeLeadStatusInput, ScheduleFollowUpInput } from "./schemas"
+import type {
+  FollowUpDto,
+  LeadPreference,
+  LeadReadModel,
+  LeadStatus,
+  VehicleLeadMatches,
+} from "./types"
+import type {
+  ChangeLeadStatusInput,
+  CreateLeadInput,
+  LeadPreferenceInput,
+  ScheduleFollowUpInput,
+} from "./schemas"
 
 export interface LeadsListParams extends PaginationParams {
   status?: LeadStatus
@@ -51,4 +62,33 @@ export async function associateVehicle(
   return serverApiClient.patch<LeadReadModel>(`/leads/${id}/vehicle`, {
     vehicleId,
   })
+}
+
+/** Full replace: fields left out are cleared. Returns the normalised preference. */
+export async function updateLeadPreference(
+  id: string,
+  body: LeadPreferenceInput
+): Promise<LeadPreference> {
+  return serverApiClient.put<LeadPreference>(`/leads/${id}/preference`, body)
+}
+
+export interface VehicleLeadMatchesParams {
+  /** Lowest score a suggested lead may have (API default 60). */
+  minScore?: number
+  /** Most suggested leads returned (API default 10, max 50). */
+  limit?: number
+}
+
+/** Linked leads scored against the car, plus suggested open leads. */
+export async function getVehicleLeadMatches(
+  vehicleId: string,
+  params: VehicleLeadMatchesParams = {}
+): Promise<VehicleLeadMatches> {
+  const query = new URLSearchParams()
+  if (params.minScore != null) query.set("minScore", String(params.minScore))
+  if (params.limit != null) query.set("limit", String(params.limit))
+  const qs = query.toString()
+  return serverApiClient.get<VehicleLeadMatches>(
+    `/leads/vehicle-matches/${vehicleId}${qs ? `?${qs}` : ""}`
+  )
 }

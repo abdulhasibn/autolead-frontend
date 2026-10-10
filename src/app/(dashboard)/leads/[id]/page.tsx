@@ -7,8 +7,9 @@ import {
   Car,
   ClipboardList,
   User,
-  type LucideIcon,
 } from "lucide-react"
+import { Detail, InfoCard } from "@/components/info-card"
+import { getMakes } from "@/features/catalog/api"
 import { getLead } from "@/features/leads/api"
 import {
   FOLLOW_UP_TASK_TYPE_LABELS,
@@ -17,18 +18,17 @@ import {
 } from "@/features/leads/constants"
 import { getVehicleOptions } from "@/features/leads/vehicle-options"
 import { ChangeStatusDialog } from "@/features/leads/components/change-status-dialog"
+import { LeadPreferenceCard } from "@/features/leads/components/lead-preference-card"
 import { LeadStatusBadge } from "@/features/leads/components/lead-status-badge"
 import { LinkVehicleDialog } from "@/features/leads/components/link-vehicle-dialog"
 import { ScheduleFollowUpDialog } from "@/features/leads/components/schedule-follow-up-dialog"
 import type { FollowUpTaskType, LeadReadModel } from "@/features/leads/types"
 import { ApiError } from "@/lib/api-error"
 import {
-  formatCurrency,
   formatDate,
   formatDateTime,
   formatYesNo,
 } from "@/lib/format"
-import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = { title: "Lead Details" }
 
@@ -46,53 +46,18 @@ async function loadLead(id: string): Promise<LeadReadModel> {
 
 const EMPTY = <span className="text-[#D1D5DB]">—</span>
 
-function Detail({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <dt className="text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">
-        {label}
-      </dt>
-      <dd className="text-sm text-[#111827]">{children}</dd>
-    </div>
-  )
-}
-
-function InfoCard({
-  title,
-  icon: Icon,
-  className,
-  children,
-}: {
-  title: string
-  icon: LucideIcon
-  className?: string
-  children: React.ReactNode
-}) {
-  return (
-    <section
-      className={cn(
-        "overflow-hidden rounded-xl border border-[#E5E7EB] bg-white",
-        className
-      )}
-    >
-      <div className="flex items-center gap-2 border-b border-[#F3F4F6] px-4 py-3">
-        <span className="flex size-6 items-center justify-center rounded-md bg-[#F0FDFA] text-[#0D9488]">
-          <Icon className="size-3.5" />
-        </span>
-        <h2 className="text-sm font-semibold text-[#111827]">{title}</h2>
-      </div>
-      <div className="p-4">{children}</div>
-    </section>
-  )
-}
-
 export default async function LeadDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const [lead, vehicles] = await Promise.all([loadLead(id), getVehicleOptions()])
+  const [lead, vehicles, makes] = await Promise.all([
+    loadLead(id),
+    getVehicleOptions(),
+    // The preference make picker degrades to "any" if the catalog is down.
+    getMakes().then((page) => page.items).catch(() => []),
+  ])
 
   const closed = isLeadClosed(lead.status)
   const vehicleLabel = lead.vehicleId
@@ -206,17 +171,15 @@ export default async function LeadDetailPage({
           )}
         </InfoCard>
 
+        <LeadPreferenceCard
+          lead={lead}
+          makes={makes}
+          closed={closed}
+          className="lg:col-span-3"
+        />
+
         <InfoCard title="Requirements" icon={ClipboardList} className="lg:col-span-3">
           <dl className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <Detail label="Budget">
-              {lead.budget == null ? (
-                EMPTY
-              ) : (
-                <span className="font-mono-data font-semibold">
-                  {formatCurrency(lead.budget)}
-                </span>
-              )}
-            </Detail>
             <Detail label="Purchase timeline">{lead.purchaseTimeline ?? EMPTY}</Detail>
             <Detail label="Finance required">{formatYesNo(lead.financeRequired)}</Detail>
             <Detail label="Trade-in required">{formatYesNo(lead.tradeInRequired)}</Detail>
