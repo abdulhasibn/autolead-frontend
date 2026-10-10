@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vehicle Module Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<style>
+  :root { --teal:#0D9488; --teal-d:#0F766E; }
+  body { font-family: "Plus Jakarta Sans", system-ui, sans-serif; background:#F1F5F9; color:#111827; }
+  .mono { font-family:"JetBrains Mono", ui-monospace, monospace; font-feature-settings:"tnum" 1,"zero" 1; }
+  .plate { font-family:"JetBrains Mono", monospace; letter-spacing:.06em; }
+  [data-view]:not(.active), [data-panel]:not(.active) { display:none; }
+  .ph { background: linear-gradient(135deg,#F0FDFA,#E2E8F0); }
+  .scroll-x::-webkit-scrollbar { height:6px } .scroll-x::-webkit-scrollbar-thumb { background:#CBD5E1; border-radius:9px }
+  .tab.active { color:#0D9488; border-color:#0D9488; }
+  .seg.active { background:#fff; color:#111827; box-shadow:0 1px 2px rgb(0 0 0 / .08); }
+  .note { background:#FEF9C3; border:1px dashed #EAB308; color:#713F12; }
+  i[data-lucide] { display:inline-flex; }
+  svg.lucide { width:1em; height:1em; }
+</style>
+</head>
+<body>
+
+<!-- Mockup chrome: switch screens + toggle design notes -->
+<div class="sticky top-0 z-50 border-b border-slate-300 bg-slate-900 text-slate-100">
+  <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-2 text-xs">
+    <span class="font-semibold tracking-wide text-teal-300">MOCKUP</span>
+    <button class="rounded px-2 py-1 hover:bg-slate-700" onclick="show('list')">1 · Inventory</button>
+    <button class="rounded px-2 py-1 hover:bg-slate-700" onclick="show('detail')">2 · Vehicle detail</button>
+    <button class="rounded px-2 py-1 hover:bg-slate-700" onclick="show('detail');openDialog('drop')">3 · Drop (with leads)</button>
+    <button class="rounded px-2 py-1 hover:bg-slate-700" onclick="openSheet()">4 · Add vehicle</button>
+    <label class="ml-auto flex items-center gap-1.5"><input id="notesToggle" type="checkbox" checked onchange="document.body.classList.toggle('hide-notes',!this.checked)"> Design notes</label>
+  </div>
+</div>
+<style>.hide-notes .note{display:none}</style>
+
+<div class="flex">
+  <!-- Sidebar (matches app shell) -->
+  <aside class="hidden min-h-screen w-60 shrink-0 border-r border-[#E5E7EB] bg-white lg:block">
+    <div class="flex h-14 items-center gap-2 border-b border-[#F3F4F6] px-4">
+      <span class="flex size-8 items-center justify-center rounded-lg bg-[#0D9488] text-white"><i data-lucide="car-front"></i></span>
+      <span class="text-sm font-bold">Wheels Experts</span>
+    </div>
+    <nav class="space-y-5 p-3 text-sm">
+      <div><p class="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-[#9CA3AF]">Overview</p>
+        <a class="flex items-center gap-2 rounded-lg px-2 py-2 text-[#4B5563]"><i data-lucide="layout-dashboard"></i>Dashboard</a></div>
+      <div><p class="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-[#9CA3AF]">Sales</p>
+        <a class="flex items-center gap-2 rounded-lg px-2 py-2 text-[#4B5563]"><i data-lucide="users-2"></i>Leads</a>
+        <a class="flex items-center gap-2 rounded-lg px-2 py-2 text-[#4B5563]"><i data-lucide="bell"></i>Notifications</a></div>
+      <div><p class="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-[#9CA3AF]">Inventory</p>
+        <a class="flex items-center gap-2 rounded-lg bg-[#F0FDFA] px-2 py-2 font-semibold text-[#0D9488]"><i data-lucide="car"></i>Vehicles</a>
+        <a class="flex items-center gap-2 rounded-lg px-2 py-2 text-[#4B5563]"><i data-lucide="user-check"></i>Owners</a></div>
+    </nav>
+  </aside>
+
+  <main class="min-w-0 flex-1 p-4 sm:p-6">
+
+  <!-- ===================================================== LIST -->
+  <section data-view="list" class="active mx-auto max-w-7xl space-y-5">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">Vehicles</h1>
+        <p class="mt-0.5 text-sm text-[#6B7280]">48 vehicles in inventory</p>
+      </div>
+      <button onclick="openSheet()" class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#0D9488] px-3 text-sm font-semibold text-white hover:bg-[#0F766E]"><i data-lucide="plus"></i>Add vehicle</button>
+    </div>
+
+    <!-- Status segments with counts -->
+    <div class="scroll-x -mx-1 overflow-x-auto px-1">
+      <div class="inline-flex rounded-lg bg-[#E2E8F0]/70 p-1 text-sm font-medium text-[#6B7280]">
+        <button class="seg active rounded-md px-3 py-1.5">All <span class="mono ml-1 text-xs text-[#9CA3AF]">48</span></button>
+        <button class="seg rounded-md px-3 py-1.5"><span class="mr-1.5 inline-block size-1.5 rounded-full bg-[#10B981] align-middle"></span>Open <span class="mono ml-1 text-xs text-[#9CA3AF]">27</span></button>
+        <button class="seg rounded-md px-3 py-1.5"><span class="mr-1.5 inline-block size-1.5 rounded-full bg-[#3B82F6] align-middle"></span>Linked <span class="mono ml-1 text-xs text-[#9CA3AF]">12</span></button>
+        <button class="seg rounded-md px-3 py-1.5"><span class="mr-1.5 inline-block size-1.5 rounded-full bg-[#8B5CF6] align-middle"></span>Sold <span class="mono ml-1 text-xs text-[#9CA3AF]">6</span></button>
+        <button class="seg rounded-md px-3 py-1.5"><span class="mr-1.5 inline-block size-1.5 rounded-full bg-[#9CA3AF] align-middle"></span>Dropped <span class="mono ml-1 text-xs text-[#9CA3AF]">3</span></button>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="relative w-full sm:w-72">
+        <i data-lucide="search" class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9CA3AF]"></i>
+        <input class="h-9 w-full rounded-lg border border-[#E5E7EB] bg-white pl-8 pr-3 text-sm outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/20" placeholder="Search plate, make or model" value="creta" />
+      </div>
+      <div class="relative">
+        <button onclick="toggle('filters')" class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-medium text-[#374151] hover:border-[#0D9488]"><i data-lucide="sliders-horizontal"></i>Filters <span class="rounded-full bg-[#0D9488] px-1.5 text-[11px] font-semibold text-white">3</span></button>
+        <!-- Filter popover -->
+        <div id="filters" class="absolute left-0 top-11 z-30 hidden w-[340px] rounded-xl border border-[#E5E7EB] bg-white p-4 shadow-xl">
+          <div class="space-y-4 text-sm">
+            <div class="grid grid-cols-2 gap-2">
+              <label class="space-y-1"><span class="text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">Make</span>
+                <select class="h-9 w-full rounded-lg border border-[#E5E7EB] px-2"><option>Hyundai</option></select></label>
+              <label class="space-y-1"><span class="text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">Model</span>
+                <select class="h-9 w-full rounded-lg border border-[#E5E7EB] px-2"><option>Any model</option></select></label>
+            </div>
+            <div><span class="text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">Fuel</span>
+              <div class="mt-1 flex flex-wrap gap-1.5">
+                <button class="rounded-full border border-[#0D9488] bg-[#F0FDFA] px-2.5 py-1 text-xs font-semibold text-[#0D9488]">Diesel</button>
+                <button class="rounded-full border border-[#0D9488] bg-[#F0FDFA] px-2.5 py-1 text-xs font-semibold text-[#0D9488]">Petrol</button>
+                <button class="rounded-full border border-[#E5E7EB] px-2.5 py-1 text-xs text-[#4B5563]">CNG</button>
+                <button class="rounded-full border border-[#E5E7EB] px-2.5 py-1 text-xs text-[#4B5563]">Electric</button>
+                <button class="rounded-full border border-[#E5E7EB] px-2.5 py-1 text-xs text-[#4B5563]">Hybrid</button>
+              </div></div>
+            <div><span class="text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">Transmission</span>
+              <div class="mt-1 flex flex-wrap gap-1.5">
+                <button class="rounded-full border border-[#E5E7EB] px-2.5 py-1 text-xs text-[#4B5563]">Manual</button>
+                <button class="rounded-full border border-[#E5E7EB] px-2.5 py-1 text-xs text-[#4B5563]">Automatic</button>
+                <button class="rounded-full border border-[#E5E7EB] px-2.5 py-1 text-xs text-[#4B5563]">AMT</button>
+                <button class="rounded-full border border-[#E5E7EB] px-2.5 py-1 text-xs text-[#4B5563]">CVT</button>
+                <button class="rounded-full border border-[#E5E7EB] px-2.5 py-1 text-xs text-[#4B5563]">DCT</button>
+              </div></div>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="space-y-1"><span class="text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">Year</span>
+                <div class="flex gap-1"><input class="mono h-9 w-full rounded-lg border border-[#E5E7EB] px-2 text-xs" placeholder="From" value="2019"><input class="mono h-9 w-full rounded-lg border border-[#E5E7EB] px-2 text-xs" placeholder="To"></div></label>
+              <label class="space-y-1"><span class="text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">Km driven</span>
+                <div class="flex gap-1"><input class="mono h-9 w-full rounded-lg border border-[#E5E7EB] px-2 text-xs" placeholder="Min"><input class="mono h-9 w-full rounded-lg border border-[#E5E7EB] px-2 text-xs" placeholder="Max"></div></label>
+            </div>
+            <div class="flex justify-between border-t border-[#F3F4F6] pt-3">
+              <button class="text-xs font-medium text-[#6B7280] hover:text-[#0D9488]">Reset</button>
+              <button onclick="toggle('filters')" class="rounded-lg bg-[#0D9488] px-3 py-1.5 text-xs font-semibold text-white">Show 9 vehicles</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Active filter chips -->
+      <span class="inline-flex h-7 items-center gap-1 rounded-full bg-white pl-2.5 pr-1 text-xs font-medium text-[#374151] ring-1 ring-[#E5E7EB]">Hyundai<button class="rounded-full p-0.5 hover:bg-[#F3F4F6]"><i data-lucide="x"></i></button></span>
+      <span class="inline-flex h-7 items-center gap-1 rounded-full bg-white pl-2.5 pr-1 text-xs font-medium text-[#374151] ring-1 ring-[#E5E7EB]">Diesel, Petrol<button class="rounded-full p-0.5 hover:bg-[#F3F4F6]"><i data-lucide="x"></i></button></span>
+      <span class="inline-flex h-7 items-center gap-1 rounded-full bg-white pl-2.5 pr-1 text-xs font-medium text-[#374151] ring-1 ring-[#E5E7EB]">2019+<button class="rounded-full p-0.5 hover:bg-[#F3F4F6]"><i data-lucide="x"></i></button></span>
+      <button class="text-xs font-medium text-[#6B7280] hover:text-[#0D9488]">Clear all</button>
+
+      <div class="ml-auto inline-flex rounded-lg border border-[#E5E7EB] bg-white p-0.5">
+        <button id="btnGrid" onclick="setLayout('grid')" class="rounded-md bg-[#F0FDFA] p-1.5 text-[#0D9488]" aria-label="Grid view"><i data-lucide="layout-grid"></i></button>
+        <button id="btnRows" onclick="setLayout('rows')" class="rounded-md p-1.5 text-[#9CA3AF]" aria-label="List view"><i data-lucide="list"></i></button>
+      </div>
+    </div>
+
+    <p class="note rounded-lg px-3 py-2 text-xs"><b>Why:</b> Status is the #1 way staff slice stock, so it's a segmented control with live counts (4 cheap <code>limit=1</code> calls). Everything else (make/model, fuel, transmission, year, km) lives behind one <b>Filters</b> popover so the bar stays calm; applied filters echo back as removable chips. All state is in the URL (shareable, back-button safe), matching the Leads page.</p>
+
+    <div id="grid" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"></div>
+    <div id="rows" class="hidden overflow-hidden rounded-xl border border-[#E5E7EB] bg-white"></div>
+
+    <div class="flex items-center justify-between text-sm text-[#6B7280]">
+      <span>Showing <b class="text-[#111827]">1–24</b> of 48</span>
+      <div class="flex gap-1">
+        <button class="h-8 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[#9CA3AF]">Previous</button>
+        <button class="h-8 rounded-lg border border-[#E5E7EB] bg-white px-3 hover:border-[#0D9488]">Next</button>
+      </div>
+    </div>
+    <p class="note rounded-lg px-3 py-2 text-xs"><b>Card anatomy:</b> full-bleed photo (4:5) with a bottom-up black gradient (90% → 0) that carries the text, plus a light top scrim so status/lead pills stay readable on bright skies. Over the gradient: year + make/model, variant, a white number-plate chip, 4 frosted spec chips (km · fuel · gearbox · owners), then location and <b>days in stock</b> (turns into an amber pill at 60+ days). No photo → teal gradient with "Add photos". Dropped cars go greyscale. Insurance, RC and condition details are deliberately <b>not</b> on the card — they live in the detail page's "Paperwork" panel. No price: the API has no commercial fields yet.</p>
+  </section>
+
+  <!-- ===================================================== DETAIL -->
+  <section data-view="detail" class="mx-auto max-w-7xl space-y-5">
+    <button onclick="show('list')" class="inline-flex items-center gap-1 text-sm font-medium text-[#6B7280] hover:text-[#0D9488]"><i data-lucide="arrow-left"></i>All vehicles</button>
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="space-y-1.5">
+        <div class="flex flex-wrap items-center gap-3">
+          <h1 class="text-2xl font-bold tracking-tight">2021 Hyundai Creta</h1>
+          <span class="inline-flex items-center gap-1 rounded-full bg-[#EFF6FF] px-2 py-0.5 text-[11px] font-semibold text-[#2563EB]"><span class="size-1.5 rounded-full bg-[#3B82F6]"></span>Linked</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 text-sm text-[#6B7280]">
+          <span>SX (O) 1.5 Diesel</span><span class="text-[#D1D5DB]">·</span>
+          <span class="plate rounded border border-[#CBD5E1] bg-white px-1.5 py-0.5 text-xs font-semibold text-[#111827]">KL 07 CU 4521</span><span class="text-[#D1D5DB]">·</span>
+          <span>In stock <b class="text-[#111827]">34 days</b></span>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-medium hover:border-[#0D9488]"><i data-lucide="pencil"></i>Edit details</button>
+        <div class="relative">
+          <button onclick="toggle('statusMenu')" class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-medium hover:border-[#0D9488]">Status<i data-lucide="chevron-down"></i></button>
+          <div id="statusMenu" class="absolute right-0 top-11 z-30 hidden w-60 rounded-xl border border-[#E5E7EB] bg-white p-1 text-sm shadow-xl">
+            <button onclick="toggle('statusMenu');openDialog('drop')" class="flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-[#FEF2F2]"><i data-lucide="archive-x" class="mt-0.5 text-[#DC2626]"></i><span><span class="font-medium text-[#DC2626]">Drop vehicle</span><span class="block text-xs text-[#9CA3AF]">Remove from active stock</span></span></button>
+            <p class="px-2.5 pb-2 pt-1 text-[11px] leading-snug text-[#9CA3AF]">Linked and Sold are set automatically from leads.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero: gallery + at-a-glance -->
+    <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div class="space-y-4">
+        <!-- Bento gallery -->
+        <div class="grid h-[260px] grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-xl sm:h-[400px]">
+          <button onclick="openLightbox(0)" class="group relative col-span-4 row-span-2 overflow-hidden sm:col-span-3">
+            <img data-src="0" class="size-full object-cover transition duration-300 group-hover:scale-[1.02]" />
+            <span class="absolute left-3 top-3 rounded-md bg-black/55 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur">Front · Cover</span>
+          </button>
+          <button onclick="openLightbox(1)" class="group relative hidden overflow-hidden sm:block"><img data-src="1" class="size-full object-cover group-hover:scale-105 transition" /></button>
+          <button onclick="openLightbox(2)" class="group relative hidden overflow-hidden sm:block">
+            <img data-src="2" class="size-full object-cover" />
+            <span class="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white"><span class="text-lg font-bold">+9</span><span class="text-[11px]">View all photos</span></span>
+          </button>
+        </div>
+        <p class="note rounded-lg px-3 py-2 text-xs"><b>Gallery:</b> cover (= the <code>front</code> photo the API already picks) is large; two supporting shots and a "+N" tile open a full-screen lightbox with category captions, arrow-key + swipe navigation and a thumbnail strip. On mobile it collapses to the cover alone with a "1/12" counter. Signed URLs expire after 10 min, so we use plain <code>&lt;img&gt;</code> (no Next image cache) and refetch media on window focus.</p>
+      </div>
+
+      <!-- At a glance -->
+      <aside class="space-y-4 lg:sticky lg:top-14 lg:self-start">
+        <section class="rounded-xl border border-[#E5E7EB] bg-white">
+          <div class="grid grid-cols-3 divide-x divide-[#F3F4F6] border-b border-[#F3F4F6] text-center">
+            <div class="px-2 py-3"><p class="mono text-base font-semibold">42,150</p><p class="text-[11px] text-[#9CA3AF]">km driven</p></div>
+            <div class="px-2 py-3"><p class="text-base font-semibold">Diesel</p><p class="text-[11px] text-[#9CA3AF]">fuel</p></div>
+            <div class="px-2 py-3"><p class="text-base font-semibold">Automatic</p><p class="text-[11px] text-[#9CA3AF]">gearbox</p></div>
+          </div>
+          <div class="grid grid-cols-3 divide-x divide-[#F3F4F6] text-center">
+            <div class="px-2 py-3"><p class="mono text-base font-semibold">2021</p><p class="text-[11px] text-[#9CA3AF]">year</p></div>
+            <div class="px-2 py-3"><p class="text-base font-semibold">1st</p><p class="text-[11px] text-[#9CA3AF]">owner</p></div>
+            <div class="px-2 py-3"><p class="flex items-center justify-center gap-1.5 text-base font-semibold"><span class="size-3 rounded-full border border-black/10 bg-[#F8FAFC]"></span>White</p><p class="text-[11px] text-[#9CA3AF]">colour</p></div>
+          </div>
+        </section>
+
+        <section class="rounded-xl border border-[#E5E7EB] bg-white">
+          <div class="flex items-center justify-between border-b border-[#F3F4F6] px-4 py-3">
+            <h2 class="text-sm font-semibold">Paperwork &amp; condition</h2>
+            <span class="rounded-full bg-[#FFFBEB] px-2 py-0.5 text-[11px] font-semibold text-[#B45309]">2 need attention</span>
+          </div>
+          <ul class="divide-y divide-[#F3F4F6] text-sm">
+            <li class="flex items-center justify-between px-4 py-2.5"><span class="flex items-center gap-2 text-[#4B5563]"><i data-lucide="shield-check" class="text-[#9CA3AF]"></i>Insurance</span><span class="flex items-center gap-1.5 font-medium text-[#B45309]"><span class="size-1.5 rounded-full bg-[#F59E0B]"></span>Expires in 18 days</span></li>
+            <li class="flex items-center justify-between px-4 py-2.5"><span class="flex items-center gap-2 text-[#4B5563]"><i data-lucide="file-badge" class="text-[#9CA3AF]"></i>RC</span><span class="flex items-center gap-1.5 font-medium text-[#B45309]"><span class="size-1.5 rounded-full bg-[#F59E0B]"></span>Hypothecation</span></li>
+            <li class="flex items-center justify-between px-4 py-2.5"><span class="flex items-center gap-2 text-[#4B5563]"><i data-lucide="wrench" class="text-[#9CA3AF]"></i>Service history</span><span class="flex items-center gap-1.5 font-medium text-[#047857]"><span class="size-1.5 rounded-full bg-[#10B981]"></span>Full</span></li>
+            <li class="flex items-center justify-between px-4 py-2.5"><span class="flex items-center gap-2 text-[#4B5563]"><i data-lucide="car-front" class="text-[#9CA3AF]"></i>Accident history</span><span class="flex items-center gap-1.5 font-medium text-[#047857]"><span class="size-1.5 rounded-full bg-[#10B981]"></span>None</span></li>
+          </ul>
+        </section>
+
+        <section class="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div class="flex items-center gap-3">
+            <span class="flex size-9 items-center justify-center rounded-full border border-[#CCFBF1] bg-[#F0FDFA] font-semibold text-[#0D9488]">R</span>
+            <div class="min-w-0 flex-1">
+              <a class="block truncate text-sm font-semibold text-[#0D9488] hover:underline">Rahul Menon</a>
+              <p class="text-xs text-[#9CA3AF]">Owner · Consignment</p>
+            </div>
+            <a class="flex size-8 items-center justify-center rounded-lg border border-[#E5E7EB] text-[#0D9488] hover:bg-[#F0FDFA]" title="Call +91 98470 12345"><i data-lucide="phone"></i></a>
+          </div>
+          <div class="mt-3 flex items-center gap-2 border-t border-[#F3F4F6] pt-3 text-xs text-[#6B7280]"><i data-lucide="map-pin" class="text-[#9CA3AF]"></i>Kochi showroom · Bay 3</div>
+        </section>
+        <p class="note rounded-lg px-3 py-2 text-xs"><b>Glance panel:</b> the 6 facts every conversation starts with, as big tiles. Paperwork fields are turned into a <b>health checklist</b> — green/amber/red, with the header counting what needs attention — instead of five neutral label/value rows. Owner + acquisition type in one compact card with a one-tap call.</p>
+      </aside>
+    </div>
+
+    <!-- Tabs -->
+    <div class="rounded-xl border border-[#E5E7EB] bg-white">
+      <div class="scroll-x flex gap-5 overflow-x-auto border-b border-[#F3F4F6] px-4 text-sm font-medium text-[#6B7280]">
+        <button class="tab active -mb-px whitespace-nowrap border-b-2 border-transparent py-3" onclick="tab('overview',this)">Overview</button>
+        <button class="tab -mb-px whitespace-nowrap border-b-2 border-transparent py-3" onclick="tab('photos',this)">Photos <span class="mono text-xs text-[#9CA3AF]">12</span></button>
+        <button class="tab -mb-px whitespace-nowrap border-b-2 border-transparent py-3" onclick="tab('docs',this)">Documents <span class="mono text-xs text-[#9CA3AF]">3</span></button>
+        <button class="tab -mb-px whitespace-nowrap border-b-2 border-transparent py-3" onclick="tab('leads',this)">Leads <span class="rounded-full bg-[#EFF6FF] px-1.5 text-[11px] font-semibold text-[#2563EB]">2</span></button>
+        <button class="tab -mb-px whitespace-nowrap border-b-2 border-transparent py-3" onclick="tab('history',this)">History</button>
+      </div>
+
+      <!-- Overview -->
+      <div data-panel="overview" class="active grid gap-6 p-5 lg:grid-cols-3">
+        <div class="space-y-2 lg:col-span-2">
+          <h3 class="text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">Description</h3>
+          <p class="text-sm leading-relaxed text-[#374151]">Single-owner, company-serviced Creta with sunroof, ventilated seats and Bose audio. New tyres fitted in March. Minor scuff on rear bumper (see rear photo). Second key available.</p>
+        </div>
+        <dl class="grid grid-cols-2 gap-4 text-sm">
+          <div><dt class="text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">Acquisition</dt><dd>Consignment</dd></div>
+          <div><dt class="text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">Insurance until</dt><dd>28 Oct 2026</dd></div>
+          <div><dt class="text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">Added</dt><dd>6 Sep 2026</dd></div>
+          <div><dt class="text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">Last updated</dt><dd class="text-[#6B7280]">2 Oct 2026</dd></div>
+        </dl>
+      </div>
+
+      <!-- Photos: angle checklist -->
+      <div data-panel="photos" class="space-y-5 p-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p class="text-sm font-semibold">Standard angles <span class="mono font-normal text-[#6B7280]">6 / 8</span></p>
+            <div class="mt-1.5 h-1.5 w-48 overflow-hidden rounded-full bg-[#F3F4F6]"><div class="h-full w-3/4 rounded-full bg-[#0D9488]"></div></div>
+          </div>
+          <button class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#0D9488] px-3 text-sm font-semibold text-white"><i data-lucide="upload"></i>Upload photos</button>
+        </div>
+        <div id="angles" class="grid grid-cols-2 gap-3 sm:grid-cols-4"></div>
+        <div>
+          <p class="mb-2 text-sm font-semibold">Additional <span class="mono font-normal text-[#6B7280]">4</span></p>
+          <div id="extras" class="grid grid-cols-3 gap-3 sm:grid-cols-6"></div>
+        </div>
+        <p class="note rounded-lg px-3 py-2 text-xs"><b>Photos as a checklist:</b> the API's 8 standard categories become labelled slots. Missing angles show as dashed "Add rear" drop targets, so intake is guided rather than a blind upload. Drag-drop or multi-select uploads go straight to storage via the signed upload URL with per-file progress; each file defaults to the slot it was dropped on. Delete (admin only) is on hover.</p>
+      </div>
+
+      <!-- Documents -->
+      <div data-panel="docs" class="p-5">
+        <div class="mb-3 flex items-center justify-between">
+          <p class="flex items-center gap-1.5 text-xs text-[#6B7280]"><i data-lucide="lock"></i>Internal only — never shown publicly</p>
+          <button class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#E5E7EB] px-3 text-sm font-medium hover:border-[#0D9488]"><i data-lucide="file-up"></i>Upload document</button>
+        </div>
+        <ul class="divide-y divide-[#F3F4F6] rounded-lg border border-[#F3F4F6] text-sm">
+          <li class="flex items-center gap-3 px-3 py-2.5"><span class="flex size-8 items-center justify-center rounded-lg bg-[#FEF2F2] text-[#DC2626]"><i data-lucide="file-text"></i></span><div class="min-w-0 flex-1"><p class="truncate font-medium">RC_KL07CU4521.pdf</p><p class="text-xs text-[#9CA3AF]">RC · 6 Sep 2026</p></div><button class="rounded-lg px-2 py-1 text-xs font-semibold text-[#0D9488] hover:bg-[#F0FDFA]">Open</button></li>
+          <li class="flex items-center gap-3 px-3 py-2.5"><span class="flex size-8 items-center justify-center rounded-lg bg-[#FEF2F2] text-[#DC2626]"><i data-lucide="file-text"></i></span><div class="min-w-0 flex-1"><p class="truncate font-medium">Policy_2025-26.pdf</p><p class="text-xs text-[#9CA3AF]">Insurance · 6 Sep 2026</p></div><button class="rounded-lg px-2 py-1 text-xs font-semibold text-[#0D9488] hover:bg-[#F0FDFA]">Open</button></li>
+          <li class="flex items-center gap-3 px-3 py-2.5"><span class="flex size-8 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]"><i data-lucide="image"></i></span><div class="min-w-0 flex-1"><p class="truncate font-medium">Service book scan</p><p class="text-xs text-[#9CA3AF]">Service record · 8 Sep 2026</p></div><button class="rounded-lg px-2 py-1 text-xs font-semibold text-[#0D9488] hover:bg-[#F0FDFA]">Open</button></li>
+        </ul>
+        <p class="note mt-4 rounded-lg px-3 py-2 text-xs"><b>Documents:</b> a simple list (type + name + date) because these are opened, not browsed. Only RC, Insurance, Service record, Inspection report and Other are offered as document types.</p>
+      </div>
+
+      <!-- Leads -->
+      <div data-panel="leads" class="p-5">
+        <ul class="divide-y divide-[#F3F4F6] rounded-lg border border-[#F3F4F6] text-sm">
+          <li class="flex items-center gap-3 px-3 py-3"><span class="flex size-8 items-center justify-center rounded-full bg-[#F0FDFA] font-semibold text-[#0D9488]">A</span><div class="min-w-0 flex-1"><p class="font-medium">Anjali Nair</p><p class="text-xs text-[#9CA3AF]">Walk-in · next follow-up tomorrow, 11:00</p></div><span class="rounded-full bg-[#ECFDF5] px-2 py-0.5 text-[11px] font-semibold text-[#047857]">Booking confirmed</span><i data-lucide="chevron-right" class="text-[#D1D5DB]"></i></li>
+          <li class="flex items-center gap-3 px-3 py-3"><span class="flex size-8 items-center justify-center rounded-full bg-[#F0FDFA] font-semibold text-[#0D9488]">S</span><div class="min-w-0 flex-1"><p class="font-medium">Suresh Kumar</p><p class="text-xs text-[#9CA3AF]">Website · no follow-up scheduled</p></div><span class="rounded-full bg-[#EFF6FF] px-2 py-0.5 text-[11px] font-semibold text-[#2563EB]">New</span><i data-lucide="chevron-right" class="text-[#D1D5DB]"></i></li>
+        </ul>
+        <p class="note mt-4 rounded-lg px-3 py-2 text-xs"><b>Leads:</b> uses <code>GET /leads?vehicleId=</code>. This answers "who's interested in this car?" without leaving the page, and reuses the Leads status badge.</p>
+      </div>
+
+      <!-- History -->
+      <div data-panel="history" class="p-5">
+        <ol class="relative space-y-5 border-l border-[#E5E7EB] pl-5 text-sm">
+          <li class="relative"><span class="absolute -left-[25px] top-1 size-2.5 rounded-full bg-[#3B82F6] ring-4 ring-white"></span><p><b>Open → Linked</b></p><p class="text-xs text-[#9CA3AF]">System · lead added · 1 Oct 2026, 3:12 pm</p></li>
+          <li class="relative"><span class="absolute -left-[25px] top-1 size-2.5 rounded-full bg-[#10B981] ring-4 ring-white"></span><p><b>Dropped → Open</b></p><p class="text-xs text-[#9CA3AF]">Priya S. · 20 Sep 2026</p><p class="mt-1 rounded-lg bg-[#F9FAFB] px-3 py-2 text-xs text-[#4B5563]">"Owner agreed to revised terms, re-listing."</p></li>
+          <li class="relative"><span class="absolute -left-[25px] top-1 size-2.5 rounded-full bg-[#9CA3AF] ring-4 ring-white"></span><p><b>Open → Dropped</b></p><p class="text-xs text-[#9CA3AF]">Priya S. · 12 Sep 2026</p></li>
+          <li class="relative"><span class="absolute -left-[25px] top-1 size-2.5 rounded-full bg-[#0D9488] ring-4 ring-white"></span><p><b>Added to inventory</b></p><p class="text-xs text-[#9CA3AF]">Arjun P. · 6 Sep 2026</p></li>
+        </ol>
+      </div>
+    </div>
+    <p class="note rounded-lg px-3 py-2 text-xs"><b>Progressive disclosure:</b> above the fold = photos + the facts that matter + risks. Everything else is one tab away, each tab showing a count so nothing is hidden by surprise. Tab is kept in the URL (<code>?tab=photos</code>). A <b>Sold</b> vehicle gets a violet banner "Sold via lead Anjali Nair →" under the header, and the Status menu hides.</p>
+  </section>
+  </main>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox" class="fixed inset-0 z-[60] hidden flex-col bg-black/95 text-white">
+  <div class="flex items-center justify-between px-4 py-3 text-sm"><span id="lbCap" class="font-medium"></span><button onclick="closeLightbox()" class="rounded-lg p-2 hover:bg-white/10"><i data-lucide="x"></i></button></div>
+  <div class="relative flex flex-1 items-center justify-center px-12">
+    <button onclick="step(-1)" class="absolute left-3 rounded-full bg-white/10 p-2 hover:bg-white/20"><i data-lucide="chevron-left"></i></button>
+    <img id="lbImg" class="max-h-[75vh] max-w-full rounded-lg object-contain" />
+    <button onclick="step(1)" class="absolute right-3 rounded-full bg-white/10 p-2 hover:bg-white/20"><i data-lucide="chevron-right"></i></button>
+  </div>
+  <div id="lbStrip" class="scroll-x flex gap-2 overflow-x-auto px-4 py-3"></div>
+</div>
+
+<!-- Drop dialog -->
+<div id="drop" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/40 p-4">
+  <div class="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl">
+    <div class="flex gap-3">
+      <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#FEF2F2] text-[#DC2626]"><i data-lucide="triangle-alert"></i></span>
+      <div class="space-y-1"><h3 class="font-semibold">Drop 2021 Hyundai Creta?</h3><p class="text-sm text-[#6B7280]">It will leave active stock. You can re-list it later.</p></div>
+    </div>
+    <div class="mt-4 rounded-lg border border-[#FDE68A] bg-[#FFFBEB] p-3 text-sm text-[#92400E]">
+      <p class="font-semibold">2 active leads will be unlinked</p>
+      <p class="mt-0.5 text-xs">Anjali Nair, Suresh Kumar keep their status but lose this vehicle.</p>
+    </div>
+    <label class="mt-4 block space-y-1 text-sm"><span class="font-medium">Reason <span class="font-normal text-[#9CA3AF]">(optional)</span></span>
+      <textarea rows="2" class="w-full rounded-lg border border-[#E5E7EB] p-2 text-sm outline-none focus:border-[#14B8A6]" placeholder="e.g. Owner withdrew the car"></textarea></label>
+    <div class="mt-5 flex justify-end gap-2">
+      <button onclick="closeDialog('drop')" class="h-9 rounded-lg border border-[#E5E7EB] px-3 text-sm font-medium">Cancel</button>
+      <button onclick="closeDialog('drop')" class="h-9 rounded-lg bg-[#DC2626] px-3 text-sm font-semibold text-white">Drop &amp; unlink 2 leads</button>
+    </div>
+    <p class="note mt-4 rounded-lg px-3 py-2 text-xs">The lead count comes from <code>linkedLeadCount</code> on the vehicle, so the warning shows <i>before</i> the request — no "try, get 422, retry" dance. Request is sent with <code>confirmUnlinkLeads: true</code>. If there are no leads, the amber box is omitted and the button just says "Drop vehicle".</p>
+  </div>
+</div>
+
+<!-- Add vehicle sheet -->
+<div id="sheet" class="fixed inset-0 z-[60] hidden bg-black/40">
+  <div class="ml-auto flex h-full w-full max-w-xl flex-col bg-white shadow-2xl">
+    <div class="border-b border-[#F3F4F6] px-5 py-4">
+      <div class="flex items-center justify-between"><h3 class="text-lg font-semibold">Add vehicle</h3><button onclick="closeSheet()" class="rounded-lg p-1.5 hover:bg-[#F3F4F6]"><i data-lucide="x"></i></button></div>
+      <ol class="mt-3 flex gap-2 text-xs font-medium">
+        <li class="flex flex-1 items-center gap-1.5 text-[#0D9488]"><span class="flex size-5 items-center justify-center rounded-full bg-[#0D9488] text-[11px] text-white">1</span>Vehicle</li>
+        <li class="flex flex-1 items-center gap-1.5 text-[#9CA3AF]"><span class="flex size-5 items-center justify-center rounded-full border border-[#D1D5DB] text-[11px]">2</span>Condition</li>
+        <li class="flex flex-1 items-center gap-1.5 text-[#9CA3AF]"><span class="flex size-5 items-center justify-center rounded-full border border-[#D1D5DB] text-[11px]">3</span>Owner</li>
+        <li class="flex flex-1 items-center gap-1.5 text-[#9CA3AF]"><span class="flex size-5 items-center justify-center rounded-full border border-[#D1D5DB] text-[11px]">4</span>Photos</li>
+      </ol>
+    </div>
+    <div class="flex-1 space-y-4 overflow-y-auto p-5 text-sm">
+      <div class="grid grid-cols-3 gap-3">
+        <label class="space-y-1"><span class="font-medium">Make</span><select class="h-9 w-full rounded-lg border border-[#E5E7EB] px-2"><option>Hyundai</option></select></label>
+        <label class="space-y-1"><span class="font-medium">Model</span><select class="h-9 w-full rounded-lg border border-[#E5E7EB] px-2"><option>Creta</option></select></label>
+        <label class="space-y-1"><span class="font-medium">Variant</span><select class="h-9 w-full rounded-lg border border-[#E5E7EB] px-2"><option>SX (O) 1.5 D</option></select></label>
+      </div>
+      <p class="-mt-2 flex items-center gap-1.5 text-xs text-[#0D9488]"><i data-lucide="sparkles"></i>Fuel and gearbox pre-filled from the variant</p>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="space-y-1"><span class="font-medium">Registration number</span><input class="plate h-9 w-full rounded-lg border border-[#E5E7EB] px-2 uppercase" value="KL 07 CU 4521"></label>
+        <label class="space-y-1"><span class="font-medium">Year</span><input class="mono h-9 w-full rounded-lg border border-[#E5E7EB] px-2" value="2021"></label>
+        <label class="space-y-1"><span class="font-medium">Fuel</span><select class="h-9 w-full rounded-lg border border-[#E5E7EB] px-2"><option>Diesel</option></select></label>
+        <label class="space-y-1"><span class="font-medium">Transmission</span><select class="h-9 w-full rounded-lg border border-[#E5E7EB] px-2"><option>Automatic</option></select></label>
+        <label class="space-y-1"><span class="font-medium">Km driven</span><input class="mono h-9 w-full rounded-lg border border-[#E5E7EB] px-2" value="42,150"></label>
+        <label class="space-y-1"><span class="font-medium">Colour</span><input class="h-9 w-full rounded-lg border border-[#E5E7EB] px-2" value="White"></label>
+      </div>
+      <p class="note rounded-lg px-3 py-2 text-xs"><b>Stepped side sheet</b> (not a long modal): 1 · identity &amp; specs, 2 · paperwork/condition (all optional, segmented buttons instead of dropdowns: RC Clear/Hypothecation/Under transfer…), 3 · owner picker (search existing or create inline) + acquisition type, 4 · photos — the vehicle is created on leaving step 3, because uploads need its id; step 4 is skippable ("Add photos later"). Make→Model→Variant cascade uses the catalog API and pre-fills fuel/gearbox from the variant. Edit reuses steps 1–2 in the same sheet.</p>
+    </div>
+    <div class="flex justify-between border-t border-[#F3F4F6] px-5 py-3">
+      <button onclick="closeSheet()" class="h-9 rounded-lg px-3 text-sm font-medium text-[#6B7280]">Cancel</button>
+      <button class="h-9 rounded-lg bg-[#0D9488] px-4 text-sm font-semibold text-white">Continue</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const IMG = [
+  "photo-1617814076367-b759c7d7e738","photo-1552519507-da3b142c6e3d","photo-1549317661-bd32c8ce0db2",
+  "photo-1503376780353-7e6692767b70","photo-1494976388531-d1058494cdd8","photo-1542362567-b07e54358753",
+  "photo-1502877338535-766e1452684a","photo-1580273916550-e323be2ae537","photo-1533473359331-0135ef1b58bf",
+  "photo-1511919884226-fd3cad34687c","photo-1525609004556-c46c7d6cf023","photo-1560958089-b8a1929cea89"
+].map(id => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1200&q=70`);
+const CATS = ["Front","Rear","Left","Right","Interior","Dashboard","Engine","Tyres","Other","Other","Other","Other"];
+
+const STATUS = {
+  open:{l:"Open",c:"bg-white/95 text-[#047857]",d:"#10B981"},
+  linked:{l:"Linked",c:"bg-white/95 text-[#2563EB]",d:"#3B82F6"},
+  sold:{l:"Sold",c:"bg-white/95 text-[#7C3AED]",d:"#8B5CF6"},
+  dropped:{l:"Dropped",c:"bg-white/95 text-[#6B7280]",d:"#9CA3AF"},
+};
+const V = [
+  {t:"2021 Hyundai Creta",v:"SX (O) 1.5 Diesel",p:"KL07CU4521",km:42150,f:"Diesel",g:"Automatic",o:1,s:"linked",leads:2,loc:"Kochi",age:34,img:0},
+  {t:"2019 Maruti Swift",v:"ZXI Plus",p:"KL01BX8890",km:61200,f:"Petrol",g:"Manual",o:2,s:"open",leads:0,loc:"Trivandrum",age:72,img:3},
+  {t:"2022 Tata Nexon EV",v:"XZ Plus LUX",p:"KL07DA0042",km:18400,f:"Electric",g:"Automatic",o:1,s:"open",leads:0,loc:"Kochi",age:5,img:11},
+  {t:"2020 Honda City",v:"VX CVT",p:"KL43H7711",km:39800,f:"Petrol",g:"CVT",o:1,s:"sold",leads:0,loc:"Thrissur",age:21,img:4},
+  {t:"2018 Toyota Innova Crysta",v:"2.4 VX 7-Str",p:"KL08AZ3301",km:112000,f:"Diesel",g:"Manual",o:2,s:"linked",leads:1,loc:"Kochi",age:48,img:5},
+  {t:"2023 Kia Seltos",v:"HTX 1.5",p:"KL07DF2210",km:9600,f:"Petrol",g:"DCT",o:1,s:"open",leads:0,loc:"Kochi",age:2,img:null},
+  {t:"2017 Mahindra XUV500",v:"W10 AWD",p:"KL11R5520",km:134500,f:"Diesel",g:"Manual",o:3,s:"dropped",leads:0,loc:"Calicut",age:96,img:6},
+  {t:"2021 Hyundai i20",v:"Asta (O) Turbo",p:"KL07CK9013",km:27300,f:"Petrol",g:"DCT",o:1,s:"open",leads:0,loc:"Kochi",age:12,img:7},
+];
+const fmtPlate = p => p.replace(/^([A-Z]{2})(\d{1,2})([A-Z]{0,3})(\d{1,4})$/, (m,a,b,c,d)=>[a,b,c,d].filter(Boolean).join(" "));
+const ord = n => n===1?"1st":n===2?"2nd":n===3?"3rd":n+"th";
+const ageCls = d => d>=60?"text-[#B45309] font-semibold":"text-[#9CA3AF]";
+
+function cover(v, cls){
+  return v.img===null
+    ? `<div class="ph flex ${cls} flex-col items-center justify-center gap-1 text-[#0D9488]"><i data-lucide="camera" class="text-xl"></i><span class="text-xs font-semibold">Add photos</span></div>`
+    : `<img src="${IMG[v.img]}" class="${cls} object-cover" loading="lazy" onerror="this.outerHTML='<div class=&quot;ph ${cls}&quot;></div>'">`;
+}
+function statusPill(s){ const x=STATUS[s]; return `<span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-sm ${x.c}"><span class="size-1.5 rounded-full" style="background:${x.d}"></span>${x.l}</span>`; }
+
+const coverOverlay = v => v.img===null
+  ? `<div class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-[#134E4A] via-[#0F766E] to-[#0D9488] pb-24 text-white/80"><i data-lucide="camera" class="text-2xl"></i><span class="text-xs font-semibold">No photos yet · Add photos</span></div>`
+  : `<img src="${IMG[v.img]}" class="absolute inset-0 size-full object-cover transition duration-500 group-hover:scale-[1.04] ${v.s==='dropped'?'grayscale':''}" loading="lazy" onerror="this.remove()">`;
+
+document.getElementById("grid").innerHTML = V.map(v=>`
+  <a onclick="show('detail')" class="group relative block aspect-[4/5] cursor-pointer overflow-hidden rounded-2xl bg-[#0F172A] shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#14B8A6]">
+    ${coverOverlay(v)}
+    <!-- top scrim keeps the pills legible on bright skies -->
+    <div class="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/40 to-transparent"></div>
+    <!-- bottom scrim carries the text -->
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-[68%] bg-gradient-to-t from-black/90 via-black/60 to-transparent"></div>
+
+    <div class="absolute left-3 top-3">${statusPill(v.s)}</div>
+    ${v.leads?`<span class="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#0D9488] px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm"><i data-lucide="users-2"></i>${v.leads} ${v.leads===1?'lead':'leads'}</span>`:""}
+
+    <div class="absolute inset-x-0 bottom-0 space-y-2.5 p-4 text-white">
+      <div class="flex items-end justify-between gap-2">
+        <div class="min-w-0">
+          <h3 class="truncate text-base font-bold leading-tight drop-shadow">${v.t}</h3>
+          <p class="truncate text-xs text-white/70">${v.v}</p>
+        </div>
+        <span class="plate shrink-0 rounded bg-white px-1.5 py-0.5 text-[10px] font-bold text-[#111827] shadow">${fmtPlate(v.p)}</span>
+      </div>
+      <div class="flex flex-wrap gap-1.5 text-[11px] font-medium">
+        <span class="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 backdrop-blur-sm"><i data-lucide="gauge"></i><span class="mono">${v.km.toLocaleString("en-IN")}</span> km</span>
+        <span class="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 backdrop-blur-sm"><i data-lucide="fuel"></i>${v.f}</span>
+        <span class="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 backdrop-blur-sm"><i data-lucide="cog"></i>${v.g}</span>
+        <span class="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 backdrop-blur-sm"><i data-lucide="user"></i>${ord(v.o)} owner</span>
+      </div>
+      <div class="flex items-center justify-between border-t border-white/15 pt-2 text-[11px]">
+        <span class="flex items-center gap-1 text-white/70"><i data-lucide="map-pin"></i>${v.loc}</span>
+        <span class="${v.age>=60?'rounded-full bg-[#F59E0B] px-1.5 font-semibold text-[#451A03]':'text-white/70'}">${v.age}d in stock</span>
+      </div>
+    </div>
+  </a>`).join("");
+
+document.getElementById("rows").innerHTML = `
+  <table class="w-full text-sm">
+    <thead class="border-b border-[#F3F4F6] bg-[#F9FAFB] text-left text-[11px] font-semibold uppercase tracking-wide text-[#9CA3AF]">
+      <tr><th class="px-4 py-2.5">Vehicle</th><th class="hidden px-4 md:table-cell">Plate</th><th class="hidden px-4 lg:table-cell">Km</th><th class="hidden px-4 lg:table-cell">Fuel · Gearbox</th><th class="px-4">Status</th><th class="hidden px-4 sm:table-cell">Leads</th><th class="px-4 text-right">In stock</th></tr>
+    </thead>
+    <tbody class="divide-y divide-[#F3F4F6]">
+    ${V.map(v=>`<tr onclick="show('detail')" class="cursor-pointer hover:bg-[#F9FAFB]">
+      <td class="px-4 py-2.5"><div class="flex items-center gap-3"><div class="h-11 w-16 shrink-0 overflow-hidden rounded-md bg-[#F1F5F9]">${cover(v,"size-full")}</div><div class="min-w-0"><p class="truncate font-medium">${v.t}</p><p class="truncate text-xs text-[#9CA3AF]">${v.v}</p></div></div></td>
+      <td class="hidden px-4 md:table-cell"><span class="plate rounded border border-[#CBD5E1] px-1.5 py-0.5 text-[11px] font-semibold">${fmtPlate(v.p)}</span></td>
+      <td class="mono hidden px-4 text-xs lg:table-cell">${v.km.toLocaleString("en-IN")}</td>
+      <td class="hidden px-4 text-xs text-[#4B5563] lg:table-cell">${v.f} · ${v.g}</td>
+      <td class="px-4">${statusPill(v.s).replace("shadow-sm","")}</td>
+      <td class="mono hidden px-4 text-xs sm:table-cell">${v.leads||'<span class="text-[#D1D5DB]">—</span>'}</td>
+      <td class="px-4 text-right text-xs ${ageCls(v.age)}">${v.age}d</td></tr>`).join("")}
+    </tbody></table>`;
+
+document.querySelectorAll("img[data-src]").forEach(i=>i.src=IMG[+i.dataset.src]);
+
+const FILLED = ["Front","Left","Right","Interior","Dashboard","Engine"];
+const ANG = ["Front","Rear","Left","Right","Interior","Dashboard","Engine","Tyres"];
+let n=0;
+document.getElementById("angles").innerHTML = ANG.map(a=>{
+  if(!FILLED.includes(a)) return `<button class="flex aspect-[4/3] flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[#D1D5DB] text-[#9CA3AF] hover:border-[#0D9488] hover:bg-[#F0FDFA] hover:text-[#0D9488]"><i data-lucide="image-plus" class="text-lg"></i><span class="text-xs font-semibold">Add ${a.toLowerCase()}</span></button>`;
+  const idx=n++; return `<button onclick="openLightbox(${idx})" class="group relative aspect-[4/3] overflow-hidden rounded-lg"><img src="${IMG[idx]}" class="size-full object-cover"><span class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 px-2 pb-1.5 pt-4 text-left text-[11px] font-semibold text-white">${a}${a==="Front"?" · Cover":""}</span><span class="absolute right-1.5 top-1.5 hidden rounded-md bg-white/90 p-1 text-[#DC2626] group-hover:block"><i data-lucide="trash-2"></i></span></button>`;
+}).join("");
+document.getElementById("extras").innerHTML = [8,9,10,11].map(i=>`<button onclick="openLightbox(${i})" class="aspect-square overflow-hidden rounded-lg"><img src="${IMG[i]}" class="size-full object-cover"></button>`).join("");
+
+// Interactions
+function show(v){ document.querySelectorAll("[data-view]").forEach(e=>e.classList.toggle("active",e.dataset.view===v)); window.scrollTo(0,0); }
+function tab(p,btn){ document.querySelectorAll("[data-panel]").forEach(e=>e.classList.toggle("active",e.dataset.panel===p)); document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===btn)); }
+function toggle(id){ document.getElementById(id).classList.toggle("hidden"); }
+function setLayout(l){ document.getElementById("grid").classList.toggle("hidden",l!=="grid"); document.getElementById("rows").classList.toggle("hidden",l!=="rows");
+  document.getElementById("btnGrid").className = "rounded-md p-1.5 "+(l==="grid"?"bg-[#F0FDFA] text-[#0D9488]":"text-[#9CA3AF]");
+  document.getElementById("btnRows").className = "rounded-md p-1.5 "+(l==="rows"?"bg-[#F0FDFA] text-[#0D9488]":"text-[#9CA3AF]"); }
+function openDialog(id){ const d=document.getElementById(id); d.classList.remove("hidden"); d.classList.add("flex"); }
+function closeDialog(id){ const d=document.getElementById(id); d.classList.add("hidden"); d.classList.remove("flex"); }
+function openSheet(){ document.getElementById("sheet").classList.remove("hidden"); }
+function closeSheet(){ document.getElementById("sheet").classList.add("hidden"); }
+let cur=0;
+function renderLb(){ document.getElementById("lbImg").src=IMG[cur]; document.getElementById("lbCap").textContent=`${CATS[cur]} · ${cur+1} / ${IMG.length}`;
+  document.getElementById("lbStrip").innerHTML = IMG.map((s,i)=>`<button onclick="cur=${i};renderLb()" class="h-14 w-20 shrink-0 overflow-hidden rounded-md ${i===cur?'ring-2 ring-[#14B8A6]':'opacity-50 hover:opacity-100'}"><img src="${s}" class="size-full object-cover"></button>`).join(""); }
+function openLightbox(i){ cur=i; renderLb(); const l=document.getElementById("lightbox"); l.classList.remove("hidden"); l.classList.add("flex"); }
+function closeLightbox(){ const l=document.getElementById("lightbox"); l.classList.add("hidden"); l.classList.remove("flex"); }
+function step(d){ cur=(cur+d+IMG.length)%IMG.length; renderLb(); }
+document.addEventListener("keydown",e=>{ if(document.getElementById("lightbox").classList.contains("hidden")) return; if(e.key==="ArrowRight")step(1); if(e.key==="ArrowLeft")step(-1); if(e.key==="Escape")closeLightbox(); });
+lucide.createIcons();
+</script>
+</body>
+</html>

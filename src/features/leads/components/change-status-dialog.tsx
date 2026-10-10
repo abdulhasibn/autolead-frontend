@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
@@ -91,8 +92,9 @@ export function ChangeStatusDialog({
       }}
     >
       <DialogTrigger
-        render={<Button variant="outline" disabled={nextStatuses.length === 0} />}
+        render={<Button disabled={nextStatuses.length === 0} />}
       >
+        <RefreshCw />
         Change status
       </DialogTrigger>
       <DialogContent>

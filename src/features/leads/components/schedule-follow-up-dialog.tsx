@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { CalendarPlus } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
@@ -81,7 +82,10 @@ export function ScheduleFollowUpDialog({
         if (!next) reset(DEFAULT_VALUES)
       }}
     >
-      <DialogTrigger render={<Button variant="outline" disabled={disabled} />}>
+      <DialogTrigger
+        render={<Button variant="outline" disabled={disabled} className="border-[#E5E7EB] bg-white text-[#374151] hover:border-[#CCFBF1] hover:bg-[#F0FDFA] hover:text-[#0D9488]" />}
+      >
+        <CalendarPlus />
         Schedule follow-up
       </DialogTrigger>
       <DialogContent>

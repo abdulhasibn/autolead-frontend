@@ -1,8 +1,14 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  ArrowLeft,
+  CalendarClock,
+  Car,
+  ClipboardList,
+  User,
+  type LucideIcon,
+} from "lucide-react"
 import { getLead } from "@/features/leads/api"
 import {
   FOLLOW_UP_TASK_TYPE_LABELS,
@@ -22,6 +28,7 @@ import {
   formatDateTime,
   formatYesNo,
 } from "@/lib/format"
+import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = { title: "Lead Details" }
 
@@ -37,12 +44,45 @@ async function loadLead(id: string): Promise<LeadReadModel> {
   }
 }
 
+const EMPTY = <span className="text-[#D1D5DB]">—</span>
+
 function Detail({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
-      <dt className="text-muted-foreground text-xs">{label}</dt>
-      <dd className="text-sm">{children}</dd>
+      <dt className="text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">
+        {label}
+      </dt>
+      <dd className="text-sm text-[#111827]">{children}</dd>
     </div>
+  )
+}
+
+function InfoCard({
+  title,
+  icon: Icon,
+  className,
+  children,
+}: {
+  title: string
+  icon: LucideIcon
+  className?: string
+  children: React.ReactNode
+}) {
+  return (
+    <section
+      className={cn(
+        "overflow-hidden rounded-xl border border-[#E5E7EB] bg-white",
+        className
+      )}
+    >
+      <div className="flex items-center gap-2 border-b border-[#F3F4F6] px-4 py-3">
+        <span className="flex size-6 items-center justify-center rounded-md bg-[#F0FDFA] text-[#0D9488]">
+          <Icon className="size-3.5" />
+        </span>
+        <h2 className="text-sm font-semibold text-[#111827]">{title}</h2>
+      </div>
+      <div className="p-4">{children}</div>
+    </section>
   )
 }
 
@@ -58,29 +98,38 @@ export default async function LeadDetailPage({
   const vehicleLabel = lead.vehicleId
     ? (vehicles.find((v) => v.id === lead.vehicleId)?.label ?? "Linked vehicle")
     : null
+  const linkClass = "text-[#0D9488] hover:text-[#0F766E] hover:underline"
 
   return (
     <div className="space-y-6">
       <Link
         href="/leads"
-        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
+        className="inline-flex items-center gap-1 text-sm font-medium text-[#6B7280] transition-colors hover:text-[#0D9488]"
       >
         <ArrowLeft className="size-4" />
         All leads
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {lead.contactFullName}
-            </h1>
-            <LeadStatusBadge status={lead.status} />
+        <div className="flex items-center gap-4">
+          <span
+            aria-hidden
+            className="flex size-12 shrink-0 items-center justify-center rounded-full border border-[#CCFBF1] bg-[#F0FDFA] text-lg font-semibold text-[#0D9488]"
+          >
+            {lead.contactFullName.charAt(0).toUpperCase()}
+          </span>
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-bold tracking-tight text-[#111827]">
+                {lead.contactFullName}
+              </h1>
+              <LeadStatusBadge status={lead.status} />
+            </div>
+            <p className="text-sm text-[#6B7280]">
+              {LEAD_SOURCE_LABELS[lead.source] ?? lead.source} lead · created{" "}
+              {formatDate(lead.createdAt)}
+            </p>
           </div>
-          <p className="text-muted-foreground text-sm">
-            {LEAD_SOURCE_LABELS[lead.source] ?? lead.source} lead · created{" "}
-            {formatDate(lead.createdAt)}
-          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <ScheduleFollowUpDialog leadId={lead.id} disabled={closed} />
@@ -97,91 +146,88 @@ export default async function LeadDetailPage({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Contact</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="space-y-3">
-              <Detail label="Phone">
-                <a href={`tel:${lead.contactPhone}`} className="hover:underline">
-                  {lead.contactPhone}
+        <InfoCard title="Contact" icon={User}>
+          <dl className="space-y-4">
+            <Detail label="Phone">
+              <a href={`tel:${lead.contactPhone}`} className={linkClass}>
+                {lead.contactPhone}
+              </a>
+            </Detail>
+            <Detail label="Email">
+              {lead.contactEmail ? (
+                <a href={`mailto:${lead.contactEmail}`} className={linkClass}>
+                  {lead.contactEmail}
                 </a>
-              </Detail>
-              <Detail label="Email">
-                {lead.contactEmail ? (
-                  <a href={`mailto:${lead.contactEmail}`} className="hover:underline">
-                    {lead.contactEmail}
-                  </a>
-                ) : (
-                  "—"
-                )}
-              </Detail>
-            </dl>
-          </CardContent>
-        </Card>
+              ) : (
+                EMPTY
+              )}
+            </Detail>
+          </dl>
+        </InfoCard>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Vehicle</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="space-y-3">
-              <Detail label="Linked vehicle">
-                {lead.vehicleId ? (
-                  <Link href={`/vehicles/${lead.vehicleId}`} className="hover:underline">
-                    {vehicleLabel}
-                  </Link>
-                ) : (
-                  "None"
-                )}
-              </Detail>
-              <Detail label="Preferred vehicle">{lead.preferredVehicle ?? "—"}</Detail>
-              <Detail label="Current vehicle">{lead.currentVehicle ?? "—"}</Detail>
-            </dl>
-          </CardContent>
-        </Card>
+        <InfoCard title="Vehicle" icon={Car}>
+          <dl className="space-y-4">
+            <Detail label="Linked vehicle">
+              {lead.vehicleId ? (
+                <Link href={`/vehicles/${lead.vehicleId}`} className={linkClass}>
+                  {vehicleLabel}
+                </Link>
+              ) : (
+                <span className="text-[#9CA3AF]">None</span>
+              )}
+            </Detail>
+            <Detail label="Preferred vehicle">{lead.preferredVehicle ?? EMPTY}</Detail>
+            <Detail label="Current vehicle">{lead.currentVehicle ?? EMPTY}</Detail>
+          </dl>
+        </InfoCard>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Next follow-up</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {lead.nextFollowUp ? (
-              <dl className="space-y-3">
-                <Detail label="When">{formatDateTime(lead.nextFollowUp.scheduledAt)}</Detail>
-                <Detail label="Task">
+        <InfoCard title="Next follow-up" icon={CalendarClock}>
+          {lead.nextFollowUp ? (
+            <dl className="space-y-4">
+              <Detail label="When">{formatDateTime(lead.nextFollowUp.scheduledAt)}</Detail>
+              <Detail label="Task">
+                <span className="inline-flex items-center rounded-full bg-[#F0FDFA] px-2 py-0.5 text-[11px] font-semibold text-[#0D9488]">
                   {FOLLOW_UP_TASK_TYPE_LABELS[
                     lead.nextFollowUp.taskType as FollowUpTaskType
                   ] ?? lead.nextFollowUp.taskType}
-                </Detail>
-                {lead.nextFollowUp.notes && (
-                  <Detail label="Notes">{lead.nextFollowUp.notes}</Detail>
-                )}
-              </dl>
-            ) : (
-              <p className="text-muted-foreground text-sm">Nothing scheduled.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Requirements</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Detail label="Budget">{formatCurrency(lead.budget)}</Detail>
-              <Detail label="Purchase timeline">{lead.purchaseTimeline ?? "—"}</Detail>
-              <Detail label="Finance required">{formatYesNo(lead.financeRequired)}</Detail>
-              <Detail label="Trade-in required">{formatYesNo(lead.tradeInRequired)}</Detail>
-              <Detail label="Notes">
-                <span className="whitespace-pre-wrap">{lead.notes ?? "—"}</span>
+                </span>
               </Detail>
-              <Detail label="Last updated">{formatDateTime(lead.updatedAt)}</Detail>
+              {lead.nextFollowUp.notes && (
+                <Detail label="Notes">{lead.nextFollowUp.notes}</Detail>
+              )}
             </dl>
-          </CardContent>
-        </Card>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-6 text-center">
+              <div className="mb-2 flex size-8 items-center justify-center rounded-full bg-[#F0FDFA]">
+                <CalendarClock className="size-4 text-[#0D9488]" />
+              </div>
+              <p className="text-xs text-[#9CA3AF]">Nothing scheduled.</p>
+            </div>
+          )}
+        </InfoCard>
+
+        <InfoCard title="Requirements" icon={ClipboardList} className="lg:col-span-3">
+          <dl className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <Detail label="Budget">
+              {lead.budget == null ? (
+                EMPTY
+              ) : (
+                <span className="font-mono-data font-semibold">
+                  {formatCurrency(lead.budget)}
+                </span>
+              )}
+            </Detail>
+            <Detail label="Purchase timeline">{lead.purchaseTimeline ?? EMPTY}</Detail>
+            <Detail label="Finance required">{formatYesNo(lead.financeRequired)}</Detail>
+            <Detail label="Trade-in required">{formatYesNo(lead.tradeInRequired)}</Detail>
+            <Detail label="Notes">
+              {lead.notes ? <span className="whitespace-pre-wrap">{lead.notes}</span> : EMPTY}
+            </Detail>
+            <Detail label="Last updated">
+              <span className="text-[#6B7280]">{formatDateTime(lead.updatedAt)}</span>
+            </Detail>
+          </dl>
+        </InfoCard>
       </div>
     </div>
   )

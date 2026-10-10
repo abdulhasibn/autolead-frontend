@@ -1,28 +1,23 @@
-export type VehicleStatus = "open" | "linked" | "dropped" | "sold"
+import type {
+  ACQUISITION_TYPES,
+  DOCUMENT_TYPES,
+  FUEL_TYPES,
+  MEDIA_CATEGORIES,
+  RC_STATUSES,
+  SERVICE_HISTORIES,
+  TRANSMISSIONS,
+  VEHICLE_STATUSES,
+} from "./constants"
 
-export type FuelType = "petrol" | "diesel" | "cng" | "electric" | "hybrid"
-export type Transmission = "manual" | "automatic" | "amt" | "cvt" | "dct"
-export type AcquisitionType =
-  | "dealership_purchase"
-  | "consignment"
-  | "intermediary_sale"
-export type MediaCategory =
-  | "front"
-  | "rear"
-  | "left"
-  | "right"
-  | "interior"
-  | "dashboard"
-  | "engine"
-  | "tyres"
-  | "other"
-export type DocumentType =
-  | "rc"
-  | "insurance"
-  | "service_record"
-  | "loan_clearance"
-  | "inspection_report"
-  | "other"
+export type VehicleStatus = (typeof VEHICLE_STATUSES)[number]
+export type FuelType = (typeof FUEL_TYPES)[number]
+export type Transmission = (typeof TRANSMISSIONS)[number]
+export type AcquisitionType = (typeof ACQUISITION_TYPES)[number]
+export type MediaCategory = (typeof MEDIA_CATEGORIES)[number]
+export type RcStatus = (typeof RC_STATUSES)[number]
+export type ServiceHistory = (typeof SERVICE_HISTORIES)[number]
+/** Document types the UI offers; the API also knows `loan_clearance`. */
+export type DocumentType = (typeof DOCUMENT_TYPES)[number]
 
 export interface VehicleDto {
   id: string
@@ -40,9 +35,10 @@ export interface VehicleDto {
   numPreviousOwners: number
   colour: string
   insuranceValidUntil: string | null
-  rcStatus: string | null
-  serviceHistory: string | null
+  rcStatus: RcStatus | null
+  serviceHistory: ServiceHistory | null
   accidentHistory: boolean
+  /** Never shown in the UI; only carried through so edits don't wipe it. */
   loanStatus: string | null
   location: string | null
   description: string | null
@@ -52,13 +48,18 @@ export interface VehicleDto {
   submittedBy: string
   createdAt: string
   updatedAt: string
+  /** Signed URL of the cover (`front`) photo, valid for ~10 minutes. */
+  frontImageUrl: string | null
+  frontImageUrlExpiresAt: string | null
+  /** Active leads (new / not_now / booking_confirmed) on this vehicle. */
+  linkedLeadCount: number
 }
 
 export interface VehicleMediaDto {
   id: string
   vehicleId: string
   storagePath: string
-  category: MediaCategory
+  category: MediaCategory | null
   sortOrder: number
   uploadedBy: string
   uploadedAt: string
@@ -70,12 +71,24 @@ export interface VehicleDocumentDto {
   id: string
   vehicleId: string
   storagePath: string
-  docType: DocumentType
-  isSensitive: true
+  docType: string | null
+  fileName: string | null
+  isSensitive: boolean
   uploadedBy: string
   uploadedAt: string
   url: string
   urlExpiresAt: string
+}
+
+export interface VehicleStatusHistoryItem {
+  id: string
+  vehicleId: string
+  fromStatus: VehicleStatus | null
+  toStatus: VehicleStatus
+  changedBy: string
+  changedByName: string | null
+  reason: string | null
+  changedAt: string
 }
 
 export interface SignedUploadDto {
@@ -83,4 +96,9 @@ export interface SignedUploadDto {
   uploadUrl: string
   token: string
   expiresAt: string
+}
+
+export interface ChangeVehicleStatusResult {
+  status: VehicleStatus
+  unlinkedLeadCount: number
 }
