@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { EMPTY_PREFERENCE_FORM } from "../preference"
 import {
+  completeFollowUpFormSchema,
   createLeadFormSchema,
   createLeadSchema,
   leadPreferenceFormSchema,
@@ -195,5 +196,41 @@ describe("scheduleFollowUpFormSchema", () => {
       scheduleFollowUpFormSchema.safeParse({ scheduledAt: "", taskType: "call", notes: "" })
         .success
     ).toBe(false)
+  })
+})
+
+describe("completeFollowUpFormSchema", () => {
+  const base = {
+    outcome: "reached" as const,
+    notes: "  Liked the car  ",
+    scheduleNext: false,
+    next: { scheduledAt: "", taskType: "call" as const, notes: "" },
+  }
+
+  it("ignores the next follow-up fields unless asked", () => {
+    expect(completeFollowUpFormSchema.parse(base)).toEqual({
+      outcome: "reached",
+      notes: "Liked the car",
+      next: null,
+    })
+  })
+
+  it("builds the next follow-up when asked", () => {
+    const result = completeFollowUpFormSchema.parse({
+      ...base,
+      scheduleNext: true,
+      next: { scheduledAt: "2026-10-12T09:00", taskType: "meeting", notes: "" },
+    })
+    expect(result.next).toEqual({
+      scheduledAt: new Date("2026-10-12T09:00").toISOString(),
+      taskType: "meeting",
+      notes: null,
+    })
+  })
+
+  it("requires a date for the next follow-up", () => {
+    const parsed = completeFollowUpFormSchema.safeParse({ ...base, scheduleNext: true })
+    expect(parsed.success).toBe(false)
+    expect(parsed.error?.issues[0]?.path).toEqual(["next", "scheduledAt"])
   })
 })

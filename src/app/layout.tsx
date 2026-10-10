@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { Plus_Jakarta_Sans } from "next/font/google"
-import { Toaster } from "sonner"
+import { Toaster } from "@/components/ui/sonner"
 import { Providers } from "@/lib/providers"
 import "./globals.css"
 

@@ -5,7 +5,8 @@ import {
   SOURCE_LABELS,
   relativeTime,
 } from "@/features/dashboard/format"
-import { EmptyState } from "./section-card"
+import { Check } from "lucide-react"
+import { EmptyState } from "@/components/empty-state"
 import { cn } from "@/lib/utils"
 
 const STATUS_COLORS: Record<string, string> = {
@@ -27,7 +28,7 @@ export function LeadList({
   emptyMessage = "No leads to show.",
 }: LeadListProps) {
   if (items.length === 0) {
-    return <EmptyState message={emptyMessage} />
+    return <EmptyState message={emptyMessage} icon={Check} className="py-8" />
   }
 
   return (

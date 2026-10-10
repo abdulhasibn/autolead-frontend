@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Check, Loader2, Pencil, Plus, Search, Sparkles, UserPlus } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import {
   Sheet,
@@ -496,7 +497,15 @@ export function VehicleFormSheet(props: Props) {
             <>
               <p className="text-xs text-[#6B7280]">All optional. Fill in what you know now.</p>
               <FormField id="insuranceValidUntil" label="Insurance valid until" error={errors.insuranceValidUntil?.message}>
-                <Input id="insuranceValidUntil" type="date" className="sm:w-56" {...register("insuranceValidUntil")} />
+                <Controller control={control} name="insuranceValidUntil" render={({ field }) => (
+                  <DatePicker
+                    id="insuranceValidUntil"
+                    value={field.value}
+                    onChange={field.onChange}
+                    invalid={!!errors.insuranceValidUntil}
+                    className="sm:w-56"
+                  />
+                )} />
               </FormField>
               <FormField id="rcStatus" label="RC status">
                 <Controller control={control} name="rcStatus" render={({ field }) => (

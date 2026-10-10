@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { ChevronRight, Users2 } from "lucide-react"
+import { EmptyState } from "@/components/empty-state"
 import { LEAD_SOURCE_LABELS } from "@/features/leads/constants"
 import { LeadStatusBadge } from "@/features/leads/components/lead-status-badge"
 import type { LeadReadModel } from "@/features/leads/types"
@@ -10,21 +11,10 @@ import type { VehicleStatusHistoryItem } from "../types"
 
 const ACTIVE_LEAD = new Set(["new", "not_now", "booking_confirmed"])
 
-function EmptyPanel({ message }: { message: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-8 text-center">
-      <div className="mb-2 flex size-8 items-center justify-center rounded-full bg-[#F0FDFA]">
-        <Users2 className="size-4 text-[#0D9488]" />
-      </div>
-      <p className="text-xs text-[#9CA3AF]">{message}</p>
-    </div>
-  )
-}
-
 /** Leads pointing at this vehicle, active ones first. */
 export function VehicleLeadsList({ leads }: { leads: LeadReadModel[] }) {
   if (leads.length === 0) {
-    return <EmptyPanel message="No leads are linked to this vehicle yet." />
+    return <EmptyState message="No leads are linked to this vehicle yet." icon={Users2} className="py-8" />
   }
   const sorted = [...leads].sort(
     (a, b) =>

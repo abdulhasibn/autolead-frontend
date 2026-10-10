@@ -1,7 +1,9 @@
 import Link from "next/link"
+import { CompleteFollowUpDialog } from "@/features/leads/components/complete-follow-up-dialog"
 import type { FollowUpCard } from "@/features/dashboard/types"
 import { TASK_TYPE_LABELS, formatTime, relativeTime } from "@/features/dashboard/format"
-import { EmptyState } from "./section-card"
+import { Check } from "lucide-react"
+import { EmptyState } from "@/components/empty-state"
 import { cn } from "@/lib/utils"
 
 const TASK_ICONS: Record<string, React.ReactNode> = {
@@ -52,7 +54,7 @@ export function FollowUpList({
   emptyMessage = "All caught up!",
 }: FollowUpListProps) {
   if (items.length === 0) {
-    return <EmptyState message={emptyMessage} />
+    return <EmptyState message={emptyMessage} icon={Check} className="py-8" />
   }
 
   return (
@@ -65,10 +67,13 @@ export function FollowUpList({
             : formatTime(item.scheduledAt)
 
         return (
-          <li key={item.followUpId}>
+          <li
+            key={item.followUpId}
+            className="flex items-center gap-2 pr-3 hover:bg-[#F9FAFB] transition-colors"
+          >
             <Link
               href={`/leads/${item.leadId}`}
-              className="flex items-start gap-3 px-4 py-3 hover:bg-[#F9FAFB] transition-colors group"
+              className="flex min-w-0 flex-1 items-start gap-3 px-4 py-3 group"
             >
               {/* Task type icon */}
               <div
@@ -108,6 +113,7 @@ export function FollowUpList({
                 )}
               </div>
             </Link>
+            <CompleteFollowUpDialog leadId={item.leadId} followUpId={item.followUpId} compact />
           </li>
         )
       })}

@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { LEAD_STATUSES, LEAD_STATUS_LABELS } from "../constants"
 import { buildLeadsHref, type LeadsSearchParams } from "../search-params"
 import { OptionSelect } from "./option-select"
@@ -51,17 +51,18 @@ export function LeadsToolbar({ params, vehicles }: LeadsToolbarProps) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="relative w-full sm:w-64">
-        <Search className="pointer-events-none text-[#9CA3AF] absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
-        <Input
+      <InputGroup className="h-9 w-full bg-background sm:w-64">
+        <InputGroupAddon>
+          <Search />
+        </InputGroupAddon>
+        <InputGroupInput
           type="search"
           placeholder="Search name, phone or email"
           aria-label="Search leads"
-          className="h-9 border-[#E5E7EB] bg-white pl-8"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-      </div>
+      </InputGroup>
       <OptionSelect
         aria-label="Filter by status"
         className="h-9 border-[#E5E7EB] bg-white sm:w-48"

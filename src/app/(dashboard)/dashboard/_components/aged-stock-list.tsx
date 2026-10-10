@@ -1,6 +1,7 @@
 import Link from "next/link"
 import type { VehicleCard } from "@/features/dashboard/types"
-import { EmptyState } from "./section-card"
+import { Check } from "lucide-react"
+import { EmptyState } from "@/components/empty-state"
 import { cn } from "@/lib/utils"
 
 interface AgedStockListProps {
@@ -13,7 +14,7 @@ export function AgedStockList({
   emptyMessage = "No aged stock.",
 }: AgedStockListProps) {
   if (items.length === 0) {
-    return <EmptyState message={emptyMessage} />
+    return <EmptyState message={emptyMessage} icon={Check} className="py-8" />
   }
 
   return (

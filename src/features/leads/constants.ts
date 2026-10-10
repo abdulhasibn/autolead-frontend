@@ -1,5 +1,6 @@
 import type {
   BodyType,
+  FollowUpOutcome,
   FollowUpTaskType,
   LeadSource,
   LeadStatus,
@@ -8,7 +9,7 @@ import type {
 } from "./types"
 
 // Mirrors the backend's lead domain (lead-status / lead-source /
-// follow-up-task-type value objects). Keep in sync when those change.
+// follow-up-task-type / follow-up-outcome value objects). Keep in sync when those change.
 
 export const LEAD_STATUSES = [
   "new",
@@ -39,6 +40,14 @@ export const FOLLOW_UP_TASK_TYPES = [
   "test_drive",
   "send_quotation",
   "other",
+] as const
+
+export const FOLLOW_UP_OUTCOMES = [
+  "reached",
+  "no_answer",
+  "rescheduled",
+  "not_interested",
+  "done",
 ] as const
 
 // Mirrors the backend's lead preference / match score (ADR-0013).
@@ -160,6 +169,14 @@ export const FOLLOW_UP_TASK_TYPE_LABELS: Record<FollowUpTaskType, string> = {
   test_drive: "Test drive",
   send_quotation: "Send quotation",
   other: "Other",
+}
+
+export const FOLLOW_UP_OUTCOME_LABELS: Record<FollowUpOutcome, string> = {
+  reached: "Reached",
+  no_answer: "No answer",
+  rescheduled: "Rescheduled",
+  not_interested: "Not interested",
+  done: "Done",
 }
 
 const ALLOWED_TRANSITIONS: Record<LeadStatus, readonly LeadStatus[]> = {

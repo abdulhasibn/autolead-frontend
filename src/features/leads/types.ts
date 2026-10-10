@@ -1,6 +1,7 @@
 import type { FuelType, Transmission } from "@/features/vehicles/types"
 import type {
   BODY_TYPES,
+  FOLLOW_UP_OUTCOMES,
   FOLLOW_UP_TASK_TYPES,
   LEAD_SOURCES,
   LEAD_STATUSES,
@@ -12,6 +13,10 @@ export type LeadSource = (typeof LEAD_SOURCES)[number]
 export type LeadStatus = (typeof LEAD_STATUSES)[number]
 
 export type FollowUpTaskType = (typeof FOLLOW_UP_TASK_TYPES)[number]
+
+export type FollowUpOutcome = (typeof FOLLOW_UP_OUTCOMES)[number]
+
+export type FollowUpStatus = "open" | "completed" | "cancelled"
 
 export type BodyType = (typeof BODY_TYPES)[number]
 
@@ -73,8 +78,55 @@ export interface FollowUpDto {
   taskType: string
   scheduledAt: string
   notes: string | null
-  notificationId: string
-  dueAt: string
+  /** null for a stored follow-up that has no due reminder. */
+  notificationId: string | null
+  dueAt: string | null
+  status: FollowUpStatus
+  outcome: FollowUpOutcome | null
+  completionNotes: string | null
+  completedAt: string | null
+  cancelledAt: string | null
+}
+
+export interface CompleteFollowUpResult {
+  followUp: FollowUpDto
+  /** The next follow-up, when one was scheduled with the completion. */
+  next: FollowUpDto | null
+}
+
+/** Item of GET /leads/:id/follow-ups. */
+export interface FollowUpReadModel {
+  id: string
+  leadId: string
+  taskType: string
+  scheduledAt: string
+  notes: string | null
+  status: FollowUpStatus
+  outcome: FollowUpOutcome | null
+  completionNotes: string | null
+  completedAt: string | null
+  completedBy: string | null
+  completedByName: string | null
+  cancelledAt: string | null
+  cancelledBy: string | null
+  cancelledByName: string | null
+  assignedTo: string
+  assignedToName: string | null
+  createdBy: string
+  createdByName: string | null
+  createdAt: string
+}
+
+/** Item of GET /leads/:id/status-history; `fromStatus` is null on create. */
+export interface LeadStatusHistoryItem {
+  id: string
+  leadId: string
+  fromStatus: LeadStatus | null
+  toStatus: LeadStatus
+  changedBy: string
+  changedByName: string | null
+  notes: string | null
+  changedAt: string
 }
 
 export type MatchOutcome = "match" | "partial" | "miss" | "unknown"

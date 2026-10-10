@@ -6,23 +6,26 @@ import {
   CalendarClock,
   Car,
   ClipboardList,
+  History,
   User,
 } from "lucide-react"
 import { Detail, InfoCard } from "@/components/info-card"
 import { getMakes } from "@/features/catalog/api"
-import { getLead } from "@/features/leads/api"
 import {
-  FOLLOW_UP_TASK_TYPE_LABELS,
-  isLeadClosed,
-  LEAD_SOURCE_LABELS,
-} from "@/features/leads/constants"
+  getLead,
+  getLeadFollowUps,
+  getLeadStatusHistory,
+} from "@/features/leads/api"
+import { isLeadClosed, LEAD_SOURCE_LABELS } from "@/features/leads/constants"
 import { getVehicleOptions } from "@/features/leads/vehicle-options"
 import { ChangeStatusDialog } from "@/features/leads/components/change-status-dialog"
+import { FollowUpActionItems } from "@/features/leads/components/follow-up-action-items"
+import { LeadHistoryTimeline } from "@/features/leads/components/lead-history-timeline"
 import { LeadPreferenceCard } from "@/features/leads/components/lead-preference-card"
 import { LeadStatusBadge } from "@/features/leads/components/lead-status-badge"
 import { LinkVehicleDialog } from "@/features/leads/components/link-vehicle-dialog"
 import { ScheduleFollowUpDialog } from "@/features/leads/components/schedule-follow-up-dialog"
-import type { FollowUpTaskType, LeadReadModel } from "@/features/leads/types"
+import type { LeadReadModel } from "@/features/leads/types"
 import { ApiError } from "@/lib/api-error"
 import {
   formatDate,
@@ -52,12 +55,17 @@ export default async function LeadDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const [lead, vehicles, makes] = await Promise.all([
-    loadLead(id),
-    getVehicleOptions(),
-    // The preference make picker degrades to "any" if the catalog is down.
-    getMakes().then((page) => page.items).catch(() => []),
-  ])
+  const [lead, vehicles, makes, openFollowUps, closedFollowUps, statusHistory] =
+    await Promise.all([
+      loadLead(id),
+      getVehicleOptions(),
+      // The preference make picker degrades to "any" if the catalog is down.
+      getMakes().then((page) => page.items).catch(() => []),
+      getLeadFollowUps(id, "open").then((page) => page.items),
+      // History is secondary; the page still works without it.
+      getLeadFollowUps(id, "closed").then((page) => page.items).catch(() => []),
+      getLeadStatusHistory(id).then((page) => page.items).catch(() => []),
+    ])
 
   const closed = isLeadClosed(lead.status)
   const vehicleLabel = lead.vehicleId
@@ -146,29 +154,11 @@ export default async function LeadDetailPage({
           </dl>
         </InfoCard>
 
-        <InfoCard title="Next follow-up" icon={CalendarClock}>
-          {lead.nextFollowUp ? (
-            <dl className="space-y-4">
-              <Detail label="When">{formatDateTime(lead.nextFollowUp.scheduledAt)}</Detail>
-              <Detail label="Task">
-                <span className="inline-flex items-center rounded-full bg-[#F0FDFA] px-2 py-0.5 text-[11px] font-semibold text-[#0D9488]">
-                  {FOLLOW_UP_TASK_TYPE_LABELS[
-                    lead.nextFollowUp.taskType as FollowUpTaskType
-                  ] ?? lead.nextFollowUp.taskType}
-                </span>
-              </Detail>
-              {lead.nextFollowUp.notes && (
-                <Detail label="Notes">{lead.nextFollowUp.notes}</Detail>
-              )}
-            </dl>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <div className="mb-2 flex size-8 items-center justify-center rounded-full bg-[#F0FDFA]">
-                <CalendarClock className="size-4 text-[#0D9488]" />
-              </div>
-              <p className="text-xs text-[#9CA3AF]">Nothing scheduled.</p>
-            </div>
-          )}
+        <InfoCard
+          title={openFollowUps.length > 1 ? `Follow-ups (${openFollowUps.length})` : "Follow-ups"}
+          icon={CalendarClock}
+        >
+          <FollowUpActionItems leadId={lead.id} items={openFollowUps} />
         </InfoCard>
 
         <LeadPreferenceCard
@@ -190,6 +180,13 @@ export default async function LeadDetailPage({
               <span className="text-[#6B7280]">{formatDateTime(lead.updatedAt)}</span>
             </Detail>
           </dl>
+        </InfoCard>
+
+        <InfoCard title="History" icon={History} className="lg:col-span-3">
+          <LeadHistoryTimeline
+            statusHistory={statusHistory}
+            closedFollowUps={closedFollowUps}
+          />
         </InfoCard>
       </div>
     </div>

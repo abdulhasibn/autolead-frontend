@@ -1,6 +1,6 @@
 "use client"
 
-import { cn } from "@/lib/utils"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import type { SelectOption } from "./option-select"
 
 interface SegmentedChoiceProps {
@@ -11,6 +11,11 @@ interface SegmentedChoiceProps {
   "aria-label"?: string
 }
 
+// Toggle values must be non-empty; options may use "" (e.g. "Unknown").
+const EMPTY = "__empty__"
+const encode = (value: string) => (value === "" ? EMPTY : value)
+const decode = (value: string) => (value === EMPTY ? "" : value)
+
 /** One-of-few choice shown inline, for short option lists like Yes / No. */
 export function SegmentedChoice({
   id,
@@ -20,32 +25,25 @@ export function SegmentedChoice({
   "aria-label": ariaLabel,
 }: SegmentedChoiceProps) {
   return (
-    <div
+    <ToggleGroup
       id={id}
-      role="radiogroup"
+      variant="segment"
+      size="sm"
+      spacing={0.5}
       aria-label={ariaLabel}
-      className="inline-flex w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-0.5"
+      className="w-full rounded-lg border border-input bg-muted/50 p-0.5"
+      value={[encode(value)]}
+      onValueChange={(next: string[]) => {
+        // A segmented control always has one choice; ignore deselecting it.
+        const [selected] = next
+        if (selected !== undefined) onValueChange(decode(selected))
+      }}
     >
-      {options.map((option) => {
-        const selected = option.value === value
-        return (
-          <button
-            key={option.value}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            onClick={() => onValueChange(option.value)}
-            className={cn(
-              "h-7 flex-1 rounded-md px-2 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-[#0D9488]/40 focus-visible:outline-none",
-              selected
-                ? "bg-white text-[#0D9488] shadow-sm ring-1 ring-[#CCFBF1]"
-                : "text-[#6B7280] hover:text-[#111827]"
-            )}
-          >
-            {option.label}
-          </button>
-        )
-      })}
-    </div>
+      {options.map((option) => (
+        <ToggleGroupItem key={option.value} value={encode(option.value)} className="text-xs">
+          {option.label}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
   )
 }

@@ -22,7 +22,7 @@ import {
 } from "../constants"
 import type { DocumentType, VehicleDocumentDto } from "../types"
 import { checkFile, putToSignedUrl } from "../upload"
-import { ConfirmDialog } from "./confirm-dialog"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 /** Missing ones of these are offered as one-click rows. */
 const EXPECTED: DocumentType[] = ["rc", "insurance"]

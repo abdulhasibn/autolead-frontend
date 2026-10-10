@@ -1,14 +1,18 @@
 import { serverApiClient } from "@/lib/api-client.server"
 import type { Page, PaginationParams } from "@/types/api"
 import type {
+  CompleteFollowUpResult,
   FollowUpDto,
+  FollowUpReadModel,
   LeadPreference,
   LeadReadModel,
   LeadStatus,
+  LeadStatusHistoryItem,
   VehicleLeadMatches,
 } from "./types"
 import type {
   ChangeLeadStatusInput,
+  CompleteFollowUpInput,
   CreateLeadInput,
   LeadPreferenceInput,
   ScheduleFollowUpInput,
@@ -53,6 +57,48 @@ export async function scheduleFollowUp(
   body: ScheduleFollowUpInput
 ): Promise<FollowUpDto> {
   return serverApiClient.post<FollowUpDto>(`/leads/${id}/follow-ups`, body)
+}
+
+export type FollowUpListStatus = "open" | "closed" | "all"
+
+/** `open`: earliest first. `closed`: most recently closed first. */
+export async function getLeadFollowUps(
+  id: string,
+  status: FollowUpListStatus
+): Promise<Page<FollowUpReadModel>> {
+  return serverApiClient.get<Page<FollowUpReadModel>>(
+    `/leads/${id}/follow-ups?status=${status}&limit=100`
+  )
+}
+
+/** Newest first; the create entry has `fromStatus: null`. */
+export async function getLeadStatusHistory(
+  id: string
+): Promise<Page<LeadStatusHistoryItem>> {
+  return serverApiClient.get<Page<LeadStatusHistoryItem>>(
+    `/leads/${id}/status-history?limit=100`
+  )
+}
+
+export async function completeFollowUp(
+  leadId: string,
+  followUpId: string,
+  body: CompleteFollowUpInput
+): Promise<CompleteFollowUpResult> {
+  return serverApiClient.post<CompleteFollowUpResult>(
+    `/leads/${leadId}/follow-ups/${followUpId}/complete`,
+    body
+  )
+}
+
+export async function cancelFollowUp(
+  leadId: string,
+  followUpId: string
+): Promise<FollowUpDto> {
+  return serverApiClient.post<FollowUpDto>(
+    `/leads/${leadId}/follow-ups/${followUpId}/cancel`,
+    {}
+  )
 }
 
 export async function associateVehicle(
