@@ -5,8 +5,9 @@ import { ArrowLeft, BadgeCheck } from "lucide-react"
 import { auth } from "@/lib/auth"
 import { ApiError } from "@/lib/api-error"
 import { formatDate, formatDateTime } from "@/lib/format"
-import { getLeads } from "@/features/leads/api"
-import type { LeadReadModel } from "@/features/leads/types"
+import { Detail } from "@/components/info-card"
+import { getLeads, getVehicleLeadMatches } from "@/features/leads/api"
+import type { LeadReadModel, VehicleLeadMatches } from "@/features/leads/types"
 import { getOwner } from "@/features/owners/api"
 import type { OwnerDto } from "@/features/owners/types"
 import {
@@ -22,7 +23,12 @@ import type {
   VehicleMediaDto,
   VehicleStatusHistoryItem,
 } from "@/features/vehicles/types"
-import { earliestExpiry, formatVehicleTitle, stockAge } from "@/features/vehicles/utils"
+import {
+  earliestExpiry,
+  formatVehicleTitle,
+  isVehicleLinkable,
+  stockAge,
+} from "@/features/vehicles/utils"
 import { ChangeVehicleStatusDialog } from "@/features/vehicles/components/change-vehicle-status-dialog"
 import { DocumentsPanel } from "@/features/vehicles/components/documents-panel"
 import { NumberPlate } from "@/features/vehicles/components/number-plate"
@@ -31,6 +37,7 @@ import { SignedUrlRefresher } from "@/features/vehicles/components/signed-url-re
 import { VehicleHistory, VehicleLeadsList } from "@/features/vehicles/components/vehicle-activity"
 import { VehicleFormSheet } from "@/features/vehicles/components/vehicle-form-sheet"
 import { VehicleGallery } from "@/features/vehicles/components/vehicle-gallery"
+import { VehicleMatchesPanel } from "@/features/vehicles/components/vehicle-matches-panel"
 import { VehicleStatusBadge } from "@/features/vehicles/components/vehicle-status-badge"
 import { GlancePanel, OwnerCard, PaperworkPanel } from "@/features/vehicles/components/vehicle-summary"
 import { VehicleTabs } from "@/features/vehicles/components/vehicle-tabs"
@@ -60,15 +67,6 @@ async function items<T>(load: () => Promise<{ items: T[] }>): Promise<T[]> {
 
 const EMPTY = <span className="text-[#D1D5DB]">—</span>
 
-function Detail({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <dt className="text-[11px] font-medium tracking-wide text-[#9CA3AF] uppercase">{label}</dt>
-      <dd className="text-sm text-[#111827]">{children}</dd>
-    </div>
-  )
-}
-
 export default async function VehicleDetailPage({
   params,
 }: {
@@ -77,13 +75,15 @@ export default async function VehicleDetailPage({
   const { id } = await params
   const vehicle = await loadVehicle(id)
 
-  const [session, media, documents, history, leads, owner] = await Promise.all([
+  const [session, media, documents, history, leads, owner, matches] = await Promise.all([
     auth(),
     items<VehicleMediaDto>(() => getVehicleMedia(id)),
     items<VehicleDocumentDto>(() => getVehicleDocuments(id)),
     items<VehicleStatusHistoryItem>(() => getVehicleStatusHistory(id)),
     items<LeadReadModel>(() => getLeads({ vehicleId: id, limit: 100 })),
     getOwner(vehicle.ownerId).catch((): OwnerDto | null => null),
+    // Falls back to the plain linked-leads list if scoring is unavailable.
+    getVehicleLeadMatches(id).catch((): VehicleLeadMatches | null => null),
   ])
 
   const isAdmin = session?.user.roles?.includes("admin") ?? false
@@ -227,7 +227,11 @@ export default async function VehicleDetailPage({
             label: "Leads",
             count: vehicle.linkedLeadCount,
             highlight: true,
-            content: <VehicleLeadsList leads={leads} />,
+            content: matches ? (
+              <VehicleMatchesPanel matches={matches} canLink={isVehicleLinkable(vehicle)} />
+            ) : (
+              <VehicleLeadsList leads={leads} />
+            ),
           },
           {
             id: "history",

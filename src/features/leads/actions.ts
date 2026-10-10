@@ -16,14 +16,16 @@ import {
   changeLeadStatus,
   createLead,
   scheduleFollowUp,
+  updateLeadPreference,
 } from "./api"
 import {
   associateVehicleSchema,
   changeLeadStatusSchema,
   createLeadSchema,
+  leadPreferenceSchema,
   scheduleFollowUpSchema,
 } from "./schemas"
-import type { FollowUpDto, LeadReadModel } from "./types"
+import type { FollowUpDto, LeadPreference, LeadReadModel } from "./types"
 
 const leadIdSchema = z.guid()
 
@@ -36,6 +38,8 @@ async function requireSession() {
 
 function revalidateLeads() {
   revalidatePath("/leads", "layout")
+  // Car pages show linked and suggested leads with match scores.
+  revalidatePath("/vehicles", "layout")
 }
 
 export async function createLeadAction(
@@ -122,6 +126,24 @@ export async function associateVehicleAction(
     const lead = await associateVehicle(id.data, parsed.data.vehicleId)
     revalidateLeads()
     return actionOk(lead)
+  } catch (err) {
+    return actionError(err)
+  }
+}
+
+export async function updateLeadPreferenceAction(
+  leadId: string,
+  input: unknown
+): Promise<ActionResult<LeadPreference>> {
+  try {
+    await requireSession()
+    const id = leadIdSchema.safeParse(leadId)
+    const parsed = leadPreferenceSchema.safeParse(input)
+    if (!id.success || !parsed.success) return validationError()
+
+    const preference = await updateLeadPreference(id.data, parsed.data)
+    revalidateLeads()
+    return actionOk(preference)
   } catch (err) {
     return actionError(err)
   }

@@ -1,4 +1,11 @@
-import type { LeadSource, LeadStatus, FollowUpTaskType } from "./types"
+import type {
+  BodyType,
+  FollowUpTaskType,
+  LeadSource,
+  LeadStatus,
+  MatchCriterion,
+  MatchOutcome,
+} from "./types"
 
 // Mirrors the backend's lead domain (lead-status / lead-source /
 // follow-up-task-type value objects). Keep in sync when those change.
@@ -33,6 +40,81 @@ export const FOLLOW_UP_TASK_TYPES = [
   "send_quotation",
   "other",
 ] as const
+
+// Mirrors the backend's lead preference / match score (ADR-0013).
+
+export const BODY_TYPES = [
+  "hatchback",
+  "sedan",
+  "suv",
+  "muv",
+  "mpv",
+  "crossover",
+  "coupe",
+  "convertible",
+  "sports",
+  "pick-up",
+] as const
+
+export const MATCH_CRITERIA = [
+  "catalog",
+  "budget",
+  "year",
+  "km",
+  "fuelType",
+  "transmission",
+  "bodyType",
+  "previousOwners",
+  "colour",
+] as const
+
+export const BODY_TYPE_LABELS: Record<BodyType, string> = {
+  hatchback: "Hatchback",
+  sedan: "Sedan",
+  suv: "SUV",
+  muv: "MUV",
+  mpv: "MPV",
+  crossover: "Crossover",
+  coupe: "Coupe",
+  convertible: "Convertible",
+  sports: "Sports",
+  "pick-up": "Pick-up",
+}
+
+export const MATCH_CRITERION_LABELS: Record<MatchCriterion, string> = {
+  catalog: "Make / model",
+  budget: "Budget",
+  year: "Year",
+  km: "Km driven",
+  fuelType: "Fuel",
+  transmission: "Transmission",
+  bodyType: "Body type",
+  previousOwners: "Owners",
+  colour: "Colour",
+}
+
+/** Offered as one-click colour tags; any free text is accepted too. */
+export const COLOUR_SUGGESTIONS = ["white", "silver", "grey", "black", "red", "blue"] as const
+
+export const PREFERRED_COLOURS_MAX = 20
+export const PREFERRED_COLOUR_MAX_LENGTH = 40
+export const PREFERRED_YEAR_MIN = 1950
+export const PREFERRED_YEAR_MAX = 2100
+
+/** Pill colours per match outcome; reuses the lead status palette. */
+export const MATCH_OUTCOME_CLASSES: Record<MatchOutcome, string> = {
+  match: "bg-[#DCFCE7] text-[#15803D]",
+  partial: "bg-[#FEF3C7] text-[#D97706]",
+  miss: "bg-[#FEE2E2] text-[#DC2626]",
+  unknown: "bg-[#F3F4F6] text-[#6B7280]",
+}
+
+/** Score bands: 80+ good, 60–79 fair, below 60 poor. */
+export function matchScoreOutcome(score: number): Exclude<MatchOutcome, "unknown"> {
+  if (score >= 80) return "match"
+  if (score >= 60) return "partial"
+  return "miss"
+}
 
 export const LEADS_PAGE_SIZE = 20
 
