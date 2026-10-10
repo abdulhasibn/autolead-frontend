@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { Car } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
@@ -63,7 +64,10 @@ export function LinkVehicleDialog({
         if (!next) setVehicleId("")
       }}
     >
-      <DialogTrigger render={<Button variant="outline" disabled={disabled} />}>
+      <DialogTrigger
+        render={<Button variant="outline" disabled={disabled} className="border-[#E5E7EB] bg-white text-[#374151] hover:border-[#CCFBF1] hover:bg-[#F0FDFA] hover:text-[#0D9488]" />}
+      >
+        <Car />
         {currentVehicleId ? "Change vehicle" : "Link vehicle"}
       </DialogTrigger>
       <DialogContent>

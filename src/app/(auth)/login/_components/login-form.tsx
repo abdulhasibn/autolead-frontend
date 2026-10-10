@@ -43,7 +43,6 @@ export function LoginForm() {
       }
 
       router.push(callbackUrl)
-      router.refresh()
     } catch {
       setAuthError("Something went wrong. Please try again.")
     } finally {
