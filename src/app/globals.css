@@ -100,38 +100,47 @@
   --sidebar-ring: #14B8A6;
 }
 
+/* Dark — teal-ink canvas derived from the mobile app's darkColors palette.
+   Deep teal-ink background, elevated charcoal-teal surfaces, brighter primary
+   (#2DD4BF) for contrast on dark backgrounds. Mirror of src/shared/ui/theme/tokens.ts. */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #0A1211;
+  --foreground: #F0FDFA;
+  --card: #111C1A;
+  --card-foreground: #F0FDFA;
+  --popover: #111C1A;
+  --popover-foreground: #F0FDFA;
+  --primary: #2DD4BF;
+  --primary-foreground: #042F2E;
+  --secondary: #111C1A;
+  --secondary-foreground: #A7B5B2;
+  --muted: #0F1A18;
+  --muted-foreground: #A7B5B2;
+  --subtle-foreground: #6B7A77;
+  --accent: rgba(45, 212, 191, 0.18);
+  --accent-foreground: #5EEAD4;
+  --accent-border: rgba(45, 212, 191, 0.14);
+  --destructive: #F87171;
+  --success: #4ADE80;
+  --success-muted: rgba(74, 222, 128, 0.15);
+  --warning: #FBBF24;
+  --warning-muted: rgba(251, 191, 36, 0.15);
+  --border: #2A3A37;
+  --input: #3A4A47;
+  --ring: #2DD4BF;
+  --chart-1: #2DD4BF;
+  --chart-2: #14B8A6;
+  --chart-3: #5EEAD4;
+  --chart-4: #0F766E;
+  --chart-5: #134E4A;
+  --sidebar: #111C1A;
+  --sidebar-foreground: #F0FDFA;
+  --sidebar-primary: #2DD4BF;
+  --sidebar-primary-foreground: #042F2E;
+  --sidebar-accent: rgba(45, 212, 191, 0.18);
+  --sidebar-accent-foreground: #5EEAD4;
+  --sidebar-border: #2A3A37;
+  --sidebar-ring: #2DD4BF;
 }
 
 @layer base {
@@ -153,6 +162,13 @@
       linear-gradient(to right, rgba(13, 148, 136, 0.08) 1px, transparent 1px),
       linear-gradient(to bottom, rgba(13, 148, 136, 0.08) 1px, transparent 1px);
     background-size: 32px 32px;
+  }
+
+  .dark .teal-grid-pattern {
+    background-color: #0A1211;
+    background-image:
+      linear-gradient(to right, rgba(45, 212, 191, 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(45, 212, 191, 0.08) 1px, transparent 1px);
   }
 
   .font-mono-data {

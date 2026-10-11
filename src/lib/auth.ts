@@ -26,10 +26,17 @@ async function refreshAccessToken(refreshToken: string) {
     refreshToken: string
     expiresIn?: number
   }
+
+  const meRes = await fetch(`${env.API_BASE_URL}/auth/me`, {
+    headers: { Authorization: `Bearer ${data.accessToken}` },
+  })
+  const fullName = meRes.ok ? ((await meRes.json()) as { fullName: string }).fullName : undefined
+
   return {
     accessToken: data.accessToken,
     refreshToken: data.refreshToken,
     accessTokenExpiresAt: Date.now() + (data.expiresIn ? data.expiresIn * 1000 : DEFAULT_TOKEN_TTL_MS),
+    fullName,
   }
 }
 
@@ -116,6 +123,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           accessToken: refreshed.accessToken,
           refreshToken: refreshed.refreshToken,
           accessTokenExpiresAt: refreshed.accessTokenExpiresAt,
+          ...(refreshed.fullName ? { name: refreshed.fullName } : {}),
           error: undefined,
         }
       } catch {
