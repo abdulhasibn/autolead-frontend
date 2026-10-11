@@ -225,7 +225,7 @@ export default async function VehicleDetailPage({
           {
             id: "leads",
             label: "Leads",
-            count: vehicle.linkedLeadCount,
+            count: matches ? matches.linked.length : leads.length,
             highlight: true,
             content: matches ? (
               <VehicleMatchesPanel matches={matches} canLink={isVehicleLinkable(vehicle)} />

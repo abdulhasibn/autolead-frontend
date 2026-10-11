@@ -2,8 +2,7 @@
 
 import { useState } from "react"
 import { useSession } from "next-auth/react"
-import { Bell, LogOut, MonitorSmartphone } from "lucide-react"
-import Link from "next/link"
+import { LogOut, MonitorSmartphone } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -20,7 +19,9 @@ import { MobileSidebar } from "@/components/layout/sidebar"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useSignOut } from "@/features/auth/use-sign-out"
+import { NotificationDrawer } from "@/features/notifications/components/notification-drawer"
 import type { UserRole } from "@/types/auth"
+import type { NotificationReadModel } from "@/features/notifications/types"
 import { cn } from "@/lib/utils"
 
 function getInitials(name?: string | null) {
@@ -43,7 +44,6 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   leads: "Leads",
   vehicles: "Vehicles",
   owners: "Owners",
-  notifications: "Notifications",
   users: "Staff",
 }
 
@@ -71,11 +71,12 @@ function PageTitle() {
 }
 
 interface HeaderProps {
+  notifications?: NotificationReadModel[]
   unreadCount?: number
   roles?: UserRole[]
 }
 
-export function Header({ unreadCount = 0, roles = [] }: HeaderProps) {
+export function Header({ notifications = [], unreadCount = 0, roles = [] }: HeaderProps) {
   const { data: session } = useSession()
   const { pending: signOutPending, signOutWith } = useSignOut()
   const [confirmSignOutAll, setConfirmSignOutAll] = useState(false)
@@ -83,7 +84,7 @@ export function Header({ unreadCount = 0, roles = [] }: HeaderProps) {
   const primaryRole = roles[0] ?? session?.user?.roles?.[0]
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border bg-background px-4 gap-3">
+    <header className="flex h-14 items-center justify-between px-4 gap-3">
       {/* Left: mobile menu + page title */}
       <div className="flex items-center gap-2">
         <MobileSidebar roles={roles} />
@@ -94,26 +95,10 @@ export function Header({ unreadCount = 0, roles = [] }: HeaderProps) {
       <div className="flex items-center gap-1.5">
         <ThemeToggle />
 
-        {/* Notifications bell */}
-        <Link
-          href="/notifications"
-          aria-label={
-            unreadCount > 0
-              ? `${unreadCount} unread notifications`
-              : "Notifications"
-          }
-          className={cn(
-            "relative inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
-            "text-muted-foreground hover:bg-muted hover:text-foreground"
-          )}
-        >
-          <Bell className="h-4 w-4" />
-          {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-0.5 text-[10px] font-bold text-primary-foreground leading-none">
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </span>
-          )}
-        </Link>
+        <NotificationDrawer
+          initialNotifications={notifications}
+          initialUnreadCount={unreadCount}
+        />
 
         {/* User dropdown */}
         <DropdownMenu>

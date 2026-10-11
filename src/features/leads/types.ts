@@ -179,3 +179,18 @@ export interface VehicleLeadMatches {
   /** Only the newest 1,000 open leads were scored. */
   truncated: boolean
 }
+
+/** A car with its match score against the current lead. `match` is null when the lead has no preference and no budget. */
+export interface VehicleWithMatch {
+  vehicle: MatchableVehicle
+  match: LeadMatch | null
+}
+
+export interface LeadVehicleMatches {
+  /** The car linked to this lead with its score, or null if the lead has no car. */
+  linked: VehicleWithMatch | null
+  /** Live cars in this showroom that scored ≥ minScore on ≥ 2 criteria, best first. */
+  suggested: VehicleWithMatch[]
+  /** True when only the newest 1,000 cars were scored. */
+  truncated: boolean
+}
