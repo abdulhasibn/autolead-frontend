@@ -7,7 +7,6 @@ import {
   Users2,
   Car,
   UserCheck,
-  Bell,
   UserCog,
   ChevronLeft,
   ChevronRight,
@@ -42,7 +41,6 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
     label: "Sales",
     items: [
       { href: "/leads", label: "Leads", icon: Users2 },
-      { href: "/notifications", label: "Notifications", icon: Bell },
     ],
   },
   {
@@ -182,7 +180,7 @@ export function Sidebar({ roles = [] }: { roles?: UserRole[] }) {
   return (
     <aside
       className={cn(
-        "relative hidden md:flex h-full flex-col border-r border-border bg-card transition-all duration-200",
+        "relative hidden md:flex h-full flex-col border-r border-border bg-sidebar dark:bg-[#111C1A] text-sidebar-foreground transition-all duration-200",
         sidebarCollapsed ? "w-16" : "w-60"
       )}
     >
