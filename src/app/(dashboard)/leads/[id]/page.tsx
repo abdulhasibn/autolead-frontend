@@ -47,7 +47,7 @@ async function loadLead(id: string): Promise<LeadReadModel> {
   }
 }
 
-const EMPTY = <span className="text-[#D1D5DB]">—</span>
+const EMPTY = <span className="text-subtle-foreground">—</span>
 
 export default async function LeadDetailPage({
   params,
@@ -71,13 +71,13 @@ export default async function LeadDetailPage({
   const vehicleLabel = lead.vehicleId
     ? (vehicles.find((v) => v.id === lead.vehicleId)?.label ?? "Linked vehicle")
     : null
-  const linkClass = "text-[#0D9488] hover:text-[#0F766E] hover:underline"
+  const linkClass = "text-primary hover:text-primary/80 hover:underline"
 
   return (
     <div className="space-y-6">
       <Link
         href="/leads"
-        className="inline-flex items-center gap-1 text-sm font-medium text-[#6B7280] transition-colors hover:text-[#0D9488]"
+        className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
         <ArrowLeft className="size-4" />
         All leads
@@ -87,18 +87,18 @@ export default async function LeadDetailPage({
         <div className="flex items-center gap-4">
           <span
             aria-hidden
-            className="flex size-12 shrink-0 items-center justify-center rounded-full border border-[#CCFBF1] bg-[#F0FDFA] text-lg font-semibold text-[#0D9488]"
+            className="flex size-12 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-accent text-lg font-semibold text-primary"
           >
             {lead.contactFullName.charAt(0).toUpperCase()}
           </span>
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight text-[#111827]">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 {lead.contactFullName}
               </h1>
               <LeadStatusBadge status={lead.status} />
             </div>
-            <p className="text-sm text-[#6B7280]">
+            <p className="text-sm text-muted-foreground">
               {LEAD_SOURCE_LABELS[lead.source] ?? lead.source} lead · created{" "}
               {formatDate(lead.createdAt)}
             </p>
@@ -146,7 +146,7 @@ export default async function LeadDetailPage({
                   {vehicleLabel}
                 </Link>
               ) : (
-                <span className="text-[#9CA3AF]">None</span>
+                <span className="text-subtle-foreground">None</span>
               )}
             </Detail>
             <Detail label="Preferred vehicle">{lead.preferredVehicle ?? EMPTY}</Detail>
@@ -177,7 +177,7 @@ export default async function LeadDetailPage({
               {lead.notes ? <span className="whitespace-pre-wrap">{lead.notes}</span> : EMPTY}
             </Detail>
             <Detail label="Last updated">
-              <span className="text-[#6B7280]">{formatDateTime(lead.updatedAt)}</span>
+              <span className="text-muted-foreground">{formatDateTime(lead.updatedAt)}</span>
             </Detail>
           </dl>
         </InfoCard>

@@ -86,8 +86,8 @@ export function ChangeVehicleStatusDialog({
             variant="outline"
             className={
               dropping
-                ? "h-9 border-[#E5E7EB] bg-white text-[#DC2626] hover:border-[#FECACA] hover:bg-[#FEF2F2] hover:text-[#DC2626]"
-                : "h-9 border-[#E5E7EB] bg-white hover:border-[#0D9488]"
+                ? "h-9 border-border bg-card text-destructive hover:border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
+                : "h-9 border-border bg-card hover:border-primary"
             }
           />
         }
@@ -106,7 +106,7 @@ export function ChangeVehicleStatusDialog({
         </DialogHeader>
 
         {leads > 0 && (
-          <div className="flex gap-2.5 rounded-lg border border-[#FDE68A] bg-[#FFFBEB] p-3 text-sm text-[#92400E]">
+          <div className="flex gap-2.5 rounded-lg border border-[#FDE68A] bg-warning-muted p-3 text-sm text-[#92400E]">
             <TriangleAlert className="mt-0.5 size-4 shrink-0" />
             <div>
               <p className="font-semibold">
@@ -119,7 +119,7 @@ export function ChangeVehicleStatusDialog({
 
         <div className="space-y-2">
           <Label htmlFor="status-reason">
-            Reason <span className="font-normal text-[#9CA3AF]">(optional)</span>
+            Reason <span className="font-normal text-subtle-foreground">(optional)</span>
           </Label>
           <Textarea
             id="status-reason"

@@ -37,7 +37,7 @@ export function VehicleGallery({
   if (photos.length === 0) {
     return (
       <div className="flex h-[260px] flex-col items-center justify-center gap-3 rounded-xl bg-gradient-to-br from-[#134E4A] via-[#0F766E] to-[#0D9488] text-white sm:h-[400px] lg:h-full lg:min-h-[400px]">
-        <span className="flex size-12 items-center justify-center rounded-full bg-white/15">
+        <span className="flex size-12 items-center justify-center rounded-full bg-card/15">
           <Camera className="size-6" />
         </span>
         <div className="text-center">
@@ -48,7 +48,7 @@ export function VehicleGallery({
         </div>
         <Link
           href={photosHref}
-          className="rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-[#0F766E] hover:bg-[#F0FDFA]"
+          className="rounded-lg bg-card px-3 py-1.5 text-sm font-semibold text-primary/80 hover:bg-accent"
         >
           Add photos
         </Link>

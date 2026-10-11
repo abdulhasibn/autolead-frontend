@@ -12,7 +12,7 @@ export default function VehicleLoading() {
         <Skeleton className="h-9 w-48 rounded-lg bg-border" />
       </div>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <Skeleton className="h-[260px] rounded-xl bg-[#E2E8F0] sm:h-[400px]" />
+        <Skeleton className="h-[260px] rounded-xl bg-muted sm:h-[400px]" />
         <div className="space-y-4">
           <Skeleton className="h-32 rounded-xl bg-card" />
           <Skeleton className="h-52 rounded-xl bg-card" />

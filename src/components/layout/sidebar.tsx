@@ -63,7 +63,7 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
 function Logo({ collapsed }: { collapsed: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
-      <div className="w-8 h-8 rounded-lg bg-[#0D9488] flex items-center justify-center text-white shrink-0">
+      <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white shrink-0">
         <svg
           className="w-4.5 h-4.5"
           style={{ width: "1.1rem", height: "1.1rem" }}
@@ -83,10 +83,10 @@ function Logo({ collapsed }: { collapsed: boolean }) {
       </div>
       {!collapsed && (
         <div>
-          <span className="text-sm font-bold tracking-tight text-[#111827]">
-            Wheels <span className="text-[#0D9488]">Experts</span>
+          <span className="text-sm font-bold tracking-tight text-foreground">
+            Wheels <span className="text-primary">Experts</span>
           </span>
-          <span className="block text-[10px] text-[#9CA3AF] uppercase tracking-wider font-medium">
+          <span className="block text-[10px] text-subtle-foreground uppercase tracking-wider font-medium">
             Sales Management
           </span>
         </div>
@@ -110,14 +110,14 @@ function NavLink({ item, collapsed, active }: NavLinkProps) {
       className={cn(
         "relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all",
         active
-          ? "bg-[#F0FDFA] text-[#0D9488]"
-          : "text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#111827]"
+          ? "bg-accent text-primary"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
       )}
     >
       {active && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-[#0D9488] rounded-r-full" />
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
       )}
-      <Icon className={cn("shrink-0 h-4 w-4", active ? "text-[#0D9488]" : "")} />
+      <Icon className={cn("shrink-0 h-4 w-4", active ? "text-primary" : "")} />
       {!collapsed && item.label}
     </Link>
   )
@@ -153,7 +153,7 @@ function SidebarNav({ roles, collapsed }: SidebarNavProps) {
         return (
           <div key={group.label} className="mb-1">
             {!collapsed && (
-              <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">
+              <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-subtle-foreground">
                 {group.label}
               </p>
             )}
@@ -182,23 +182,23 @@ export function Sidebar({ roles = [] }: { roles?: UserRole[] }) {
   return (
     <aside
       className={cn(
-        "relative hidden md:flex h-full flex-col border-r border-[#E5E7EB] bg-white transition-all duration-200",
+        "relative hidden md:flex h-full flex-col border-r border-border bg-card transition-all duration-200",
         sidebarCollapsed ? "w-16" : "w-60"
       )}
     >
       {/* Logo */}
-      <div className="flex h-14 items-center border-b border-[#E5E7EB] px-3">
+      <div className="flex h-14 items-center border-b border-border px-3">
         <Logo collapsed={sidebarCollapsed} />
       </div>
 
       <SidebarNav roles={roles} collapsed={sidebarCollapsed} />
 
       {/* Collapse toggle */}
-      <div className="border-t border-[#E5E7EB] p-2">
+      <div className="border-t border-border p-2">
         <Button
           variant="ghost"
           size="icon"
-          className="w-full text-[#9CA3AF] hover:text-[#111827] hover:bg-[#F3F4F6]"
+          className="w-full text-subtle-foreground hover:text-foreground hover:bg-muted"
           onClick={toggleSidebar}
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
@@ -223,7 +223,7 @@ export function MobileSidebar({ roles = [] }: { roles?: UserRole[] }) {
       <Button
         variant="ghost"
         size="icon"
-        className="md:hidden text-[#6B7280] hover:text-[#111827]"
+        className="md:hidden text-muted-foreground hover:text-foreground"
         onClick={() => openModal("mobile-sidebar")}
         aria-label="Open navigation"
       >
@@ -232,7 +232,7 @@ export function MobileSidebar({ roles = [] }: { roles?: UserRole[] }) {
 
       <Sheet open={isOpen} onOpenChange={(v) => !v && closeModal()}>
         <SheetContent side="left" className="w-64 p-0">
-          <SheetHeader className="h-14 border-b border-[#E5E7EB] px-4 flex flex-row items-center">
+          <SheetHeader className="h-14 border-b border-border px-4 flex flex-row items-center">
             <SheetTitle className="sr-only">Navigation</SheetTitle>
             <Logo collapsed={false} />
           </SheetHeader>

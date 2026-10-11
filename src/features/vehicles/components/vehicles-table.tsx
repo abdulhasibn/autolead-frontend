@@ -18,7 +18,7 @@ import { formatKm, formatVehicleTitle, stockAge } from "../utils"
 import { NumberPlate } from "./number-plate"
 import { VehicleStatusBadge } from "./vehicle-status-badge"
 
-const EMPTY = <span className="text-[#D1D5DB]">—</span>
+const EMPTY = <span className="text-subtle-foreground">—</span>
 
 /** Dense view for scanning many cars at once; rows open the vehicle. */
 export function VehiclesTable({ vehicles, now }: { vehicles: VehicleDto[]; now: string }) {
@@ -26,17 +26,17 @@ export function VehiclesTable({ vehicles, now }: { vehicles: VehicleDto[]; now: 
   const nowDate = new Date(now)
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
       <Table>
         <TableHeader>
-          <TableRow className="bg-[#F9FAFB] hover:bg-[#F9FAFB]">
-            <TableHead className="text-[11px] font-semibold tracking-wide text-[#9CA3AF] uppercase">Vehicle</TableHead>
-            <TableHead className="hidden text-[11px] font-semibold tracking-wide text-[#9CA3AF] uppercase md:table-cell">Plate</TableHead>
-            <TableHead className="hidden text-[11px] font-semibold tracking-wide text-[#9CA3AF] uppercase lg:table-cell">Km</TableHead>
-            <TableHead className="hidden text-[11px] font-semibold tracking-wide text-[#9CA3AF] uppercase lg:table-cell">Fuel · Gearbox</TableHead>
-            <TableHead className="text-[11px] font-semibold tracking-wide text-[#9CA3AF] uppercase">Status</TableHead>
-            <TableHead className="hidden text-[11px] font-semibold tracking-wide text-[#9CA3AF] uppercase sm:table-cell">Leads</TableHead>
-            <TableHead className="text-right text-[11px] font-semibold tracking-wide text-[#9CA3AF] uppercase">In stock</TableHead>
+          <TableRow className="bg-card/50 hover:bg-card/50">
+            <TableHead className="text-[11px] font-semibold tracking-wide text-subtle-foreground uppercase">Vehicle</TableHead>
+            <TableHead className="hidden text-[11px] font-semibold tracking-wide text-subtle-foreground uppercase md:table-cell">Plate</TableHead>
+            <TableHead className="hidden text-[11px] font-semibold tracking-wide text-subtle-foreground uppercase lg:table-cell">Km</TableHead>
+            <TableHead className="hidden text-[11px] font-semibold tracking-wide text-subtle-foreground uppercase lg:table-cell">Fuel · Gearbox</TableHead>
+            <TableHead className="text-[11px] font-semibold tracking-wide text-subtle-foreground uppercase">Status</TableHead>
+            <TableHead className="hidden text-[11px] font-semibold tracking-wide text-subtle-foreground uppercase sm:table-cell">Leads</TableHead>
+            <TableHead className="text-right text-[11px] font-semibold tracking-wide text-subtle-foreground uppercase">In stock</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -47,12 +47,12 @@ export function VehiclesTable({ vehicles, now }: { vehicles: VehicleDto[]; now: 
             return (
               <TableRow
                 key={vehicle.id}
-                className="cursor-pointer hover:bg-[#F9FAFB]"
+                className="cursor-pointer hover:bg-card/50"
                 onClick={() => router.push(href)}
               >
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[#F0FDFA] text-[#0D9488]">
+                    <div className="flex h-11 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-accent text-primary">
                       {vehicle.frontImageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -68,12 +68,12 @@ export function VehiclesTable({ vehicles, now }: { vehicles: VehicleDto[]; now: 
                     <div className="min-w-0">
                       <Link
                         href={href}
-                        className="block truncate font-medium text-[#111827] hover:text-[#0D9488]"
+                        className="block truncate font-medium text-foreground hover:text-primary"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {title}
                       </Link>
-                      <p className="truncate text-xs text-[#9CA3AF]">{vehicle.variantName}</p>
+                      <p className="truncate text-xs text-subtle-foreground">{vehicle.variantName}</p>
                     </div>
                   </div>
                 </TableCell>
@@ -83,7 +83,7 @@ export function VehiclesTable({ vehicles, now }: { vehicles: VehicleDto[]; now: 
                 <TableCell className="font-mono-data hidden text-xs lg:table-cell">
                   {formatKm(vehicle.kmDriven)}
                 </TableCell>
-                <TableCell className="hidden text-xs text-[#4B5563] lg:table-cell">
+                <TableCell className="hidden text-xs text-muted-foreground lg:table-cell">
                   {FUEL_TYPE_LABELS[vehicle.fuelType] ?? vehicle.fuelType} ·{" "}
                   {TRANSMISSION_LABELS[vehicle.transmission] ?? vehicle.transmission}
                 </TableCell>
@@ -96,7 +96,7 @@ export function VehiclesTable({ vehicles, now }: { vehicles: VehicleDto[]; now: 
                 <TableCell
                   className={cn(
                     "text-right text-xs",
-                    age?.aging ? "font-semibold text-[#B45309]" : "text-[#9CA3AF]"
+                    age?.aging ? "font-semibold text-warning" : "text-subtle-foreground"
                   )}
                 >
                   {age ? `${age.days}d` : EMPTY}

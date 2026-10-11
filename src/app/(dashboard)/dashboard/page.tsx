@@ -46,10 +46,10 @@ export default async function DashboardPage({
       {/* Page header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#111827]">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             {greeting()}, {firstName} 👋
           </h1>
-          <p className="text-sm text-[#6B7280] mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {formatDateRange(data.period.from, data.period.to)}&nbsp;·&nbsp;
             {data.period.timezone}
           </p>
@@ -152,7 +152,7 @@ export default async function DashboardPage({
       </div>
 
       {/* Footer */}
-      <p className="text-[11px] text-[#9CA3AF] text-right pb-2">
+      <p className="text-[11px] text-subtle-foreground text-right pb-2">
         Updated {new Date(data.generatedAt).toLocaleTimeString("en-IN", {
           hour: "2-digit",
           minute: "2-digit",

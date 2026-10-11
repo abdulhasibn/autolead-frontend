@@ -45,14 +45,14 @@ export function ColourTagsInput({ id, value, onValueChange, invalid }: ColourTag
           {value.map((colour) => (
             <li
               key={colour}
-              className="inline-flex h-7 items-center gap-1 rounded-full border border-[#CCFBF1] bg-[#F0FDFA] pr-1 pl-2.5 text-xs font-medium text-[#0D9488]"
+              className="inline-flex h-7 items-center gap-1 rounded-full border border-primary/20 bg-accent pr-1 pl-2.5 text-xs font-medium text-primary"
             >
               {capitalize(colour)}
               <button
                 type="button"
                 onClick={() => onValueChange(value.filter((c) => c !== colour))}
                 aria-label={`Remove ${colour}`}
-                className="flex size-5 items-center justify-center rounded-full hover:bg-[#CCFBF1]"
+                className="flex size-5 items-center justify-center rounded-full hover:bg-accent"
               >
                 <X aria-hidden className="size-3" />
               </button>
@@ -94,7 +94,7 @@ export function ColourTagsInput({ id, value, onValueChange, invalid }: ColourTag
               key={colour}
               type="button"
               onClick={() => add(colour)}
-              className="inline-flex h-6 items-center gap-0.5 rounded-full border border-dashed border-[#E5E7EB] px-2 text-[11px] font-medium text-[#6B7280] transition-colors hover:border-[#CCFBF1] hover:bg-[#F0FDFA] hover:text-[#0D9488]"
+              className="inline-flex h-6 items-center gap-0.5 rounded-full border border-dashed border-border px-2 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/20 hover:bg-accent hover:text-primary"
             >
               <Plus aria-hidden className="size-3" />
               {capitalize(colour)}

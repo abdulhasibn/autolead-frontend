@@ -17,8 +17,8 @@ import { formatKm, formatOwners, paperworkHealth, type HealthItem, type HealthTo
 function Tile({ value, label, mono }: { value: React.ReactNode; label: string; mono?: boolean }) {
   return (
     <div className="min-w-0 px-2 py-3 text-center">
-      <p className={cn("truncate text-base font-semibold text-[#111827]", mono && "font-mono-data")}>{value}</p>
-      <p className="text-[11px] text-[#9CA3AF]">{label}</p>
+      <p className={cn("truncate text-base font-semibold text-foreground", mono && "font-mono-data")}>{value}</p>
+      <p className="text-[11px] text-subtle-foreground">{label}</p>
     </div>
   )
 }
@@ -26,8 +26,8 @@ function Tile({ value, label, mono }: { value: React.ReactNode; label: string; m
 /** The six facts every conversation about a car starts with. */
 export function GlancePanel({ vehicle }: { vehicle: VehicleDto }) {
   return (
-    <section aria-label="Key specs" className="rounded-xl border border-[#E5E7EB] bg-white">
-      <div className="grid grid-cols-3 divide-x divide-[#F3F4F6] border-b border-[#F3F4F6]">
+    <section aria-label="Key specs" className="rounded-xl border border-border bg-card">
+      <div className="grid grid-cols-3 divide-x divide-[#F3F4F6] border-b border-border/50">
         <Tile value={formatKm(vehicle.kmDriven)} label="km driven" mono />
         <Tile value={FUEL_TYPE_LABELS[vehicle.fuelType] ?? vehicle.fuelType} label="fuel" />
         <Tile value={TRANSMISSION_LABELS[vehicle.transmission] ?? vehicle.transmission} label="transmission" />
@@ -52,10 +52,10 @@ const ICONS: Record<HealthItem["key"], LucideIcon> = {
 }
 
 const TONES: Record<HealthTone, { text: string; dot: string }> = {
-  good: { text: "text-[#047857]", dot: "bg-[#10B981]" },
-  warn: { text: "text-[#B45309]", dot: "bg-[#F59E0B]" },
+  good: { text: "text-success", dot: "bg-[#10B981]" },
+  warn: { text: "text-warning", dot: "bg-[#F59E0B]" },
   bad: { text: "text-[#B91C1C]", dot: "bg-[#EF4444]" },
-  unknown: { text: "text-[#9CA3AF]", dot: "bg-[#D1D5DB]" },
+  unknown: { text: "text-subtle-foreground", dot: "bg-border" },
 }
 
 /** Paperwork and condition as a traffic-light checklist. */
@@ -65,19 +65,19 @@ export function PaperworkPanel({ vehicle, now }: { vehicle: VehicleDto; now: Dat
   const unknown = items.filter((i) => i.tone === "unknown").length
 
   return (
-    <section className="rounded-xl border border-[#E5E7EB] bg-white">
-      <div className="flex items-center justify-between border-b border-[#F3F4F6] px-4 py-3">
-        <h2 className="text-sm font-semibold text-[#111827]">Paperwork &amp; condition</h2>
+    <section className="rounded-xl border border-border bg-card">
+      <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
+        <h2 className="text-sm font-semibold text-foreground">Paperwork &amp; condition</h2>
         {attention > 0 ? (
-          <span className="rounded-full bg-[#FFFBEB] px-2 py-0.5 text-[11px] font-semibold text-[#B45309]">
+          <span className="rounded-full bg-warning-muted px-2 py-0.5 text-[11px] font-semibold text-warning">
             {attention} need{attention === 1 ? "s" : ""} attention
           </span>
         ) : unknown > 0 ? (
-          <span className="rounded-full bg-[#F3F4F6] px-2 py-0.5 text-[11px] font-semibold text-[#6B7280]">
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
             {unknown} not recorded
           </span>
         ) : (
-          <span className="rounded-full bg-[#ECFDF5] px-2 py-0.5 text-[11px] font-semibold text-[#047857]">
+          <span className="rounded-full bg-success-muted px-2 py-0.5 text-[11px] font-semibold text-success">
             All clear
           </span>
         )}
@@ -88,8 +88,8 @@ export function PaperworkPanel({ vehicle, now }: { vehicle: VehicleDto; now: Dat
           const tone = TONES[item.tone]
           return (
             <li key={item.key} className="flex items-center justify-between gap-3 px-4 py-2.5">
-              <span className="flex items-center gap-2 text-[#4B5563]">
-                <Icon aria-hidden className="size-4 text-[#9CA3AF]" />
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <Icon aria-hidden className="size-4 text-subtle-foreground" />
                 {item.label}
               </span>
               <span className={cn("flex items-center gap-1.5 text-right font-medium", tone.text)}>
@@ -107,38 +107,38 @@ export function PaperworkPanel({ vehicle, now }: { vehicle: VehicleDto; now: Dat
 export function OwnerCard({ vehicle, owner }: { vehicle: VehicleDto; owner: OwnerDto | null }) {
   const acquisition = ACQUISITION_TYPE_LABELS[vehicle.acquisitionType] ?? vehicle.acquisitionType
   return (
-    <section className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+    <section className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-center gap-3">
         <span
           aria-hidden
-          className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[#CCFBF1] bg-[#F0FDFA] font-semibold text-[#0D9488]"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-accent font-semibold text-primary"
         >
           {owner ? owner.fullName.charAt(0).toUpperCase() : "?"}
         </span>
         <div className="min-w-0 flex-1">
           {owner ? (
-            <Link href={`/owners/${owner.id}`} className="block truncate text-sm font-semibold text-[#0D9488] hover:underline">
+            <Link href={`/owners/${owner.id}`} className="block truncate text-sm font-semibold text-primary hover:underline">
               {owner.fullName}
             </Link>
           ) : (
-            <p className="text-sm font-semibold text-[#9CA3AF]">Owner unavailable</p>
+            <p className="text-sm font-semibold text-subtle-foreground">Owner unavailable</p>
           )}
-          <p className="text-xs text-[#9CA3AF]">Owner · {acquisition}</p>
+          <p className="text-xs text-subtle-foreground">Owner · {acquisition}</p>
         </div>
         {owner && (
           <a
             href={`tel:${owner.phone}`}
             title={`Call ${owner.phone}`}
             aria-label={`Call ${owner.fullName}`}
-            className="flex size-8 items-center justify-center rounded-lg border border-[#E5E7EB] text-[#0D9488] hover:bg-[#F0FDFA]"
+            className="flex size-8 items-center justify-center rounded-lg border border-border text-primary hover:bg-accent"
           >
             <Phone className="size-4" />
           </a>
         )}
       </div>
       {vehicle.location && (
-        <div className="mt-3 flex items-center gap-2 border-t border-[#F3F4F6] pt-3 text-xs text-[#6B7280]">
-          <MapPin aria-hidden className="size-3.5 text-[#9CA3AF]" />
+        <div className="mt-3 flex items-center gap-2 border-t border-border/50 pt-3 text-xs text-muted-foreground">
+          <MapPin aria-hidden className="size-3.5 text-subtle-foreground" />
           {vehicle.location}
         </div>
       )}

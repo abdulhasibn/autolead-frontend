@@ -69,7 +69,7 @@ export function FollowUpList({
         return (
           <li
             key={item.followUpId}
-            className="flex items-center gap-2 pr-3 hover:bg-[#F9FAFB] transition-colors"
+            className="flex items-center gap-2 pr-3 hover:bg-card/50 transition-colors"
           >
             <Link
               href={`/leads/${item.leadId}`}
@@ -80,8 +80,8 @@ export function FollowUpList({
                 className={cn(
                   "mt-0.5 shrink-0 w-7 h-7 rounded-lg flex items-center justify-center",
                   variant === "overdue"
-                    ? "bg-[#FEE2E2] text-[#DC2626]"
-                    : "bg-[#F0FDFA] text-[#0D9488]"
+                    ? "bg-destructive/10 text-destructive"
+                    : "bg-accent text-primary"
                 )}
               >
                 {icon}
@@ -90,24 +90,24 @@ export function FollowUpList({
               {/* Details */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-medium text-[#111827] truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {item.contactName}
                   </p>
                   <span
                     className={cn(
                       "text-[11px] font-semibold shrink-0",
-                      variant === "overdue" ? "text-[#DC2626]" : "text-[#0D9488]"
+                      variant === "overdue" ? "text-destructive" : "text-primary"
                     )}
                   >
                     {timeLabel}
                   </span>
                 </div>
-                <p className="text-[11px] text-[#6B7280] truncate mt-0.5">
+                <p className="text-[11px] text-muted-foreground truncate mt-0.5">
                   {TASK_TYPE_LABELS[item.taskType] ?? item.taskType}
                   {item.contactPhone && ` · ${item.contactPhone}`}
                 </p>
                 {item.vehicleLabel && (
-                  <p className="text-[11px] text-[#9CA3AF] truncate mt-0.5">
+                  <p className="text-[11px] text-subtle-foreground truncate mt-0.5">
                     {item.vehicleLabel}
                   </p>
                 )}

@@ -17,16 +17,16 @@ interface LeadsTableProps {
   vehicleLabels: Record<string, string>
 }
 
-const HEAD = "h-10 px-4 text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]"
+const HEAD = "h-10 px-4 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
 const CELL = "px-4 py-3"
-const EMPTY = <span className="text-[#D1D5DB]">—</span>
+const EMPTY = <span className="text-subtle-foreground">—</span>
 
 export function LeadsTable({ leads, vehicleLabels }: LeadsTableProps) {
   return (
-    <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
       <Table>
-        <TableHeader className="bg-[#F9FAFB]">
-          <TableRow className="border-[#F3F4F6] hover:bg-transparent">
+        <TableHeader className="bg-card/50">
+          <TableRow className="border-border/50 hover:bg-transparent">
             <TableHead className={HEAD}>Contact</TableHead>
             <TableHead className={HEAD}>Status</TableHead>
             <TableHead className={HEAD}>Source</TableHead>
@@ -40,21 +40,21 @@ export function LeadsTable({ leads, vehicleLabels }: LeadsTableProps) {
           {leads.map((lead) => (
             <TableRow
               key={lead.id}
-              className="border-[#F3F4F6] hover:bg-[#F9FAFB]"
+              className="border-border/50 hover:bg-card/50"
             >
               <TableCell className={CELL}>
                 <div className="flex items-center gap-3">
-                  <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[#CCFBF1] bg-[#F0FDFA] text-xs font-semibold text-[#0D9488]">
+                  <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-accent text-xs font-semibold text-primary">
                     {lead.contactFullName.charAt(0).toUpperCase()}
                   </span>
                   <div className="min-w-0">
                     <Link
                       href={`/leads/${lead.id}`}
-                      className="text-sm font-medium text-[#111827] hover:text-[#0D9488]"
+                      className="text-sm font-medium text-foreground hover:text-primary"
                     >
                       {lead.contactFullName}
                     </Link>
-                    <div className="text-xs text-[#9CA3AF]">
+                    <div className="text-xs text-subtle-foreground">
                       {lead.contactPhone}
                     </div>
                   </div>
@@ -63,24 +63,24 @@ export function LeadsTable({ leads, vehicleLabels }: LeadsTableProps) {
               <TableCell className={CELL}>
                 <LeadStatusBadge status={lead.status} />
               </TableCell>
-              <TableCell className={`${CELL} text-[#374151]`}>
+              <TableCell className={`${CELL} text-foreground`}>
                 {LEAD_SOURCE_LABELS[lead.source] ?? lead.source}
               </TableCell>
-              <TableCell className={`${CELL} max-w-56 truncate text-[#374151]`}>
+              <TableCell className={`${CELL} max-w-56 truncate text-foreground`}>
                 {lead.vehicleId
                   ? (vehicleLabels[lead.vehicleId] ?? "Linked vehicle")
                   : (lead.preferredVehicle ?? EMPTY)}
               </TableCell>
-              <TableCell className={`${CELL} font-mono-data text-right text-[#111827]`}>
+              <TableCell className={`${CELL} font-mono-data text-right text-foreground`}>
                 {lead.budget == null ? EMPTY : formatCurrency(lead.budget)}
               </TableCell>
               <TableCell className={CELL}>
                 {lead.nextFollowUp ? (
                   <>
-                    <div className="text-[#374151]">
+                    <div className="text-foreground">
                       {formatDateTime(lead.nextFollowUp.scheduledAt)}
                     </div>
-                    <div className="text-xs text-[#9CA3AF]">
+                    <div className="text-xs text-subtle-foreground">
                       {FOLLOW_UP_TASK_TYPE_LABELS[
                         lead.nextFollowUp.taskType as FollowUpTaskType
                       ] ?? lead.nextFollowUp.taskType}
@@ -90,7 +90,7 @@ export function LeadsTable({ leads, vehicleLabels }: LeadsTableProps) {
                   EMPTY
                 )}
               </TableCell>
-              <TableCell className={`${CELL} text-[#6B7280]`}>
+              <TableCell className={`${CELL} text-muted-foreground`}>
                 {formatDate(lead.createdAt)}
               </TableCell>
             </TableRow>
