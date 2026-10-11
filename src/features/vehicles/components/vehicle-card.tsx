@@ -46,8 +46,15 @@ export function VehicleCard({ vehicle, now }: { vehicle: VehicleDto; now: Date }
       )}
 
       {/* Scrims: top keeps the pills legible, bottom carries the text. */}
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/40 to-transparent" />
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[68%] bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#05100F]/60 to-transparent" />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[78%]"
+        style={{
+          background:
+            "linear-gradient(to top, rgba(4,12,12,0.97) 0%, rgba(4,12,12,0.92) 28%, rgba(6,18,18,0.7) 52%, rgba(6,18,18,0.3) 78%, transparent 100%)",
+        }}
+      />
 
       <VehicleStatusBadge status={vehicle.status} variant="overlay" className="absolute top-3 left-3" />
       {vehicle.linkedLeadCount > 0 && (
