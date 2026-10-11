@@ -74,7 +74,7 @@ export function ScheduleFollowUpDialog({
       }}
     >
       <DialogTrigger
-        render={<Button variant="outline" disabled={disabled} className="border-[#E5E7EB] bg-white text-[#374151] hover:border-[#CCFBF1] hover:bg-[#F0FDFA] hover:text-[#0D9488]" />}
+        render={<Button variant="outline" disabled={disabled} className="border-border bg-card text-foreground hover:border-primary/20 hover:bg-accent hover:text-primary" />}
       >
         <CalendarPlus />
         Schedule follow-up

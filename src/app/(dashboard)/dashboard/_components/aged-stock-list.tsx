@@ -23,10 +23,10 @@ export function AgedStockList({
         <li key={item.vehicleId}>
           <Link
             href={`/vehicles/${item.vehicleId}`}
-            className="flex items-center gap-3 px-4 py-3 hover:bg-[#F9FAFB] transition-colors"
+            className="flex items-center gap-3 px-4 py-3 hover:bg-card/50 transition-colors"
           >
             {/* Car icon */}
-            <div className="shrink-0 w-7 h-7 rounded-lg bg-[#FEF3C7] border border-[#FDE68A] flex items-center justify-center text-[#D97706] mt-0">
+            <div className="shrink-0 w-7 h-7 rounded-lg bg-warning-muted border border-[#FDE68A] flex items-center justify-center text-warning mt-0">
               <svg
                 className="w-3.5 h-3.5"
                 fill="none"
@@ -53,22 +53,22 @@ export function AgedStockList({
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-[#111827] truncate">
+              <p className="text-sm font-medium text-foreground truncate">
                 {item.vehicleLabel}
               </p>
               <div className="flex items-center gap-2 mt-0.5">
                 <span
                   className={cn(
                     "text-[11px] font-semibold",
-                    item.daysListed > 60 ? "text-[#DC2626]" : "text-[#D97706]"
+                    item.daysListed > 60 ? "text-destructive" : "text-warning"
                   )}
                 >
                   {item.daysListed}d listed
                 </span>
                 {item.activeLeads > 0 && (
                   <>
-                    <span className="text-[10px] text-[#9CA3AF]">·</span>
-                    <span className="text-[11px] text-[#6B7280]">
+                    <span className="text-[10px] text-subtle-foreground">·</span>
+                    <span className="text-[11px] text-muted-foreground">
                       {item.activeLeads} active {item.activeLeads === 1 ? "lead" : "leads"}
                     </span>
                   </>
@@ -77,7 +77,7 @@ export function AgedStockList({
             </div>
 
             <svg
-              className="w-3.5 h-3.5 text-[#9CA3AF] shrink-0"
+              className="w-3.5 h-3.5 text-subtle-foreground shrink-0"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"

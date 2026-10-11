@@ -34,7 +34,7 @@ type Draft = Pick<
   "makeId" | "modelId" | "fuel" | "transmission" | "yearMin" | "yearMax" | "kmMin" | "kmMax"
 >
 
-const fieldLabel = "text-[11px] font-medium tracking-wide text-[#9CA3AF] uppercase"
+const fieldLabel = "text-[11px] font-medium tracking-wide text-subtle-foreground uppercase"
 
 function toDraft(params: VehiclesSearchParams): Draft {
   return {
@@ -76,13 +76,13 @@ function ChoiceChip({
 
 function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex h-7 items-center gap-1 rounded-full bg-white pr-1 pl-2.5 text-xs font-medium text-[#374151] ring-1 ring-[#E5E7EB]">
+    <span className="inline-flex h-7 items-center gap-1 rounded-full bg-card pr-1 pl-2.5 text-xs font-medium text-foreground ring-1 ring-[#E5E7EB]">
       {label}
       <button
         type="button"
         onClick={onRemove}
         aria-label={`Remove ${label} filter`}
-        className="rounded-full p-0.5 text-[#9CA3AF] hover:bg-[#F3F4F6] hover:text-[#111827]"
+        className="rounded-full p-0.5 text-subtle-foreground hover:bg-muted hover:text-foreground"
       >
         <X className="size-3" />
       </button>
@@ -196,14 +196,14 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
       >
         <PopoverTrigger
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-lg border bg-white px-3 text-sm font-medium text-[#374151] transition-colors hover:border-[#0D9488]",
-            activeCount > 0 ? "border-[#99F6E4]" : "border-[#E5E7EB]"
+            "inline-flex h-9 items-center gap-1.5 rounded-lg border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:border-primary",
+            activeCount > 0 ? "border-primary/30" : "border-border"
           )}
         >
           <SlidersHorizontal className="size-4" />
           Filters
           {activeCount > 0 && (
-            <span className="rounded-full bg-[#0D9488] px-1.5 text-[11px] font-semibold text-white">
+            <span className="rounded-full bg-primary px-1.5 text-[11px] font-semibold text-white">
               {activeCount}
             </span>
           )}
@@ -292,10 +292,10 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
             </div>
           </div>
 
-          <div className="flex items-center justify-between border-t border-[#F3F4F6] pt-3">
+          <div className="flex items-center justify-between border-t border-border/50 pt-3">
             <button
               type="button"
-              className="text-xs font-medium text-[#6B7280] hover:text-[#0D9488]"
+              className="text-xs font-medium text-muted-foreground hover:text-primary"
               onClick={() => {
                 setOpen(false)
                 navigate({ makeId: undefined, modelId: undefined, fuel: [], transmission: [], yearMin: undefined, yearMax: undefined, kmMin: undefined, kmMax: undefined })
@@ -322,7 +322,7 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
       {hasAnything && (
         <button
           type="button"
-          className="text-xs font-medium text-[#6B7280] hover:text-[#0D9488]"
+          className="text-xs font-medium text-muted-foreground hover:text-primary"
           onClick={() => {
             setSearch("")
             startTransition(() =>
@@ -333,9 +333,9 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
           Clear all
         </button>
       )}
-      {isPending && <Loader2 className="size-4 animate-spin text-[#0D9488]" aria-label="Loading" />}
+      {isPending && <Loader2 className="size-4 animate-spin text-primary" aria-label="Loading" />}
 
-      <div className="ml-auto inline-flex rounded-lg border border-[#E5E7EB] bg-white p-0.5">
+      <div className="ml-auto inline-flex rounded-lg border border-border bg-card p-0.5">
         {(["grid", "table"] as const).map((layout) => {
           const Icon = layout === "grid" ? LayoutGrid : List
           const active = params.layout === layout
@@ -347,7 +347,7 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
               aria-current={active ? "true" : undefined}
               className={cn(
                 "rounded-md p-1.5 transition-colors",
-                active ? "bg-[#F0FDFA] text-[#0D9488]" : "text-[#9CA3AF] hover:text-[#4B5563]"
+                active ? "bg-accent text-primary" : "text-subtle-foreground hover:text-muted-foreground"
               )}
             >
               <Icon className="size-4" />

@@ -11,11 +11,11 @@ import { cn } from "@/lib/utils"
 
 const STATUS_COLORS: Record<string, string> = {
   new: "bg-[#DBEAFE] text-[#1D4ED8]",
-  not_now: "bg-[#FEF3C7] text-[#D97706]",
-  booking_confirmed: "bg-[#DCFCE7] text-[#16A34A]",
-  converted: "bg-[#F0FDF4] text-[#15803D]",
-  lost: "bg-[#FEE2E2] text-[#DC2626]",
-  vehicle_unavailable: "bg-[#F3F4F6] text-[#6B7280]",
+  not_now: "bg-warning-muted text-warning",
+  booking_confirmed: "bg-success-muted text-success",
+  converted: "bg-success-muted text-success",
+  lost: "bg-destructive/10 text-destructive",
+  vehicle_unavailable: "bg-muted text-muted-foreground",
 }
 
 interface LeadListProps {
@@ -37,19 +37,19 @@ export function LeadList({
         <li key={item.leadId}>
           <Link
             href={`/leads/${item.leadId}`}
-            className="flex items-start gap-3 px-4 py-3 hover:bg-[#F9FAFB] transition-colors"
+            className="flex items-start gap-3 px-4 py-3 hover:bg-card/50 transition-colors"
           >
             {/* Avatar placeholder */}
-            <div className="shrink-0 w-7 h-7 rounded-full bg-[#F0FDFA] border border-[#CCFBF1] flex items-center justify-center text-[#0D9488] text-xs font-semibold mt-0.5">
+            <div className="shrink-0 w-7 h-7 rounded-full bg-accent border border-primary/20 flex items-center justify-center text-primary text-xs font-semibold mt-0.5">
               {item.contactName.charAt(0).toUpperCase()}
             </div>
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium text-[#111827] truncate">
+                <p className="text-sm font-medium text-foreground truncate">
                   {item.contactName}
                 </p>
-                <span className="text-[11px] text-[#9CA3AF] shrink-0">
+                <span className="text-[11px] text-subtle-foreground shrink-0">
                   {relativeTime(item.createdAt)}
                 </span>
               </div>
@@ -57,18 +57,18 @@ export function LeadList({
                 <span
                   className={cn(
                     "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold",
-                    STATUS_COLORS[item.status] ?? "bg-[#F3F4F6] text-[#6B7280]"
+                    STATUS_COLORS[item.status] ?? "bg-muted text-muted-foreground"
                   )}
                 >
                   {LEAD_STATUS_LABELS[item.status] ?? item.status}
                 </span>
-                <span className="text-[10px] text-[#9CA3AF]">·</span>
-                <span className="text-[11px] text-[#9CA3AF]">
+                <span className="text-[10px] text-subtle-foreground">·</span>
+                <span className="text-[11px] text-subtle-foreground">
                   {SOURCE_LABELS[item.source] ?? item.source}
                 </span>
               </div>
               {item.vehicleLabel && (
-                <p className="text-[11px] text-[#9CA3AF] truncate mt-0.5">
+                <p className="text-[11px] text-subtle-foreground truncate mt-0.5">
                   {item.vehicleLabel}
                 </p>
               )}

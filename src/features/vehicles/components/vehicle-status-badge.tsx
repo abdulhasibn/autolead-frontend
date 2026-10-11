@@ -23,7 +23,7 @@ export function VehicleStatusBadge({
       className={cn(
         "rounded-full px-2 text-[11px] font-semibold",
         style.text,
-        variant === "overlay" ? "bg-white/95 shadow-sm" : style.soft,
+        variant === "overlay" ? "bg-card/95 shadow-sm" : style.soft,
         className
       )}
     >

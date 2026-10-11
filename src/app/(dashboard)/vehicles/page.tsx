@@ -86,8 +86,8 @@ export default async function VehiclesPage({
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#111827]">Vehicles</h1>
-          <p className="mt-0.5 text-sm text-[#6B7280]">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Vehicles</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             {resultCount} {resultCount === 1 ? "vehicle" : "vehicles"}
             {hasFilters ? " match the filters" : params.status ? "" : " in inventory"}
           </p>
@@ -99,12 +99,12 @@ export default async function VehiclesPage({
       <VehiclesToolbar params={params} makes={makes} models={models} />
 
       {vehicles.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-white py-16 text-center">
-          <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-[#F0FDFA]">
-            <Car className="size-5 text-[#0D9488]" />
+        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card py-16 text-center">
+          <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-accent">
+            <Car className="size-5 text-primary" />
           </div>
-          <p className="text-sm font-semibold text-[#111827]">No vehicles found</p>
-          <p className="text-xs text-[#9CA3AF]">
+          <p className="text-sm font-semibold text-foreground">No vehicles found</p>
+          <p className="text-xs text-subtle-foreground">
             {hasFilters || params.status
               ? "Try a different search or clear the filters."
               : "Add your first vehicle to get started."}

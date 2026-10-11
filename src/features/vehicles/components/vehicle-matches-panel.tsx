@@ -13,11 +13,11 @@ import { formatKm } from "../utils"
 import { LinkSuggestedLeadButton } from "./link-suggested-lead-button"
 
 const actionClass =
-  "inline-flex h-7 shrink-0 items-center gap-1 rounded-md border border-[#E5E7EB] bg-white px-2.5 text-[0.8rem] font-medium text-[#374151] transition-colors hover:border-[#CCFBF1] hover:bg-[#F0FDFA] hover:text-[#0D9488]"
+  "inline-flex h-7 shrink-0 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[0.8rem] font-medium text-foreground transition-colors hover:border-primary/20 hover:bg-accent hover:text-primary"
 
 function SectionHeading({ children, count }: { children: React.ReactNode; count: number }) {
   return (
-    <h3 className="flex items-center gap-1.5 text-[11px] font-medium tracking-wide text-[#9CA3AF] uppercase">
+    <h3 className="flex items-center gap-1.5 text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">
       {children}
       <span className="font-mono-data text-xs normal-case">{count}</span>
     </h3>
@@ -26,11 +26,11 @@ function SectionHeading({ children, count }: { children: React.ReactNode; count:
 
 function EmptyRow({ message }: { message: string }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-[#F3F4F6] py-6 text-center">
-      <div className="mb-2 flex size-8 items-center justify-center rounded-full bg-[#F0FDFA]">
-        <Users2 className="size-4 text-[#0D9488]" />
+    <div className="flex flex-col items-center justify-center rounded-lg border border-border/50 py-6 text-center">
+      <div className="mb-2 flex size-8 items-center justify-center rounded-full bg-accent">
+        <Users2 className="size-4 text-primary" />
       </div>
-      <p className="text-xs text-[#9CA3AF]">{message}</p>
+      <p className="text-xs text-subtle-foreground">{message}</p>
     </div>
   )
 }
@@ -59,14 +59,14 @@ function LeadRow({
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href={`/leads/${lead.id}`}
-            className="truncate font-medium text-[#111827] hover:text-[#0D9488] hover:underline"
+            className="truncate font-medium text-foreground hover:text-primary hover:underline"
           >
             {lead.contactFullName}
           </Link>
           <LeadStatusBadge status={lead.status} />
         </div>
         {summary.length > 0 && (
-          <p className="truncate text-xs text-[#9CA3AF]">{summary.join(" · ")}</p>
+          <p className="truncate text-xs text-subtle-foreground">{summary.join(" · ")}</p>
         )}
         {lead.match && <MatchBreakdownChips match={lead.match} lead={lead} vehicle={vehicle} />}
       </div>
@@ -96,16 +96,16 @@ export function VehicleMatchesPanel({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-[#F9FAFB] px-3 py-2 text-xs text-[#6B7280]">
-        <span className="font-medium text-[#374151]">Scored against</span>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-card/50 px-3 py-2 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">Scored against</span>
         <span>{facts.join(" · ")}</span>
-        <span aria-hidden className="text-[#D1D5DB]">·</span>
+        <span aria-hidden className="text-subtle-foreground">·</span>
         {vehicle.listedPrice == null ? (
-          <span className="inline-flex items-center rounded-full bg-[#F3F4F6] px-2 py-0.5 text-[11px] font-semibold text-[#6B7280]">
+          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
             Not priced yet: budget can&rsquo;t be checked
           </span>
         ) : (
-          <span className="font-mono-data font-semibold text-[#111827]">
+          <span className="font-mono-data font-semibold text-foreground">
             {formatCurrency(vehicle.listedPrice)}
           </span>
         )}
@@ -116,7 +116,7 @@ export function VehicleMatchesPanel({
         {linked.length === 0 ? (
           <EmptyRow message="No leads are linked to this car yet." />
         ) : (
-          <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-[#F3F4F6] text-sm">
+          <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-border/50 text-sm">
             {linked.map((lead) => (
               <LeadRow
                 key={lead.id}
@@ -143,13 +143,13 @@ export function VehicleMatchesPanel({
 
       <section className="space-y-2">
         <SectionHeading count={suggested.length}>
-          <Sparkles aria-hidden className="size-3 text-[#0D9488]" />
+          <Sparkles aria-hidden className="size-3 text-primary" />
           Suggested leads
         </SectionHeading>
         {suggested.length === 0 ? (
           <EmptyRow message="No open leads match this car closely enough yet." />
         ) : (
-          <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-[#F3F4F6] text-sm">
+          <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-border/50 text-sm">
             {suggested.map((lead) => (
               <LeadRow
                 key={lead.id}
@@ -174,7 +174,7 @@ export function VehicleMatchesPanel({
           </ul>
         )}
         {truncated && (
-          <p className="text-xs text-[#9CA3AF]">
+          <p className="text-xs text-subtle-foreground">
             Only the newest 1,000 open leads were checked for suggestions.
           </p>
         )}

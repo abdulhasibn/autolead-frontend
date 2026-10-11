@@ -17,7 +17,7 @@ export default function VehiclesLoading() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {Array.from({ length: 8 }, (_, i) => (
-          <Skeleton key={i} className="aspect-[4/5] rounded-2xl bg-[#E2E8F0]" />
+          <Skeleton key={i} className="aspect-[4/5] rounded-2xl bg-muted" />
         ))}
       </div>
     </div>

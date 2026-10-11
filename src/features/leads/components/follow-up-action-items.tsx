@@ -30,29 +30,29 @@ export function FollowUpActionItems({
         return (
           <li key={item.id} className="space-y-2 py-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center rounded-full bg-[#F0FDFA] px-2 py-0.5 text-[11px] font-semibold text-[#0D9488]">
+              <span className="inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-primary">
                 {FOLLOW_UP_TASK_TYPE_LABELS[item.taskType as FollowUpTaskType] ??
                   item.taskType}
               </span>
               <span
                 className={cn(
                   "text-sm font-medium",
-                  overdue ? "text-[#DC2626]" : "text-[#111827]"
+                  overdue ? "text-destructive" : "text-foreground"
                 )}
               >
                 {formatDateTime(item.scheduledAt)}
               </span>
               {overdue && (
-                <span className="rounded-full bg-[#FEE2E2] px-2 py-0.5 text-[11px] font-semibold text-[#DC2626]">
+                <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-semibold text-destructive">
                   Overdue
                 </span>
               )}
             </div>
             {item.notes && (
-              <p className="text-xs whitespace-pre-wrap text-[#4B5563]">{item.notes}</p>
+              <p className="text-xs whitespace-pre-wrap text-muted-foreground">{item.notes}</p>
             )}
             <div className="flex items-center justify-between gap-2">
-              <p className="truncate text-[11px] text-[#9CA3AF]">
+              <p className="truncate text-[11px] text-subtle-foreground">
                 {item.assignedToName ? `For ${item.assignedToName}` : ""}
               </p>
               <div className="flex shrink-0 items-center gap-1">

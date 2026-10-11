@@ -45,11 +45,11 @@ export default function AuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen flex flex-col bg-[#F1F5F9]">
+    <div className="min-h-screen flex flex-col bg-muted">
       <SystemHeader />
 
       <main className="flex-1 flex items-center justify-center p-4 md:p-8">
-        <div className="w-full max-w-[1200px] min-h-[680px] bg-white rounded-2xl shadow-xl overflow-hidden grid grid-cols-1 lg:grid-cols-12">
+        <div className="w-full max-w-[1200px] min-h-[680px] bg-card rounded-2xl shadow-xl overflow-hidden grid grid-cols-1 lg:grid-cols-12">
 
           {/* Left: Brand panel */}
           <section
@@ -58,8 +58,8 @@ export default function AuthLayout({
           >
             {/* Glow blobs */}
             <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-[#0D9488]/10 rounded-full blur-3xl translate-x-1/3 -translate-y-1/3" />
-              <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#134E4A]/30 rounded-full blur-3xl -translate-x-1/4 translate-y-1/4" />
+              <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl translate-x-1/3 -translate-y-1/3" />
+              <div className="absolute bottom-0 left-0 w-80 h-80 bg-primary/20 rounded-full blur-3xl -translate-x-1/4 translate-y-1/4" />
             </div>
 
             {/* Faint car silhouette */}
@@ -73,7 +73,7 @@ export default function AuthLayout({
               {/* Logo + badge */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white">
+                  <div className="w-11 h-11 rounded-xl bg-card/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10" />
                       <circle cx="12" cy="12" r="3" />
@@ -91,7 +91,7 @@ export default function AuthLayout({
                     </span>
                   </div>
                 </div>
-                <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-xs font-medium text-white/70">
+                <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/10 backdrop-blur-sm border border-white/20 text-xs font-medium text-white/70">
                   <svg className="w-3 h-3 text-[#34D399]" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
                   </svg>
@@ -115,7 +115,7 @@ export default function AuthLayout({
                 {FEATURES.map((f) => (
                   <div
                     key={f.title}
-                    className="flex items-start gap-3 rounded-xl p-4 bg-white/8 border border-white/10 hover:bg-white/12 transition-colors"
+                    className="flex items-start gap-3 rounded-xl p-4 bg-card/8 border border-white/10 hover:bg-card/12 transition-colors"
                     style={{ background: "rgba(255,255,255,0.07)" }}
                   >
                     <div className="shrink-0 w-9 h-9 rounded-lg bg-[#34D399]/15 border border-[#34D399]/20 flex items-center justify-center text-[#34D399]">
@@ -138,19 +138,19 @@ export default function AuthLayout({
           </section>
 
           {/* Right: Form slot */}
-          <section className="lg:col-span-5 bg-white p-8 sm:p-12 flex flex-col justify-between items-center">
+          <section className="lg:col-span-5 bg-card p-8 sm:p-12 flex flex-col justify-between items-center">
             <div className="flex-1 flex items-center justify-center w-full">
               <div className="w-full max-w-[400px]">
                 {children}
               </div>
             </div>
 
-            <div className="w-full max-w-[400px] pt-5 border-t border-[#F3F4F6] flex items-center justify-between text-xs text-[#9CA3AF] mt-8">
+            <div className="w-full max-w-[400px] pt-5 border-t border-border/50 flex items-center justify-between text-xs text-subtle-foreground mt-8">
               <span>© 2026 Wheels Experts</span>
               <div className="flex items-center gap-3">
-                <a href="#" className="hover:text-[#374151] transition-colors">Privacy</a>
+                <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
                 <span>·</span>
-                <a href="#" className="hover:text-[#374151] transition-colors">Terms</a>
+                <a href="#" className="hover:text-foreground transition-colors">Terms</a>
               </div>
             </div>
           </section>
