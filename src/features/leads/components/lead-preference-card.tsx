@@ -15,7 +15,7 @@ import {
 import type { LeadPreference, LeadReadModel } from "../types"
 import { EditPreferenceDialog } from "./edit-preference-dialog"
 
-const ANY = <span className="text-[#9CA3AF]">Any</span>
+const ANY = <span className="text-subtle-foreground">Any</span>
 
 function Chips({ values }: { values: string[] }) {
   if (values.length === 0) return ANY
@@ -24,7 +24,7 @@ function Chips({ values }: { values: string[] }) {
       {values.map((value) => (
         <span
           key={value}
-          className="inline-flex items-center rounded-full bg-[#F0FDFA] px-2 py-0.5 text-[11px] font-semibold text-[#0D9488]"
+          className="inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-primary"
         >
           {value}
         </span>
@@ -84,7 +84,7 @@ export function LeadPreferenceCard({
       }
     >
       {empty && (
-        <p className="mb-4 rounded-lg bg-[#F9FAFB] px-3 py-2 text-xs text-[#6B7280]">
+        <p className="mb-4 rounded-lg bg-card/50 px-3 py-2 text-xs text-muted-foreground">
           No preference recorded yet. Add one so cars can be scored against what this buyer
           wants.
         </p>

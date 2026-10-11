@@ -60,7 +60,7 @@ export function PhotoLightbox({ photos, index, onIndexChange }: PhotoLightboxPro
                 {index !== null ? index + 1 : 0} / {photos.length}
               </span>
             </DialogPrimitive.Title>
-            <DialogPrimitive.Close className="rounded-lg p-2 hover:bg-white/10" aria-label="Close">
+            <DialogPrimitive.Close className="rounded-lg p-2 hover:bg-card/10" aria-label="Close">
               <X className="size-5" />
             </DialogPrimitive.Close>
           </div>
@@ -80,7 +80,7 @@ export function PhotoLightbox({ photos, index, onIndexChange }: PhotoLightboxPro
                 type="button"
                 onClick={() => step(-1)}
                 aria-label="Previous photo"
-                className="absolute left-3 hidden rounded-full bg-white/10 p-2 hover:bg-white/20 sm:block"
+                className="absolute left-3 hidden rounded-full bg-card/10 p-2 hover:bg-card/20 sm:block"
               >
                 <ChevronLeft className="size-5" />
               </button>
@@ -99,7 +99,7 @@ export function PhotoLightbox({ photos, index, onIndexChange }: PhotoLightboxPro
                 type="button"
                 onClick={() => step(1)}
                 aria-label="Next photo"
-                className="absolute right-3 hidden rounded-full bg-white/10 p-2 hover:bg-white/20 sm:block"
+                className="absolute right-3 hidden rounded-full bg-card/10 p-2 hover:bg-card/20 sm:block"
               >
                 <ChevronRight className="size-5" />
               </button>

@@ -6,6 +6,7 @@ import type { CreateOwnerInput } from "./schemas"
 interface OwnersListParams extends PaginationParams {
   city?: string
   phone?: string
+  search?: string
 }
 
 export async function getOwners(

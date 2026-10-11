@@ -81,7 +81,7 @@ const DEFAULT_VALUES: CreateLeadFormInput = {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-[11px] font-medium tracking-wide text-[#9CA3AF] uppercase">{children}</h3>
+    <h3 className="text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">{children}</h3>
   )
 }
 
@@ -166,7 +166,7 @@ export function CreateLeadSheet({
       </SheetTrigger>
 
       <SheetContent className="w-full gap-0 data-[side=right]:sm:max-w-xl">
-        <SheetHeader className="border-b border-[#F3F4F6] px-5 py-4">
+        <SheetHeader className="border-b border-border/50 px-5 py-4">
           <SheetTitle className="text-lg font-semibold">New lead</SheetTitle>
           <SheetDescription className="text-xs">
             Only contact details are required. An existing contact with the same phone number is
@@ -183,17 +183,17 @@ export function CreateLeadSheet({
                   onClick={() => setStep(i)}
                   className={cn(
                     "flex w-full items-center gap-1.5 disabled:cursor-default",
-                    i <= step ? "text-[#0D9488]" : "text-[#9CA3AF]"
+                    i <= step ? "text-primary" : "text-subtle-foreground"
                   )}
                 >
                   <span
                     className={cn(
                       "flex size-5 shrink-0 items-center justify-center rounded-full text-[11px]",
                       i < step
-                        ? "bg-[#CCFBF1] text-[#0F766E]"
+                        ? "bg-accent text-primary/80"
                         : i === step
-                          ? "bg-[#0D9488] text-white"
-                          : "border border-[#D1D5DB]"
+                          ? "bg-primary text-white"
+                          : "border border-border"
                     )}
                   >
                     {i < step ? <Check className="size-3" /> : i + 1}
@@ -266,7 +266,7 @@ export function CreateLeadSheet({
                   </FormField>
                 </div>
               </section>
-              <div className="rounded-lg bg-[#F0FDFA] px-3 py-2 text-xs text-[#0F766E]">
+              <div className="rounded-lg bg-accent px-3 py-2 text-xs text-primary/80">
                 Everything below is optional. Leave a field empty for &ldquo;any&rdquo;. Cars are
                 scored against these.
               </div>
@@ -343,7 +343,7 @@ export function CreateLeadSheet({
           )}
         </form>
 
-        <div className="flex items-center justify-between gap-2 border-t border-[#F3F4F6] px-5 py-3">
+        <div className="flex items-center justify-between gap-2 border-t border-border/50 px-5 py-3">
           <Button
             type="button"
             variant="ghost"
@@ -359,7 +359,7 @@ export function CreateLeadSheet({
                 variant="outline"
                 onClick={createNow}
                 disabled={isPending}
-                className="border-[#E5E7EB] bg-white text-[#374151] hover:border-[#CCFBF1] hover:bg-[#F0FDFA] hover:text-[#0D9488]"
+                className="border-border bg-card text-foreground hover:border-primary/20 hover:bg-accent hover:text-primary"
               >
                 Create now
               </Button>

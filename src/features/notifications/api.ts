@@ -1,14 +1,14 @@
 import { serverApiClient } from "@/lib/api-client.server"
-import type { Page, PaginationParams } from "@/types/api"
-import type { NotificationReadModel } from "./types"
+import type { PaginationParams } from "@/types/api"
+import type { NotificationPageDto } from "./types"
 
 export async function getNotifications(
   params: PaginationParams = {}
-): Promise<Page<NotificationReadModel>> {
+): Promise<NotificationPageDto> {
   const query = new URLSearchParams()
   if (params.limit) query.set("limit", String(params.limit))
   if (params.offset) query.set("offset", String(params.offset))
-  return serverApiClient.get<Page<NotificationReadModel>>(
+  return serverApiClient.get<NotificationPageDto>(
     `/notifications?${query}`
   )
 }

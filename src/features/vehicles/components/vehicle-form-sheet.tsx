@@ -139,8 +139,8 @@ function Segmented<T extends string>({
             className={cn(
               "rounded-lg border px-3 py-1.5 text-sm transition-colors",
               selected
-                ? "border-[#0D9488] bg-[#F0FDFA] font-semibold text-[#0D9488]"
-                : "border-[#E5E7EB] bg-white text-[#4B5563] hover:border-[#99F6E4]"
+                ? "border-primary bg-accent font-semibold text-primary"
+                : "border-border bg-card text-muted-foreground hover:border-primary/30"
             )}
           >
             {option.label}
@@ -338,7 +338,7 @@ export function VehicleFormSheet(props: Props) {
           isCreate ? (
             <Button className="h-9" />
           ) : (
-            <Button variant="outline" className="h-9 border-[#E5E7EB] bg-white hover:border-[#0D9488]" />
+            <Button variant="outline" className="h-9 border-border bg-card hover:border-primary" />
           )
         }
       >
@@ -347,7 +347,7 @@ export function VehicleFormSheet(props: Props) {
       </SheetTrigger>
 
       <SheetContent className="w-full gap-0 data-[side=right]:sm:max-w-xl">
-        <SheetHeader className="border-b border-[#F3F4F6] px-5 py-4">
+        <SheetHeader className="border-b border-border/50 px-5 py-4">
           <SheetTitle className="text-lg font-semibold">
             {isCreate ? "Add vehicle" : `Edit ${formatVehicleTitle(props.vehicle)}`}
           </SheetTitle>
@@ -361,17 +361,17 @@ export function VehicleFormSheet(props: Props) {
                 aria-current={i === step ? "step" : undefined}
                 className={cn(
                   "flex flex-1 items-center gap-1.5",
-                  i <= step ? "text-[#0D9488]" : "text-[#9CA3AF]"
+                  i <= step ? "text-primary" : "text-subtle-foreground"
                 )}
               >
                 <span
                   className={cn(
                     "flex size-5 shrink-0 items-center justify-center rounded-full text-[11px]",
                     i < step
-                      ? "bg-[#CCFBF1] text-[#0F766E]"
+                      ? "bg-accent text-primary/80"
                       : i === step
-                        ? "bg-[#0D9488] text-white"
-                        : "border border-[#D1D5DB]"
+                        ? "bg-primary text-white"
+                        : "border border-border"
                   )}
                 >
                   {i < step ? <Check className="size-3" /> : i + 1}
@@ -431,14 +431,14 @@ export function VehicleFormSheet(props: Props) {
                     </FormField>
                   </div>
                   {prefilled && (
-                    <p className="flex items-center gap-1.5 text-xs text-[#0D9488]">
+                    <p className="flex items-center gap-1.5 text-xs text-primary">
                       <Sparkles className="size-3.5" />
                       Fuel and transmission filled in from the variant
                     </p>
                   )}
                 </div>
               ) : (
-                <p className="rounded-lg bg-[#F9FAFB] px-3 py-2 text-xs text-[#6B7280]">
+                <p className="rounded-lg bg-card/50 px-3 py-2 text-xs text-muted-foreground">
                   {[props.vehicle.makeName, props.vehicle.modelName, props.vehicle.variantName]
                     .filter(Boolean)
                     .join(" · ")}{" "}
@@ -495,7 +495,7 @@ export function VehicleFormSheet(props: Props) {
 
           {step === 1 && (
             <>
-              <p className="text-xs text-[#6B7280]">All optional. Fill in what you know now.</p>
+              <p className="text-xs text-muted-foreground">All optional. Fill in what you know now.</p>
               <FormField id="insuranceValidUntil" label="Insurance valid until" error={errors.insuranceValidUntil?.message}>
                 <Controller control={control} name="insuranceValidUntil" render={({ field }) => (
                   <DatePicker
@@ -537,13 +537,13 @@ export function VehicleFormSheet(props: Props) {
             <>
               <FormField id="ownerId" label="Owner *" error={errors.ownerId?.message}>
                 {selectedOwner && !newOwner ? (
-                  <div className="flex items-center gap-3 rounded-lg border border-[#99F6E4] bg-[#F0FDFA] px-3 py-2.5">
-                    <span className="flex size-8 items-center justify-center rounded-full bg-white font-semibold text-[#0D9488]">
+                  <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-accent px-3 py-2.5">
+                    <span className="flex size-8 items-center justify-center rounded-full bg-card font-semibold text-primary">
                       {selectedOwner.fullName.charAt(0).toUpperCase()}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-[#111827]">{selectedOwner.fullName}</p>
-                      <p className="text-xs text-[#6B7280]">
+                      <p className="truncate font-medium text-foreground">{selectedOwner.fullName}</p>
+                      <p className="text-xs text-muted-foreground">
                         {selectedOwner.phone}
                         {selectedOwner.city ? ` · ${selectedOwner.city}` : ""}
                       </p>
@@ -553,8 +553,8 @@ export function VehicleFormSheet(props: Props) {
                     </Button>
                   </div>
                 ) : newOwner ? (
-                  <div className="space-y-3 rounded-lg border border-[#E5E7EB] p-3">
-                    <p className="text-sm font-semibold text-[#111827]">New owner</p>
+                  <div className="space-y-3 rounded-lg border border-border p-3">
+                    <p className="text-sm font-semibold text-foreground">New owner</p>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <Input aria-label="Owner full name" placeholder="Full name" value={newOwner.fullName}
                         onChange={(e) => setNewOwner({ ...newOwner, fullName: e.target.value })} />
@@ -578,7 +578,7 @@ export function VehicleFormSheet(props: Props) {
                   <div className="space-y-2">
                     <div className="flex gap-2">
                       <div className="relative flex-1">
-                        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-[#9CA3AF]" />
+                        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-subtle-foreground" />
                         <Input aria-label="Search owners" placeholder="Search name, phone or city" className="pl-8"
                           value={ownerQuery} onChange={(e) => setOwnerQuery(e.target.value)} />
                       </div>
@@ -587,9 +587,9 @@ export function VehicleFormSheet(props: Props) {
                         New
                       </Button>
                     </div>
-                    <ul className="max-h-64 divide-y divide-[#F3F4F6] overflow-y-auto rounded-lg border border-[#E5E7EB]">
+                    <ul className="max-h-64 divide-y divide-[#F3F4F6] overflow-y-auto rounded-lg border border-border">
                       {filteredOwners.length === 0 ? (
-                        <li className="px-3 py-6 text-center text-xs text-[#9CA3AF]">
+                        <li className="px-3 py-6 text-center text-xs text-subtle-foreground">
                           No owners match. Add them as a new owner.
                         </li>
                       ) : (
@@ -597,13 +597,13 @@ export function VehicleFormSheet(props: Props) {
                           <li key={owner.id}>
                             <button type="button"
                               onClick={() => setValue("ownerId", owner.id, { shouldValidate: true })}
-                              className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-[#F9FAFB]">
-                              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#F0FDFA] text-xs font-semibold text-[#0D9488]">
+                              className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-card/50">
+                              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-primary">
                                 {owner.fullName.charAt(0).toUpperCase()}
                               </span>
                               <span className="min-w-0 flex-1">
-                                <span className="block truncate text-sm font-medium text-[#111827]">{owner.fullName}</span>
-                                <span className="block text-xs text-[#9CA3AF]">
+                                <span className="block truncate text-sm font-medium text-foreground">{owner.fullName}</span>
+                                <span className="block text-xs text-subtle-foreground">
                                   {owner.phone}
                                   {owner.city ? ` · ${owner.city}` : ""}
                                 </span>
@@ -631,10 +631,10 @@ export function VehicleFormSheet(props: Props) {
           )}
         </form>
 
-        <div className="flex items-center justify-between gap-2 border-t border-[#F3F4F6] px-5 py-3">
+        <div className="flex items-center justify-between gap-2 border-t border-border/50 px-5 py-3">
           {step === 3 ? (
             <>
-              <span className="text-xs text-[#9CA3AF]">You can add photos later too.</span>
+              <span className="text-xs text-subtle-foreground">You can add photos later too.</span>
               <Button type="button" onClick={() => finish(created)}>
                 Done
               </Button>

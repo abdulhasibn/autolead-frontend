@@ -65,7 +65,7 @@ export function LeadsToolbar({ params, vehicles }: LeadsToolbarProps) {
       </InputGroup>
       <OptionSelect
         aria-label="Filter by status"
-        className="h-9 border-[#E5E7EB] bg-white sm:w-48"
+        className="h-9 border-border bg-card sm:w-48"
         value={params.status ?? ALL}
         options={STATUS_OPTIONS}
         onValueChange={(value) =>
@@ -74,7 +74,7 @@ export function LeadsToolbar({ params, vehicles }: LeadsToolbarProps) {
       />
       <OptionSelect
         aria-label="Filter by vehicle"
-        className="h-9 border-[#E5E7EB] bg-white sm:w-64"
+        className="h-9 border-border bg-card sm:w-64"
         value={params.vehicleId ?? ALL}
         options={vehicleOptions}
         onValueChange={(value) =>
@@ -85,7 +85,7 @@ export function LeadsToolbar({ params, vehicles }: LeadsToolbarProps) {
         <Button
           variant="ghost"
           size="sm"
-          className="text-[#6B7280] hover:text-[#0D9488]"
+          className="text-muted-foreground hover:text-primary"
           onClick={() => {
             setSearch("")
             startTransition(() => router.push("/leads"))
@@ -96,7 +96,7 @@ export function LeadsToolbar({ params, vehicles }: LeadsToolbarProps) {
         </Button>
       )}
       {isPending && (
-        <Loader2 className="size-4 text-[#0D9488] animate-spin" aria-label="Loading" />
+        <Loader2 className="size-4 text-primary animate-spin" aria-label="Loading" />
       )}
     </div>
   )

@@ -246,7 +246,7 @@ export function PreferenceFields({
 function PreferenceGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3">
-      <h4 className="text-[11px] font-medium tracking-wide text-[#9CA3AF] uppercase">{title}</h4>
+      <h4 className="text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">{title}</h4>
       {children}
     </section>
   )
@@ -286,7 +286,7 @@ function NumberField({
         {...props}
       />
       {hint && !error && (
-        <p id={`${id}-hint`} className="text-[11px] text-[#9CA3AF]">
+        <p id={`${id}-hint`} className="text-[11px] text-subtle-foreground">
           {hint}
         </p>
       )}

@@ -106,7 +106,7 @@ export function CompleteFollowUpDialog({
             aria-label={compact ? "Mark follow-up done" : undefined}
             title={compact ? "Mark done" : undefined}
             className={cn(
-              "h-7 border-[#CCFBF1] bg-[#F0FDFA] text-xs text-[#0D9488] hover:bg-[#CCFBF1] hover:text-[#0F766E]",
+              "h-7 border-primary/20 bg-accent text-xs text-primary hover:bg-accent hover:text-primary/80",
               compact ? "w-7 px-0" : "px-2"
             )}
           />
@@ -168,7 +168,7 @@ export function CompleteFollowUpDialog({
           />
 
           {scheduleNext && (
-            <div className="space-y-4 rounded-lg border border-[#F3F4F6] bg-[#F9FAFB] p-3">
+            <div className="space-y-4 rounded-lg border border-border/50 bg-card/50 p-3">
               <Controller
                 control={control}
                 name="next.scheduledAt"

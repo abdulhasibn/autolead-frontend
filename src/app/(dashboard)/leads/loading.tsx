@@ -14,8 +14,8 @@ export default function LeadsLoading() {
         <Skeleton className="h-9 w-64 rounded-lg bg-border" />
         <Skeleton className="h-9 w-48 rounded-lg bg-border" />
       </div>
-      <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
-        <div className="h-10 border-b border-[#F3F4F6] bg-[#F9FAFB]" />
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="h-10 border-b border-border/50 bg-card/50" />
         <div className="divide-y divide-[#F3F4F6]">
           {Array.from({ length: 8 }, (_, i) => (
             <div key={i} className="flex items-center gap-3 px-4 py-3">

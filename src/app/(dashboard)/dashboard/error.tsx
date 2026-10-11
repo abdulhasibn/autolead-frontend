@@ -23,9 +23,9 @@ export default function DashboardError({
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] text-center px-4">
-      <div className="w-12 h-12 rounded-full bg-[#FEE2E2] flex items-center justify-center mb-4">
+      <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
         <svg
-          className="w-6 h-6 text-[#DC2626]"
+          className="w-6 h-6 text-destructive"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -38,10 +38,10 @@ export default function DashboardError({
           />
         </svg>
       </div>
-      <h2 className="text-base font-semibold text-[#111827] mb-1">
+      <h2 className="text-base font-semibold text-foreground mb-1">
         Failed to load dashboard
       </h2>
-      <p className="text-sm text-[#6B7280] max-w-sm mb-5">{message}</p>
+      <p className="text-sm text-muted-foreground max-w-sm mb-5">{message}</p>
       <Button onClick={reset}>Try again</Button>
     </div>
   )

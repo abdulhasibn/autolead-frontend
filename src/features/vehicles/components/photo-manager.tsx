@@ -160,13 +160,13 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
 
   function pendingTile(u: PendingUpload, className?: string) {
     return (
-      <div key={u.key} className={cn("relative overflow-hidden rounded-lg bg-[#F1F5F9]", className)}>
+      <div key={u.key} className={cn("relative overflow-hidden rounded-lg bg-muted", className)}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={u.previewUrl} alt="" className="size-full object-cover opacity-60" />
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/30 text-white">
           <Loader2 className="size-5 animate-spin" />
-          <div className="h-1 w-2/3 overflow-hidden rounded-full bg-white/30">
-            <div className="h-full bg-white transition-all" style={{ width: `${Math.round(u.progress * 100)}%` }} />
+          <div className="h-1 w-2/3 overflow-hidden rounded-full bg-card/30">
+            <div className="h-full bg-card transition-all" style={{ width: `${Math.round(u.progress * 100)}%` }} />
           </div>
         </div>
       </div>
@@ -193,7 +193,7 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
             type="button"
             onClick={() => setToDelete(photo)}
             aria-label={`Delete ${label}`}
-            className="absolute top-1.5 right-1.5 rounded-md bg-white/90 p-1 text-[#DC2626] opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+            className="absolute top-1.5 right-1.5 rounded-md bg-card/90 p-1 text-destructive opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
           >
             <Trash2 className="size-3.5" />
           </button>
@@ -221,15 +221,15 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-[#111827]">
+          <p className="text-sm font-semibold text-foreground">
             Standard angles{" "}
-            <span className="font-mono-data font-normal text-[#6B7280]">
+            <span className="font-mono-data font-normal text-muted-foreground">
               {covered} / {STANDARD_ANGLES.length}
             </span>
           </p>
-          <div className="mt-1.5 h-1.5 w-48 overflow-hidden rounded-full bg-[#F3F4F6]">
+          <div className="mt-1.5 h-1.5 w-48 overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full bg-[#0D9488] transition-all"
+              className="h-full rounded-full bg-primary transition-all"
               style={{ width: `${(covered / STANDARD_ANGLES.length) * 100}%` }}
             />
           </div>
@@ -258,8 +258,8 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
               onClick={() => pick(angle)}
               {...dropProps(angle)}
               className={cn(
-                "flex aspect-[4/3] flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed text-[#9CA3AF] transition-colors hover:border-[#0D9488] hover:bg-[#F0FDFA] hover:text-[#0D9488]",
-                dragOver === angle ? "border-[#0D9488] bg-[#F0FDFA] text-[#0D9488]" : "border-[#D1D5DB]"
+                "flex aspect-[4/3] flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed text-subtle-foreground transition-colors hover:border-primary hover:bg-accent hover:text-primary",
+                dragOver === angle ? "border-primary bg-accent text-primary" : "border-border"
               )}
             >
               <ImagePlus className="size-5" />
@@ -271,14 +271,14 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-semibold text-[#111827]">
-          More photos <span className="font-mono-data font-normal text-[#6B7280]">{more.length}</span>
+        <p className="mb-2 text-sm font-semibold text-foreground">
+          More photos <span className="font-mono-data font-normal text-muted-foreground">{more.length}</span>
         </p>
         <div
           {...dropProps("other")}
           className={cn(
             "grid grid-cols-3 gap-3 rounded-lg sm:grid-cols-6",
-            dragOver === "other" && "bg-[#F0FDFA] ring-2 ring-[#0D9488] ring-offset-4"
+            dragOver === "other" && "bg-accent ring-2 ring-[#0D9488] ring-offset-4"
           )}
         >
           {more.map((m) => (
@@ -290,7 +290,7 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
           <button
             type="button"
             onClick={() => pick("other")}
-            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[#D1D5DB] text-[#9CA3AF] hover:border-[#0D9488] hover:bg-[#F0FDFA] hover:text-[#0D9488]"
+            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border text-subtle-foreground hover:border-primary hover:bg-accent hover:text-primary"
           >
             <ImagePlus className="size-5" />
             <span className="text-[11px] font-semibold">Add or drop</span>

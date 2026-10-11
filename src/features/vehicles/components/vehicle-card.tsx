@@ -8,7 +8,7 @@ import { VehicleStatusBadge } from "./vehicle-status-badge"
 
 function SpecChip({ icon: Icon, children }: { icon: typeof Gauge; children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 backdrop-blur-sm">
+    <span className="inline-flex items-center gap-1 rounded-full bg-card/15 px-2 py-0.5 backdrop-blur-sm">
       <Icon aria-hidden className="size-3" />
       {children}
     </span>
@@ -24,7 +24,7 @@ export function VehicleCard({ vehicle, now }: { vehicle: VehicleDto; now: Date }
   return (
     <Link
       href={`/vehicles/${vehicle.id}`}
-      className="group relative block aspect-[4/5] overflow-hidden rounded-2xl bg-[#0F172A] shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-[#14B8A6] focus-visible:outline-none"
+      className="group relative block aspect-[4/5] overflow-hidden rounded-2xl bg-[#0F172A] shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
     >
       {vehicle.frontImageUrl ? (
         // Signed, short-lived URL: skip the Next image cache.
@@ -58,7 +58,7 @@ export function VehicleCard({ vehicle, now }: { vehicle: VehicleDto; now: Date }
 
       <VehicleStatusBadge status={vehicle.status} variant="overlay" className="absolute top-3 left-3" />
       {vehicle.linkedLeadCount > 0 && (
-        <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-[#0D9488] px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm">
+        <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm">
           <Users2 aria-hidden className="size-3" />
           {vehicle.linkedLeadCount} {vehicle.linkedLeadCount === 1 ? "lead" : "leads"}
         </span>
@@ -70,7 +70,7 @@ export function VehicleCard({ vehicle, now }: { vehicle: VehicleDto; now: Date }
             <h3 className="truncate text-base leading-tight font-bold drop-shadow">{title}</h3>
             <p className="truncate text-xs text-white/70">{vehicle.variantName ?? " "}</p>
           </div>
-          <span className="font-mono-data shrink-0 rounded bg-white px-1.5 py-0.5 text-[10px] font-bold tracking-[0.06em] text-[#111827] shadow">
+          <span className="font-mono-data shrink-0 rounded bg-card px-1.5 py-0.5 text-[10px] font-bold tracking-[0.06em] text-foreground shadow">
             {formatPlate(vehicle.registrationNumber)}
           </span>
         </div>

@@ -112,10 +112,10 @@ export const PREFERRED_YEAR_MAX = 2100
 
 /** Pill colours per match outcome; reuses the lead status palette. */
 export const MATCH_OUTCOME_CLASSES: Record<MatchOutcome, string> = {
-  match: "bg-[#DCFCE7] text-[#15803D]",
-  partial: "bg-[#FEF3C7] text-[#D97706]",
-  miss: "bg-[#FEE2E2] text-[#DC2626]",
-  unknown: "bg-[#F3F4F6] text-[#6B7280]",
+  match: "bg-success-muted text-success",
+  partial: "bg-warning-muted text-warning",
+  miss: "bg-destructive/10 text-destructive",
+  unknown: "bg-muted text-muted-foreground",
 }
 
 /** Score bands: 80+ good, 60–79 fair, below 60 poor. */
@@ -141,12 +141,12 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
 
 /** Pill colors for each status; matches the dashboard palette. */
 export const LEAD_STATUS_BADGE_CLASSES: Record<LeadStatus, string> = {
-  new: "bg-[#DBEAFE] text-[#1D4ED8]",
-  not_now: "bg-[#FEF3C7] text-[#D97706]",
-  booking_confirmed: "bg-[#CCFBF1] text-[#0F766E]",
-  converted: "bg-[#DCFCE7] text-[#15803D]",
-  lost: "bg-[#FEE2E2] text-[#DC2626]",
-  vehicle_unavailable: "bg-[#F3F4F6] text-[#6B7280]",
+  new: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  not_now: "bg-warning-muted text-warning",
+  booking_confirmed: "bg-accent text-primary",
+  converted: "bg-success-muted text-success",
+  lost: "bg-destructive/10 text-destructive",
+  vehicle_unavailable: "bg-muted text-muted-foreground",
 }
 
 export const LEAD_SOURCE_LABELS: Record<LeadSource, string> = {

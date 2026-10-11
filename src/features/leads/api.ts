@@ -8,6 +8,7 @@ import type {
   LeadReadModel,
   LeadStatus,
   LeadStatusHistoryItem,
+  LeadVehicleMatches,
   VehicleLeadMatches,
 } from "./types"
 import type {
@@ -136,5 +137,26 @@ export async function getVehicleLeadMatches(
   const qs = query.toString()
   return serverApiClient.get<VehicleLeadMatches>(
     `/leads/vehicle-matches/${vehicleId}${qs ? `?${qs}` : ""}`
+  )
+}
+
+export interface LeadVehicleMatchesParams {
+  /** Lowest score a suggested car may have (API default 60). */
+  minScore?: number
+  /** Most suggested cars returned (API default 10, max 50). */
+  limit?: number
+}
+
+/** Linked car scored against the lead, plus suggested cars from the same showroom. */
+export async function getLeadVehicleMatches(
+  leadId: string,
+  params: LeadVehicleMatchesParams = {}
+): Promise<LeadVehicleMatches> {
+  const query = new URLSearchParams()
+  if (params.minScore != null) query.set("minScore", String(params.minScore))
+  if (params.limit != null) query.set("limit", String(params.limit))
+  const qs = query.toString()
+  return serverApiClient.get<LeadVehicleMatches>(
+    `/leads/${leadId}/vehicle-matches${qs ? `?${qs}` : ""}`
   )
 }

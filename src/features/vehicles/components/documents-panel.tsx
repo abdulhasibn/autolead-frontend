@@ -117,14 +117,14 @@ export function DocumentsPanel({ vehicleId, documents, canDelete }: DocumentsPan
       />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-xs text-[#6B7280]">
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Lock className="size-3.5" />
           Internal only. Never shown to buyers.
         </p>
         <div className="flex items-center gap-2">
           <OptionSelect
             aria-label="Document type"
-            className="h-8 w-44 bg-white"
+            className="h-8 w-44 bg-card"
             value={docType}
             onValueChange={(v) => v && setDocType(v as DocumentType)}
             options={TYPE_OPTIONS}
@@ -136,7 +136,7 @@ export function DocumentsPanel({ vehicleId, documents, canDelete }: DocumentsPan
         </div>
       </div>
 
-      <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-[#F3F4F6] text-sm">
+      <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-border/50 text-sm">
         {documents.map((doc) => {
           const isPdf = doc.storagePath.toLowerCase().endsWith(".pdf")
           const Icon = isPdf ? FileText : FileImage
@@ -146,15 +146,15 @@ export function DocumentsPanel({ vehicleId, documents, canDelete }: DocumentsPan
               <span
                 className={
                   isPdf
-                    ? "flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#FEF2F2] text-[#DC2626]"
+                    ? "flex size-8 shrink-0 items-center justify-center rounded-lg bg-destructive/5 text-destructive"
                     : "flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] text-[#2563EB]"
                 }
               >
                 <Icon className="size-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-[#111827]">{doc.fileName ?? typeLabel}</p>
-                <p className="text-xs text-[#9CA3AF]">
+                <p className="truncate font-medium text-foreground">{doc.fileName ?? typeLabel}</p>
+                <p className="text-xs text-subtle-foreground">
                   {typeLabel} · {formatDate(doc.uploadedAt)}
                 </p>
               </div>
@@ -162,7 +162,7 @@ export function DocumentsPanel({ vehicleId, documents, canDelete }: DocumentsPan
                 href={doc.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-lg px-2 py-1 text-xs font-semibold text-[#0D9488] hover:bg-[#F0FDFA]"
+                className="rounded-lg px-2 py-1 text-xs font-semibold text-primary hover:bg-accent"
               >
                 Open
               </a>
@@ -171,7 +171,7 @@ export function DocumentsPanel({ vehicleId, documents, canDelete }: DocumentsPan
                   type="button"
                   onClick={() => setToDelete(doc)}
                   aria-label={`Delete ${doc.fileName ?? typeLabel}`}
-                  className="rounded-lg p-1.5 text-[#9CA3AF] hover:bg-[#FEF2F2] hover:text-[#DC2626]"
+                  className="rounded-lg p-1.5 text-subtle-foreground hover:bg-destructive/5 hover:text-destructive"
                 >
                   <Trash2 className="size-3.5" />
                 </button>
@@ -182,21 +182,21 @@ export function DocumentsPanel({ vehicleId, documents, canDelete }: DocumentsPan
 
         {uploading && (
           <li className="flex items-center gap-3 px-3 py-2.5">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-[#F0FDFA] text-[#0D9488]">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-accent text-primary">
               <Loader2 className="size-4 animate-spin" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-medium text-[#111827]">{uploading.name}</p>
-              <div className="mt-1 h-1 w-40 overflow-hidden rounded-full bg-[#F3F4F6]">
-                <div className="h-full bg-[#0D9488] transition-all" style={{ width: `${Math.round(uploading.progress * 100)}%` }} />
+              <p className="truncate font-medium text-foreground">{uploading.name}</p>
+              <div className="mt-1 h-1 w-40 overflow-hidden rounded-full bg-muted">
+                <div className="h-full bg-primary transition-all" style={{ width: `${Math.round(uploading.progress * 100)}%` }} />
               </div>
             </div>
           </li>
         )}
 
         {missing.map((type) => (
-          <li key={type} className="flex items-center gap-3 px-3 py-2.5 text-[#9CA3AF]">
-            <span className="flex size-8 items-center justify-center rounded-lg border border-dashed border-[#D1D5DB]">
+          <li key={type} className="flex items-center gap-3 px-3 py-2.5 text-subtle-foreground">
+            <span className="flex size-8 items-center justify-center rounded-lg border border-dashed border-border">
               <Plus className="size-4" />
             </span>
             <div className="flex-1">
@@ -207,7 +207,7 @@ export function DocumentsPanel({ vehicleId, documents, canDelete }: DocumentsPan
               type="button"
               onClick={() => pick(type)}
               disabled={uploading !== null}
-              className="rounded-lg px-2 py-1 text-xs font-semibold text-[#0D9488] hover:bg-[#F0FDFA] disabled:opacity-50"
+              className="rounded-lg px-2 py-1 text-xs font-semibold text-primary hover:bg-accent disabled:opacity-50"
             >
               Add
             </button>

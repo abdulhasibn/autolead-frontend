@@ -46,7 +46,7 @@ function fromFollowUp(item: FollowUpReadModel): TimelineEntry | null {
     return {
       key: `follow-up-${item.id}`,
       at: item.completedAt,
-      dot: "bg-[#0D9488]",
+      dot: "bg-primary",
       title:
         item.outcome && item.outcome !== "done"
           ? `${task} done · ${FOLLOW_UP_OUTCOME_LABELS[item.outcome]}`
@@ -60,7 +60,7 @@ function fromFollowUp(item: FollowUpReadModel): TimelineEntry | null {
     return {
       key: `follow-up-${item.id}`,
       at: item.cancelledAt,
-      dot: "bg-[#9CA3AF]",
+      dot: "bg-border",
       title: `${task} cancelled`,
       actor: item.cancelledByName,
       detail: due,
@@ -88,7 +88,7 @@ export function LeadHistoryTimeline({
   }
 
   return (
-    <ol className="relative ml-1 space-y-5 border-l border-[#E5E7EB] pl-5 text-sm">
+    <ol className="relative ml-1 space-y-5 border-l border-border pl-5 text-sm">
       {entries.map((entry) => (
         <li key={entry.key} className="relative">
           <span
@@ -98,13 +98,13 @@ export function LeadHistoryTimeline({
               entry.dot
             )}
           />
-          <p className="font-semibold text-[#111827]">{entry.title}</p>
-          <p className="text-xs text-[#9CA3AF]">
+          <p className="font-semibold text-foreground">{entry.title}</p>
+          <p className="text-xs text-subtle-foreground">
             {entry.actor ?? "System"} · {formatDateTime(entry.at)}
             {entry.detail && ` · ${entry.detail}`}
           </p>
           {entry.notes && (
-            <p className="mt-1 rounded-lg bg-[#F9FAFB] px-3 py-2 text-xs whitespace-pre-wrap text-[#4B5563]">
+            <p className="mt-1 rounded-lg bg-card/50 px-3 py-2 text-xs whitespace-pre-wrap text-muted-foreground">
               {entry.notes}
             </p>
           )}

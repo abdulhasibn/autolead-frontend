@@ -53,8 +53,8 @@ export default async function LeadsPage({
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#111827]">Leads</h1>
-          <p className="mt-0.5 text-sm text-[#6B7280]">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Leads</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             {resultCount} {resultCount === 1 ? "lead" : "leads"}
             {hasFilters ? " match the filters" : ""}
           </p>
@@ -65,12 +65,12 @@ export default async function LeadsPage({
       <LeadsToolbar params={params} vehicles={vehicles} />
 
       {leads.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-white py-16 text-center">
-          <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-[#F0FDFA]">
-            <Users2 className="size-5 text-[#0D9488]" />
+        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card py-16 text-center">
+          <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-accent">
+            <Users2 className="size-5 text-primary" />
           </div>
-          <p className="text-sm font-semibold text-[#111827]">No leads found</p>
-          <p className="text-xs text-[#9CA3AF]">
+          <p className="text-sm font-semibold text-foreground">No leads found</p>
+          <p className="text-xs text-subtle-foreground">
             {hasFilters
               ? "Try a different search or clear the filters."
               : "Create your first lead to get started."}
@@ -82,7 +82,7 @@ export default async function LeadsPage({
 
       {params.q ? (
         searchTruncated && (
-          <p className="text-xs text-[#9CA3AF]">
+          <p className="text-xs text-subtle-foreground">
             Search covers the {LEADS_SEARCH_SCAN_LIMIT} most recent leads.
             Narrow it with the status or vehicle filter.
           </p>

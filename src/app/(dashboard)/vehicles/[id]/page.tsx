@@ -65,7 +65,7 @@ async function items<T>(load: () => Promise<{ items: T[] }>): Promise<T[]> {
   }
 }
 
-const EMPTY = <span className="text-[#D1D5DB]">—</span>
+const EMPTY = <span className="text-subtle-foreground">—</span>
 
 export default async function VehicleDetailPage({
   params,
@@ -103,7 +103,7 @@ export default async function VehicleDetailPage({
 
       <Link
         href="/vehicles"
-        className="inline-flex items-center gap-1 text-sm font-medium text-[#6B7280] transition-colors hover:text-[#0D9488]"
+        className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
         <ArrowLeft className="size-4" />
         All vehicles
@@ -112,23 +112,23 @@ export default async function VehicleDetailPage({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 space-y-1.5">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-[#111827]">{title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
             <VehicleStatusBadge status={vehicle.status} />
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-[#6B7280]">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             {vehicle.variantName && (
               <>
                 <span>{vehicle.variantName}</span>
-                <span aria-hidden className="text-[#D1D5DB]">·</span>
+                <span aria-hidden className="text-subtle-foreground">·</span>
               </>
             )}
             <NumberPlate registration={vehicle.registrationNumber} className="text-xs" />
             {age && (
               <>
-                <span aria-hidden className="text-[#D1D5DB]">·</span>
+                <span aria-hidden className="text-subtle-foreground">·</span>
                 <span>
                   In stock{" "}
-                  <b className={age.aging ? "text-[#B45309]" : "text-[#111827]"}>
+                  <b className={age.aging ? "text-warning" : "text-foreground"}>
                     {age.days} {age.days === 1 ? "day" : "days"}
                   </b>
                 </span>
@@ -186,13 +186,13 @@ export default async function VehicleDetailPage({
             content: (
               <div className="grid gap-6 lg:grid-cols-3">
                 <div className="space-y-2 lg:col-span-2">
-                  <h3 className="text-[11px] font-medium tracking-wide text-[#9CA3AF] uppercase">Description</h3>
+                  <h3 className="text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">Description</h3>
                   {vehicle.description ? (
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap text-[#374151]">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
                       {vehicle.description}
                     </p>
                   ) : (
-                    <p className="text-sm text-[#9CA3AF]">No description yet. Use Edit details to add one.</p>
+                    <p className="text-sm text-subtle-foreground">No description yet. Use Edit details to add one.</p>
                   )}
                 </div>
                 <dl className="grid grid-cols-2 gap-4">
@@ -204,7 +204,7 @@ export default async function VehicleDetailPage({
                   </Detail>
                   <Detail label="Added">{formatDate(vehicle.createdAt)}</Detail>
                   <Detail label="Last updated">
-                    <span className="text-[#6B7280]">{formatDateTime(vehicle.updatedAt)}</span>
+                    <span className="text-muted-foreground">{formatDateTime(vehicle.updatedAt)}</span>
                   </Detail>
                 </dl>
               </div>
@@ -225,7 +225,7 @@ export default async function VehicleDetailPage({
           {
             id: "leads",
             label: "Leads",
-            count: vehicle.linkedLeadCount,
+            count: matches ? matches.linked.length : leads.length,
             highlight: true,
             content: matches ? (
               <VehicleMatchesPanel matches={matches} canLink={isVehicleLinkable(vehicle)} />

@@ -59,12 +59,12 @@ export const VEHICLE_STATUS_LABELS: Record<VehicleStatus, string> = {
   dropped: "Dropped",
 }
 
-/** Text colour and dot colour per status; pills sit on photos and on white. */
+/** Text colour and dot colour per status; pills sit on photos and on cards. */
 export const VEHICLE_STATUS_STYLES: Record<VehicleStatus, { text: string; dot: string; soft: string }> = {
-  open: { text: "text-[#047857]", dot: "bg-[#10B981]", soft: "bg-[#ECFDF5]" },
-  linked: { text: "text-[#2563EB]", dot: "bg-[#3B82F6]", soft: "bg-[#EFF6FF]" },
-  sold: { text: "text-[#7C3AED]", dot: "bg-[#8B5CF6]", soft: "bg-[#F5F3FF]" },
-  dropped: { text: "text-[#6B7280]", dot: "bg-[#9CA3AF]", soft: "bg-[#F3F4F6]" },
+  open: { text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-500", soft: "bg-emerald-50 dark:bg-emerald-900/20" },
+  linked: { text: "text-blue-600 dark:text-blue-400", dot: "bg-blue-500", soft: "bg-blue-50 dark:bg-blue-900/20" },
+  sold: { text: "text-violet-700 dark:text-violet-400", dot: "bg-violet-500", soft: "bg-violet-50 dark:bg-violet-900/20" },
+  dropped: { text: "text-muted-foreground", dot: "bg-subtle-foreground", soft: "bg-muted" },
 }
 
 export const FUEL_TYPE_LABELS: Record<FuelType, string> = {

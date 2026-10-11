@@ -15,10 +15,13 @@ const REFRESH_BUFFER_MS = 60_000
 const DEFAULT_TOKEN_TTL_MS = 15 * 60 * 1000
 
 async function refreshAccessToken(refreshToken: string) {
+  const signal = AbortSignal.timeout(8_000)
+
   const res = await fetch(`${env.API_BASE_URL}/auth/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refreshToken }),
+    signal,
   })
   if (!res.ok) throw new Error("RefreshTokenError")
   const data = (await res.json()) as {
@@ -29,6 +32,7 @@ async function refreshAccessToken(refreshToken: string) {
 
   const meRes = await fetch(`${env.API_BASE_URL}/auth/me`, {
     headers: { Authorization: `Bearer ${data.accessToken}` },
+    signal,
   })
   const fullName = meRes.ok ? ((await meRes.json()) as { fullName: string }).fullName : undefined
 

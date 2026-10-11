@@ -17,7 +17,7 @@ export default function DashboardLoading() {
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="bg-white rounded-xl border border-[#E5E7EB] p-4 space-y-3"
+            className="bg-card rounded-xl border border-border p-4 space-y-3"
           >
             <Skeleton className="h-3 w-20 bg-muted rounded" />
             <Skeleton className="h-8 w-16 bg-border rounded" />
