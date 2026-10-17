@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Plus_Jakarta_Sans } from "next/font/google"
 import { Toaster } from "@/components/ui/sonner"
 import { Providers } from "@/lib/providers"
@@ -16,6 +16,17 @@ export const metadata: Metadata = {
     template: "%s | Wheels Experts",
   },
   description: "Car showroom sales management platform",
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Lets the app draw under the notch; the shell pads with safe-area insets.
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F3F4F6" },
+    { media: "(prefers-color-scheme: dark)", color: "#0F1A18" },
+  ],
 }
 
 export default function RootLayout({
@@ -39,7 +50,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full">
         <Providers>{children}</Providers>
-        <Toaster richColors closeButton position="top-right" />
+        <Toaster richColors closeButton />
       </body>
     </html>
   )

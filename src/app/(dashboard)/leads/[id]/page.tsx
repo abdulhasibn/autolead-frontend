@@ -10,7 +10,10 @@ import {
   Sparkles,
   User,
 } from "lucide-react"
+import { CollapsibleInfoCard } from "@/components/collapsible-info-card"
+import { ContactActions } from "@/components/contact-actions"
 import { Detail, InfoCard } from "@/components/info-card"
+import { MobileActionBar } from "@/components/mobile-action-bar"
 import { getMakes } from "@/features/catalog/api"
 import {
   getLead,
@@ -91,16 +94,16 @@ export default async function LeadDetailPage({
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-4">
           <span
             aria-hidden
             className="flex size-12 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-accent text-lg font-semibold text-primary"
           >
             {lead.contactFullName.charAt(0).toUpperCase()}
           </span>
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <div className="min-w-0 space-y-1">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h1 className="text-xl font-bold tracking-tight break-words text-foreground sm:text-2xl">
                 {lead.contactFullName}
               </h1>
               <LeadStatusBadge status={lead.status} />
@@ -111,7 +114,13 @@ export default async function LeadDetailPage({
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <ContactActions
+          phone={lead.contactPhone}
+          email={lead.contactEmail}
+          name={lead.contactFullName}
+          className="w-full md:hidden"
+        />
+        <MobileActionBar>
           <ScheduleFollowUpDialog leadId={lead.id} disabled={closed} />
           <LinkVehicleDialog
             leadId={lead.id}
@@ -122,11 +131,11 @@ export default async function LeadDetailPage({
           <ChangeStatusDialog
             lead={{ id: lead.id, status: lead.status, vehicleId: lead.vehicleId }}
           />
-        </div>
+        </MobileActionBar>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <InfoCard title="Contact" icon={User}>
+        <InfoCard title="Contact" icon={User} className="max-md:hidden">
           <dl className="space-y-4">
             <Detail label="Phone">
               <a href={`tel:${lead.contactPhone}`} className={linkClass}>
@@ -145,7 +154,7 @@ export default async function LeadDetailPage({
           </dl>
         </InfoCard>
 
-        <InfoCard title="Vehicle" icon={Car}>
+        <InfoCard title="Vehicle" icon={Car} className="max-lg:order-2">
           <dl className="space-y-4">
             <Detail label="Linked vehicle">
               {lead.vehicleId ? (
@@ -169,6 +178,7 @@ export default async function LeadDetailPage({
         <InfoCard
           title={openFollowUps.length > 1 ? `Follow-ups (${openFollowUps.length})` : "Follow-ups"}
           icon={CalendarClock}
+          className="max-lg:order-1"
         >
           <FollowUpActionItems leadId={lead.id} items={openFollowUps} />
         </InfoCard>
@@ -177,16 +187,16 @@ export default async function LeadDetailPage({
           lead={lead}
           makes={makes}
           closed={closed}
-          className="lg:col-span-3"
+          className="max-lg:order-4 lg:col-span-3"
         />
 
         {vehicleMatches && (
-          <InfoCard title="Matching cars" icon={Sparkles} className="lg:col-span-3">
+          <InfoCard title="Matching cars" icon={Sparkles} className="max-lg:order-3 lg:col-span-3">
             <LeadMatchesPanel lead={lead} matches={vehicleMatches} canLink={canLink} />
           </InfoCard>
         )}
 
-        <InfoCard title="Requirements" icon={ClipboardList} className="lg:col-span-3">
+        <CollapsibleInfoCard title="Requirements" icon={<ClipboardList />} className="max-lg:order-5 lg:col-span-3">
           <dl className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <Detail label="Purchase timeline">{lead.purchaseTimeline ?? EMPTY}</Detail>
             <Detail label="Finance required">{formatYesNo(lead.financeRequired)}</Detail>
@@ -198,14 +208,14 @@ export default async function LeadDetailPage({
               <span className="text-muted-foreground">{formatDateTime(lead.updatedAt)}</span>
             </Detail>
           </dl>
-        </InfoCard>
+        </CollapsibleInfoCard>
 
-        <InfoCard title="History" icon={History} className="lg:col-span-3">
+        <CollapsibleInfoCard title="History" icon={<History />} className="max-lg:order-6 lg:col-span-3">
           <LeadHistoryTimeline
             statusHistory={statusHistory}
             closedFollowUps={closedFollowUps}
           />
-        </InfoCard>
+        </CollapsibleInfoCard>
       </div>
     </div>
   )

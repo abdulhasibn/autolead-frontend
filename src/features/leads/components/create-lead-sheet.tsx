@@ -166,7 +166,7 @@ export function CreateLeadSheet({
       </SheetTrigger>
 
       <SheetContent className="w-full gap-0 data-[side=right]:sm:max-w-xl">
-        <SheetHeader className="border-b border-border/50 px-5 py-4">
+        <SheetHeader className="border-b border-border/50 px-4 py-4 sm:px-5">
           <SheetTitle className="text-lg font-semibold">New lead</SheetTitle>
           <SheetDescription className="text-xs">
             Only contact details are required. An existing contact with the same phone number is
@@ -174,7 +174,7 @@ export function CreateLeadSheet({
           </SheetDescription>
           <ol className="mt-3 flex gap-2 text-xs font-medium">
             {STEPS.map((label, i) => (
-              <li key={label} className="flex-1">
+              <li key={label} className={cn("flex-1", i !== step && "max-sm:flex-none")}>
                 <button
                   type="button"
                   aria-current={i === step ? "step" : undefined}
@@ -198,7 +198,7 @@ export function CreateLeadSheet({
                   >
                     {i < step ? <Check className="size-3" /> : i + 1}
                   </span>
-                  <span className="truncate">{label}</span>
+                  <span className={cn("truncate", i !== step && "max-sm:hidden")}>{label}</span>
                 </button>
               </li>
             ))}
@@ -213,7 +213,7 @@ export function CreateLeadSheet({
             if (step < LAST_STEP) void next()
             else createNow()
           }}
-          className="flex-1 space-y-6 overflow-y-auto p-5"
+          className="flex-1 space-y-6 overflow-y-auto overscroll-contain p-4 sm:p-5"
         >
           {step === 0 && (
             <>
@@ -221,13 +221,13 @@ export function CreateLeadSheet({
                 <SectionTitle>Who</SectionTitle>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <FormField id="fullName" label="Full name *" error={errors.fullName?.message}>
-                    <Input id="fullName" autoComplete="off" autoFocus aria-invalid={!!errors.fullName} {...register("fullName")} />
+                    <Input id="fullName" autoComplete="off" autoCapitalize="words" enterKeyHint="next" autoFocus aria-invalid={!!errors.fullName} {...register("fullName")} />
                   </FormField>
                   <FormField id="phone" label="Phone *" error={errors.phone?.message}>
-                    <Input id="phone" type="tel" placeholder="+919876543210" aria-invalid={!!errors.phone} {...register("phone")} />
+                    <Input id="phone" type="tel" autoComplete="off" enterKeyHint="next" placeholder="+919876543210" aria-invalid={!!errors.phone} {...register("phone")} />
                   </FormField>
                   <FormField id="email" label="Email" error={errors.email?.message} className="sm:col-span-2">
-                    <Input id="email" type="email" aria-invalid={!!errors.email} {...register("email")} />
+                    <Input id="email" type="email" autoComplete="off" enterKeyHint="next" aria-invalid={!!errors.email} {...register("email")} />
                   </FormField>
                 </div>
               </section>
@@ -343,7 +343,7 @@ export function CreateLeadSheet({
           )}
         </form>
 
-        <div className="flex items-center justify-between gap-2 border-t border-border/50 px-5 py-3">
+        <div className="flex items-center justify-between gap-2 border-t border-border/50 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5 sm:pb-3">
           <Button
             type="button"
             variant="ghost"

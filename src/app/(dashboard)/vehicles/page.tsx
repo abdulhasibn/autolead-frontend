@@ -16,7 +16,8 @@ import {
 import type { VehicleStatus } from "@/features/vehicles/types"
 import { earliestExpiry } from "@/features/vehicles/utils"
 import { SignedUrlRefresher } from "@/features/vehicles/components/signed-url-refresher"
-import { VehicleCard } from "@/features/vehicles/components/vehicle-card"
+import { PageHeader } from "@/components/page-header"
+import { VehicleCard, VehicleCardCompact } from "@/features/vehicles/components/vehicle-card"
 import { VehicleFormSheet } from "@/features/vehicles/components/vehicle-form-sheet"
 import { VehicleStatusTabs } from "@/features/vehicles/components/vehicle-status-tabs"
 import { VehiclesPagination } from "@/features/vehicles/components/vehicles-pagination"
@@ -84,16 +85,16 @@ export default async function VehiclesPage({
         expiresAt={earliestExpiry(vehicles.map((v) => v.frontImageUrlExpiresAt))}
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Vehicles</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+      <PageHeader
+        title="Vehicles"
+        subtitle={
+          <>
             {resultCount} {resultCount === 1 ? "vehicle" : "vehicles"}
             {hasFilters ? " match the filters" : params.status ? "" : " in inventory"}
-          </p>
-        </div>
-        <VehicleFormSheet mode="create" makes={makes} owners={owners} />
-      </div>
+          </>
+        }
+        action={<VehicleFormSheet mode="create" makes={makes} owners={owners} />}
+      />
 
       <VehicleStatusTabs params={params} counts={counts} />
       <VehiclesToolbar params={params} makes={makes} models={models} />
@@ -110,14 +111,28 @@ export default async function VehiclesPage({
               : "Add your first vehicle to get started."}
           </p>
         </div>
-      ) : params.layout === "table" ? (
-        <VehiclesTable vehicles={vehicles} now={now.toISOString()} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {vehicles.map((vehicle) => (
-            <VehicleCard key={vehicle.id} vehicle={vehicle} now={now} />
-          ))}
-        </div>
+        <>
+          {/* Phones always get the compact list; the grid/table choice applies from sm up. */}
+          <ul className="space-y-2 sm:hidden">
+            {vehicles.map((vehicle) => (
+              <li key={vehicle.id}>
+                <VehicleCardCompact vehicle={vehicle} now={now} />
+              </li>
+            ))}
+          </ul>
+          <div className="hidden sm:block">
+            {params.layout === "table" ? (
+              <VehiclesTable vehicles={vehicles} now={now.toISOString()} />
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                {vehicles.map((vehicle) => (
+                  <VehicleCard key={vehicle.id} vehicle={vehicle} now={now} />
+                ))}
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {vehiclesPage.total > 0 && (

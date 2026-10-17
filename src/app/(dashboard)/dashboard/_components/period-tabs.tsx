@@ -19,14 +19,15 @@ export function PeriodTabs({ activePeriod }: { activePeriod: DashboardPeriodKey 
   }
 
   return (
-    <Tabs value={activePeriod}>
-      <TabsList variant="accent" aria-label="Dashboard period">
+    <Tabs value={activePeriod} className="max-sm:w-full">
+      <TabsList variant="accent" aria-label="Dashboard period" className="max-sm:w-full">
         {PERIODS.map((period) => (
           <TabsTrigger
             key={period}
             value={period}
             nativeButton={false}
             render={<Link href={buildHref(period)} />}
+            className="max-sm:flex-1 pointer-coarse:min-h-9"
           >
             {PERIOD_LABELS[period]}
           </TabsTrigger>

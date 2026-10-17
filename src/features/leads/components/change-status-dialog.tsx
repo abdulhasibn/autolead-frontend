@@ -95,7 +95,8 @@ export function ChangeStatusDialog({
         render={<Button disabled={nextStatuses.length === 0} />}
       >
         <RefreshCw />
-        Change status
+        <span className="sm:hidden">Status</span>
+        <span className="max-sm:hidden">Change status</span>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

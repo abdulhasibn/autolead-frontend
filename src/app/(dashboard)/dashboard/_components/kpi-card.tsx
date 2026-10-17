@@ -26,15 +26,15 @@ export function KpiCard({
   return (
     <div
       className={cn(
-        "bg-card rounded-xl border border-border p-4 flex flex-col gap-3",
+        "bg-card rounded-xl border border-border p-3 sm:p-4 flex flex-col gap-2 sm:gap-3",
         className
       )}
     >
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
         {label}
       </p>
-      <div className="flex items-end justify-between gap-2">
-        <span className="font-mono-data text-3xl font-bold text-foreground leading-none">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <span className="font-mono-data text-2xl font-bold text-foreground leading-none sm:text-3xl">
           {display ?? (value ?? "—")}
         </span>
         {delta && delta.direction !== "neutral" && (

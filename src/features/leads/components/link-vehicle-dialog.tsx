@@ -68,7 +68,8 @@ export function LinkVehicleDialog({
         render={<Button variant="outline" disabled={disabled} className="border-border bg-card text-foreground hover:border-primary/20 hover:bg-accent hover:text-primary" />}
       >
         <Car />
-        {currentVehicleId ? "Change vehicle" : "Link vehicle"}
+        <span className="sm:hidden">Vehicle</span>
+        <span className="max-sm:hidden">{currentVehicleId ? "Change vehicle" : "Link vehicle"}</span>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

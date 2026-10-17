@@ -1,12 +1,17 @@
 "use client"
 
 import { Toaster as Sonner, type ToasterProps } from "sonner"
+import { useIsMobile } from "@/hooks/use-media-query"
 
 /** App toaster: light only (no dark mode yet), colours from theme tokens. */
 function Toaster(props: ToasterProps) {
+  const isMobile = useIsMobile()
   return (
     <Sonner
       theme="light"
+      // Phones: centred so toasts don't sit on the header's account menu.
+      position={isMobile ? "top-center" : "top-right"}
+      mobileOffset={{ top: "calc(env(safe-area-inset-top) + 0.5rem)" }}
       className="toaster group"
       style={
         {

@@ -207,7 +207,7 @@ export function NotificationDrawer({
             : "Notifications"
         }
         className={cn(
-          "relative inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
+          "relative inline-flex size-8 pointer-coarse:size-10 items-center justify-center rounded-lg transition-colors",
           "text-muted-foreground hover:bg-muted hover:text-foreground"
         )}
       >

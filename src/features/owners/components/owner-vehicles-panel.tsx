@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table"
 import { VEHICLE_STATUS_LABELS } from "@/features/vehicles/constants"
 import type { VehicleDto } from "@/features/vehicles/types"
+import { VehicleCardCompact } from "@/features/vehicles/components/vehicle-card"
 
 interface OwnerVehiclesPanelProps {
   vehicles: VehicleDto[]
@@ -34,8 +35,18 @@ export function OwnerVehiclesPanel({ vehicles }: OwnerVehiclesPanelProps) {
     )
   }
 
+  const now = new Date()
+
   return (
-    <Table>
+    <>
+    <ul className="space-y-2 sm:hidden">
+      {vehicles.map((v) => (
+        <li key={v.id}>
+          <VehicleCardCompact vehicle={v} now={now} />
+        </li>
+      ))}
+    </ul>
+    <Table className="max-sm:hidden">
       <TableHeader className="bg-card/50">
         <TableRow className="border-border/50 hover:bg-transparent">
           <TableHead className={HEAD}>Registration</TableHead>
@@ -71,5 +82,6 @@ export function OwnerVehiclesPanel({ vehicles }: OwnerVehiclesPanelProps) {
         })}
       </TableBody>
     </Table>
+    </>
   )
 }

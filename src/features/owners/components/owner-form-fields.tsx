@@ -31,7 +31,7 @@ export function OwnerFormFields({ register, control, errors }: OwnerFormFieldsPr
         />
       </FormField>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <FormField id="phone" label="Phone (E.164)" error={errors.phone?.message}>
           <Input
             id="phone"
@@ -62,7 +62,7 @@ export function OwnerFormFields({ register, control, errors }: OwnerFormFieldsPr
         />
       </FormField>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <FormField id="city" label="City" error={errors.city?.message}>
           <Input id="city" placeholder="Dubai" {...register("city")} />
         </FormField>

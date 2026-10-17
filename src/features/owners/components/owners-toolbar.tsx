@@ -31,12 +31,13 @@ export function OwnersToolbar({ params }: OwnersToolbarProps) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <InputGroup className="h-9 w-full bg-background sm:w-72">
+      <InputGroup className="h-9 pointer-coarse:h-10 w-full bg-background sm:w-72">
         <InputGroupAddon>
           <Search />
         </InputGroupAddon>
         <InputGroupInput
           type="search"
+          enterKeyHint="search"
           placeholder="Search name or phone"
           aria-label="Search owners"
           value={search}

@@ -31,13 +31,13 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-muted">
+    <div className="h-dvh overflow-hidden bg-muted">
       <Sidebar roles={roles} />
       <div className="flex flex-col h-full overflow-hidden md:ml-[80px]">
         <div className="relative flex-1 min-h-0">
           <ScrollGradient>{children}</ScrollGradient>
           {/* Floating header — no card, just text */}
-          <div className="absolute inset-x-0 top-0 z-20 md:pr-3">
+          <div className="absolute inset-x-0 top-0 z-20 pt-[env(safe-area-inset-top)] md:pr-3">
             <Header notifications={initialNotifications} unreadCount={unreadCount} roles={roles} />
           </div>
         </div>

@@ -130,7 +130,7 @@ export function OwnerCard({ vehicle, owner }: { vehicle: VehicleDto; owner: Owne
             href={`tel:${owner.phone}`}
             title={`Call ${owner.phone}`}
             aria-label={`Call ${owner.fullName}`}
-            className="flex size-8 items-center justify-center rounded-lg border border-border text-primary hover:bg-accent"
+            className="flex size-8 items-center justify-center rounded-lg border border-border text-primary hover:bg-accent pointer-coarse:size-10"
           >
             <Phone className="size-4" />
           </a>
