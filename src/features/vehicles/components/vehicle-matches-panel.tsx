@@ -1,5 +1,8 @@
+"use client"
+
+import { useState } from "react"
 import Link from "next/link"
-import { ChevronRight, Plus, Sparkles, Users2 } from "lucide-react"
+import { ChevronDown, ChevronRight, ChevronUp, Plus, Sparkles, Users2 } from "lucide-react"
 import { LeadStatusBadge } from "@/features/leads/components/lead-status-badge"
 import {
   MatchBreakdownChips,
@@ -75,6 +78,8 @@ function LeadRow({
   )
 }
 
+const INITIAL_SHOW = 3
+
 /**
  * Leads linked to this car scored against it, plus open leads worth calling.
  * Scores are computed per request, so the panel is always current.
@@ -93,6 +98,15 @@ export function VehicleMatchesPanel({
     TRANSMISSION_LABELS[vehicle.transmission] ?? vehicle.transmission,
     `${formatKm(vehicle.kmDriven)} km`,
   ]
+
+  const [showAllLinked, setShowAllLinked] = useState(false)
+  const [showAllSuggested, setShowAllSuggested] = useState(false)
+
+  const visibleLinked = showAllLinked ? linked : linked.slice(0, INITIAL_SHOW)
+  const hiddenLinkedCount = linked.length - INITIAL_SHOW
+
+  const visibleSuggested = showAllSuggested ? suggested : suggested.slice(0, INITIAL_SHOW)
+  const hiddenSuggestedCount = suggested.length - INITIAL_SHOW
 
   return (
     <div className="space-y-6">
@@ -116,28 +130,48 @@ export function VehicleMatchesPanel({
         {linked.length === 0 ? (
           <EmptyRow message="No leads are linked to this car yet." />
         ) : (
-          <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-border/50 text-sm">
-            {linked.map((lead) => (
-              <LeadRow
-                key={lead.id}
-                lead={lead}
-                vehicle={vehicle}
-                action={
-                  lead.match ? (
-                    <Link href={`/leads/${lead.id}`} className={actionClass}>
-                      Open lead
-                      <ChevronRight aria-hidden className="size-3.5" />
-                    </Link>
-                  ) : (
-                    <Link href={`/leads/${lead.id}`} className={actionClass}>
-                      <Plus aria-hidden className="size-3.5" />
-                      Add preference
-                    </Link>
-                  )
-                }
-              />
-            ))}
-          </ul>
+          <>
+            <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-border/50 text-sm">
+              {visibleLinked.map((lead) => (
+                <LeadRow
+                  key={lead.id}
+                  lead={lead}
+                  vehicle={vehicle}
+                  action={
+                    lead.match ? (
+                      <Link href={`/leads/${lead.id}`} className={actionClass}>
+                        Open lead
+                        <ChevronRight aria-hidden className="size-3.5" />
+                      </Link>
+                    ) : (
+                      <Link href={`/leads/${lead.id}`} className={actionClass}>
+                        <Plus aria-hidden className="size-3.5" />
+                        Add preference
+                      </Link>
+                    )
+                  }
+                />
+              ))}
+            </ul>
+            {hiddenLinkedCount > 0 && (
+              <button
+                onClick={() => setShowAllLinked((v) => !v)}
+                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-border/50 py-2 text-xs font-medium text-subtle-foreground transition-colors hover:border-border hover:text-foreground"
+              >
+                {showAllLinked ? (
+                  <>
+                    <ChevronUp className="size-3.5" />
+                    Show less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="size-3.5" />
+                    Show {hiddenLinkedCount} more
+                  </>
+                )}
+              </button>
+            )}
+          </>
         )}
       </section>
 
@@ -149,29 +183,49 @@ export function VehicleMatchesPanel({
         {suggested.length === 0 ? (
           <EmptyRow message="No open leads match this car closely enough yet." />
         ) : (
-          <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-border/50 text-sm">
-            {suggested.map((lead) => (
-              <LeadRow
-                key={lead.id}
-                lead={lead}
-                vehicle={vehicle}
-                action={
-                  canLink ? (
-                    <LinkSuggestedLeadButton
-                      leadId={lead.id}
-                      leadName={lead.contactFullName}
-                      vehicleId={vehicle.id}
-                    />
-                  ) : (
-                    <Link href={`/leads/${lead.id}`} className={actionClass}>
-                      Open lead
-                      <ChevronRight aria-hidden className="size-3.5" />
-                    </Link>
-                  )
-                }
-              />
-            ))}
-          </ul>
+          <>
+            <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-border/50 text-sm">
+              {visibleSuggested.map((lead) => (
+                <LeadRow
+                  key={lead.id}
+                  lead={lead}
+                  vehicle={vehicle}
+                  action={
+                    canLink ? (
+                      <LinkSuggestedLeadButton
+                        leadId={lead.id}
+                        leadName={lead.contactFullName}
+                        vehicleId={vehicle.id}
+                      />
+                    ) : (
+                      <Link href={`/leads/${lead.id}`} className={actionClass}>
+                        Open lead
+                        <ChevronRight aria-hidden className="size-3.5" />
+                      </Link>
+                    )
+                  }
+                />
+              ))}
+            </ul>
+            {hiddenSuggestedCount > 0 && (
+              <button
+                onClick={() => setShowAllSuggested((v) => !v)}
+                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-border/50 py-2 text-xs font-medium text-subtle-foreground transition-colors hover:border-border hover:text-foreground"
+              >
+                {showAllSuggested ? (
+                  <>
+                    <ChevronUp className="size-3.5" />
+                    Show less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="size-3.5" />
+                    Show {hiddenSuggestedCount} more
+                  </>
+                )}
+              </button>
+            )}
+          </>
         )}
         {truncated && (
           <p className="text-xs text-subtle-foreground">

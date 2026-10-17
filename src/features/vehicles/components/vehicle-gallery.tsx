@@ -18,7 +18,7 @@ interface VehicleGalleryProps {
 
 /**
  * Bento hero: the cover large, two supporting shots and a "+N" tile that opens
- * the lightbox. Phones get the cover alone with a counter.
+ * the lightbox. Phones get a swipeable full-width carousel instead.
  */
 export function VehicleGallery({
   media,
@@ -27,6 +27,7 @@ export function VehicleGallery({
   dimmed,
 }: VehicleGalleryProps) {
   const [index, setIndex] = useState<number | null>(null);
+  const [slide, setSlide] = useState(0);
   const ordered = orderPhotos(media);
   const photos: LightboxPhoto[] = ordered.map((m, i) => ({
     id: m.id,
@@ -66,8 +67,46 @@ export function VehicleGallery({
 
   return (
     <>
+      {/* Phones: swipe through every photo; tap opens the lightbox. */}
+      <div className="relative -mx-4 sm:hidden">
+        <div
+          className="flex aspect-[4/3] snap-x snap-mandatory overflow-x-auto scrollbar-none"
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            setSlide(Math.round(el.scrollLeft / el.clientWidth));
+          }}
+        >
+          {photos.map((photo, i) => (
+            <button
+              key={photo.id}
+              type="button"
+              onClick={() => setIndex(i)}
+              className="relative w-full shrink-0 snap-center bg-[#0F172A]"
+              aria-label={i === 0 ? `Open photos of ${title}` : `Open ${photo.caption}`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photo.url}
+                alt={i === 0 ? title : ""}
+                loading={i === 0 ? "eager" : "lazy"}
+                className={imgClass}
+              />
+            </button>
+          ))}
+        </div>
+        <span className="pointer-events-none absolute top-3 left-4 rounded-md bg-black/55 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur">
+          {photos[slide]?.caption}
+        </span>
+        {photos.length > 1 && (
+          <span className="pointer-events-none absolute right-4 bottom-3 inline-flex items-center gap-1 rounded-md bg-black/55 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
+            <Images className="size-3.5" />
+            {slide + 1} / {photos.length}
+          </span>
+        )}
+      </div>
+
       {/* On desktop the wrapper stretches to the summary column's height; the grid fills it absolutely so photos don't drive the size. */}
-      <div className="relative h-[260px] sm:h-[400px] lg:h-auto lg:min-h-[400px]">
+      <div className="relative hidden h-[400px] sm:block lg:h-auto lg:min-h-[400px]">
         <div
           className={cn(
             "grid h-full gap-2 overflow-hidden rounded-xl lg:absolute lg:inset-0",
@@ -94,11 +133,6 @@ export function VehicleGallery({
             <span className="absolute top-3 left-3 rounded-md bg-black/55 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur">
               {cover.caption}
             </span>
-            {photos.length > 1 && (
-              <span className="absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-md bg-black/55 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur sm:hidden">
-                <Images className="size-3.5" />1 / {photos.length}
-              </span>
-            )}
           </button>
 
           {side.map((photo, i) => {

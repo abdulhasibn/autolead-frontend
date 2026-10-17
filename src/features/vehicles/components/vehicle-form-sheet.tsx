@@ -347,7 +347,7 @@ export function VehicleFormSheet(props: Props) {
       </SheetTrigger>
 
       <SheetContent className="w-full gap-0 data-[side=right]:sm:max-w-xl">
-        <SheetHeader className="border-b border-border/50 px-5 py-4">
+        <SheetHeader className="border-b border-border/50 px-4 py-4 sm:px-5">
           <SheetTitle className="text-lg font-semibold">
             {isCreate ? "Add vehicle" : `Edit ${formatVehicleTitle(props.vehicle)}`}
           </SheetTitle>
@@ -361,6 +361,7 @@ export function VehicleFormSheet(props: Props) {
                 aria-current={i === step ? "step" : undefined}
                 className={cn(
                   "flex flex-1 items-center gap-1.5",
+                  i !== step && "max-sm:flex-none",
                   i <= step ? "text-primary" : "text-subtle-foreground"
                 )}
               >
@@ -376,7 +377,7 @@ export function VehicleFormSheet(props: Props) {
                 >
                   {i < step ? <Check className="size-3" /> : i + 1}
                 </span>
-                <span className="truncate">{label}</span>
+                <span className={cn("truncate", i !== step && "max-sm:hidden")}>{label}</span>
               </li>
             ))}
           </ol>
@@ -390,7 +391,7 @@ export function VehicleFormSheet(props: Props) {
             if (step < lastFormStep) void next()
             else void handleSubmit(submit)(e)
           }}
-          className="flex-1 space-y-5 overflow-y-auto p-5"
+          className="flex-1 space-y-5 overflow-y-auto overscroll-contain p-4 sm:p-5"
         >
           {step === 0 && (
             <>
@@ -451,6 +452,7 @@ export function VehicleFormSheet(props: Props) {
                   <Input
                     id="registrationNumber"
                     autoComplete="off"
+                    autoCapitalize="characters"
                     placeholder="KL 07 CU 4521"
                     className="font-mono-data tracking-[0.06em] uppercase"
                     aria-invalid={!!errors.registrationNumber}
@@ -631,7 +633,7 @@ export function VehicleFormSheet(props: Props) {
           )}
         </form>
 
-        <div className="flex items-center justify-between gap-2 border-t border-border/50 px-5 py-3">
+        <div className="flex items-center justify-between gap-2 border-t border-border/50 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5 sm:pb-3">
           {step === 3 ? (
             <>
               <span className="text-xs text-subtle-foreground">You can add photos later too.</span>

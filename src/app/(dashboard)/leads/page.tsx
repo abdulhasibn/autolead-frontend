@@ -14,6 +14,8 @@ import {
 } from "@/features/leads/search-params"
 import { getVehicleOptions } from "@/features/leads/vehicle-options"
 import { CreateLeadSheet } from "@/features/leads/components/create-lead-sheet"
+import { PageHeader } from "@/components/page-header"
+import { LeadsCardList } from "@/features/leads/components/leads-card-list"
 import { LeadsPagination } from "@/features/leads/components/leads-pagination"
 import { LeadsTable } from "@/features/leads/components/leads-table"
 import { LeadsToolbar } from "@/features/leads/components/leads-toolbar"
@@ -51,16 +53,16 @@ export default async function LeadsPage({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Leads</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+      <PageHeader
+        title="Leads"
+        subtitle={
+          <>
             {resultCount} {resultCount === 1 ? "lead" : "leads"}
             {hasFilters ? " match the filters" : ""}
-          </p>
-        </div>
-        <CreateLeadSheet vehicles={vehicles} makes={makes} />
-      </div>
+          </>
+        }
+        action={<CreateLeadSheet vehicles={vehicles} makes={makes} />}
+      />
 
       <LeadsToolbar params={params} vehicles={vehicles} />
 
@@ -77,7 +79,14 @@ export default async function LeadsPage({
           </p>
         </div>
       ) : (
-        <LeadsTable leads={leads} vehicleLabels={vehicleLabels} />
+        <>
+          <div className="hidden md:block">
+            <LeadsTable leads={leads} vehicleLabels={vehicleLabels} />
+          </div>
+          <div className="md:hidden">
+            <LeadsCardList leads={leads} vehicleLabels={vehicleLabels} />
+          </div>
+        </>
       )}
 
       {params.q ? (

@@ -1,7 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useSession } from "next-auth/react"
 import {
   LayoutDashboard,
   Users2,
@@ -9,11 +11,13 @@ import {
   UserCheck,
   UserCog,
   Menu,
+  LogOut,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { useUIStore } from "@/stores/ui.store"
+import { useSignOut } from "@/features/auth/use-sign-out"
 import type { UserRole } from "@/types/auth"
 
 interface NavItem {
@@ -161,6 +165,14 @@ export function Sidebar({ roles = [] }: { roles?: UserRole[] }) {
 export function MobileSidebar({ roles = [] }: { roles?: UserRole[] }) {
   const { activeModal, openModal, closeModal } = useUIStore()
   const isOpen = activeModal === "mobile-sidebar"
+  const pathname = usePathname()
+
+  // Close once navigation lands, so the new page isn't hidden behind the drawer.
+  const [lastPath, setLastPath] = useState(pathname)
+  if (pathname !== lastPath) {
+    setLastPath(pathname)
+    if (isOpen) closeModal()
+  }
 
   return (
     <>
@@ -175,7 +187,10 @@ export function MobileSidebar({ roles = [] }: { roles?: UserRole[] }) {
       </Button>
 
       <Sheet open={isOpen} onOpenChange={(v) => !v && closeModal()}>
-        <SheetContent side="left" className="w-64 p-0">
+        <SheetContent
+          side="left"
+          className="gap-0 p-0 data-[side=left]:w-72 data-[side=left]:max-w-[85vw] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+        >
           <SheetHeader className="h-14 border-b border-border px-4 flex flex-row items-center">
             <SheetTitle className="sr-only">Navigation</SheetTitle>
             {/* Inline logo for mobile sheet */}
@@ -207,13 +222,44 @@ export function MobileSidebar({ roles = [] }: { roles?: UserRole[] }) {
               </div>
             </div>
           </SheetHeader>
-          <div className="flex flex-col h-[calc(100%-3.5rem)] overflow-hidden">
-            {/* Render nav with all labels visible in mobile sheet */}
-            <MobileNav roles={roles} />
-          </div>
+          {/* Render nav with all labels visible in mobile sheet */}
+          <MobileNav roles={roles} />
+          <MobileAccount />
         </SheetContent>
       </Sheet>
     </>
+  )
+}
+
+/** Signed-in user and sign-out, kept at the bottom of the drawer within thumb reach. */
+function MobileAccount() {
+  const { data: session } = useSession()
+  const { pending, signOutWith } = useSignOut()
+  const name = session?.user?.name ?? ""
+
+  return (
+    <div className="flex items-center gap-3 border-t border-border px-4 py-3">
+      <span
+        aria-hidden
+        className="flex size-9 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-accent text-sm font-semibold text-primary"
+      >
+        {name.charAt(0).toUpperCase() || "U"}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-foreground">{name}</p>
+        <p className="truncate text-xs text-subtle-foreground">{session?.user?.email}</p>
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+        disabled={pending !== null}
+        onClick={() => signOutWith("local")}
+        aria-label="Sign out"
+      >
+        <LogOut className="size-4" />
+      </Button>
+    </div>
   )
 }
 
@@ -221,7 +267,7 @@ function MobileNav({ roles }: { roles: UserRole[] }) {
   const pathname = usePathname()
 
   return (
-    <nav className="flex-1 overflow-y-auto py-3">
+    <nav className="flex-1 overflow-y-auto overscroll-contain py-3">
       {NAV_GROUPS.map((group) => {
         const visibleItems = group.items.filter(
           (item) => !item.roles || item.roles.some((r) => roles.includes(r))
@@ -242,7 +288,7 @@ function MobileNav({ roles }: { roles: UserRole[] }) {
                     <Link
                       href={item.href}
                       className={cn(
-                        "relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        "relative flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-colors",
                         active
                           ? "bg-accent text-primary"
                           : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -251,7 +297,7 @@ function MobileNav({ roles }: { roles: UserRole[] }) {
                       {active && (
                         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
                       )}
-                      <Icon className={cn("shrink-0 h-4 w-4", active && "text-primary")} />
+                      <Icon className={cn("shrink-0 size-[18px]", active && "text-primary")} />
                       {item.label}
                     </Link>
                   </li>

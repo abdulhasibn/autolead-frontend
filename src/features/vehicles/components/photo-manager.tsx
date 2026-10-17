@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { ImagePlus, Loader2, Trash2, Upload } from "lucide-react"
+import { Camera, ImagePlus, Loader2, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { useApiError } from "@/hooks/use-api-error"
@@ -50,6 +50,7 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
   const [deleting, startDelete] = useTransition()
   const [dragOver, setDragOver] = useState<MediaCategory | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const cameraRef = useRef<HTMLInputElement>(null)
   const targetCategory = useRef<MediaCategory>("other")
 
   // Server props win once they include a freshly uploaded photo.
@@ -127,6 +128,12 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
     inputRef.current?.click()
   }
 
+  /** Phones: open the rear camera straight away instead of the file chooser. */
+  function shoot(category: MediaCategory) {
+    targetCategory.current = category
+    cameraRef.current?.click()
+  }
+
   function dropProps(category: MediaCategory) {
     return {
       onDragOver: (e: React.DragEvent) => {
@@ -193,7 +200,7 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
             type="button"
             onClick={() => setToDelete(photo)}
             aria-label={`Delete ${label}`}
-            className="absolute top-1.5 right-1.5 rounded-md bg-card/90 p-1 text-destructive opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+            className="absolute top-1.5 right-1.5 rounded-md bg-card/90 p-1 text-destructive opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:p-1.5 pointer-coarse:opacity-100"
           >
             <Trash2 className="size-3.5" />
           </button>
@@ -218,6 +225,18 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
           e.target.value = ""
         }}
       />
+      <input
+        ref={cameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="sr-only"
+        tabIndex={-1}
+        onChange={(e) => {
+          if (e.target.files) void upload(e.target.files, targetCategory.current)
+          e.target.value = ""
+        }}
+      />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -234,10 +253,17 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
             />
           </div>
         </div>
-        <Button onClick={() => pick("other")}>
-          <Upload />
-          Upload extra photos
-        </Button>
+        <div className="flex gap-2 max-sm:w-full max-sm:*:flex-1">
+          <Button variant="outline" className="hidden pointer-coarse:inline-flex" onClick={() => shoot("other")}>
+            <Camera />
+            Take photo
+          </Button>
+          <Button onClick={() => pick("other")}>
+            <Upload />
+            <span className="pointer-coarse:hidden">Upload extra photos</span>
+            <span className="hidden pointer-coarse:inline">Upload</span>
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

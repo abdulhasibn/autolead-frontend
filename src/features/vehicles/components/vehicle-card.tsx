@@ -110,3 +110,64 @@ export function VehicleCard({ vehicle, now }: { vehicle: VehicleDto; now: Date }
     </Link>
   )
 }
+
+/** Phone row: thumbnail beside the key facts, so several cars fit on one screen. */
+export function VehicleCardCompact({ vehicle, now }: { vehicle: VehicleDto; now: Date }) {
+  const title = formatVehicleTitle(vehicle)
+  const age = stockAge(vehicle, now)
+  const dropped = vehicle.status === "dropped"
+
+  return (
+    <Link
+      href={`/vehicles/${vehicle.id}`}
+      className="flex gap-3 rounded-xl border border-border bg-card p-2.5 transition-colors active:bg-muted/60 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+    >
+      <div className="relative flex h-[84px] w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[#134E4A] via-[#0F766E] to-[#0D9488] text-white/80">
+        {vehicle.frontImageUrl ? (
+          // Signed, short-lived URL: skip the Next image cache.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={vehicle.frontImageUrl}
+            alt=""
+            loading="lazy"
+            className={cn("absolute inset-0 size-full object-cover", dropped && "grayscale")}
+          />
+        ) : (
+          <Camera aria-hidden className="size-5" />
+        )}
+        <VehicleStatusBadge
+          status={vehicle.status}
+          variant="overlay"
+          className="absolute bottom-1 left-1 px-1.5 text-[10px]"
+        />
+        {vehicle.linkedLeadCount > 0 && (
+          <span className="absolute top-1 right-1 inline-flex items-center gap-0.5 rounded-full bg-primary px-1.5 text-[10px] font-semibold text-white shadow-sm">
+            <Users2 aria-hidden className="size-2.5" />
+            {vehicle.linkedLeadCount}
+          </span>
+        )}
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col justify-between gap-1 py-0.5">
+        <div className="min-w-0">
+          <h3 className="truncate text-[15px] leading-tight font-semibold text-foreground">{title}</h3>
+          <p className="truncate text-xs text-subtle-foreground">{vehicle.variantName ?? " "}</p>
+        </div>
+        <p className="truncate text-xs text-muted-foreground">
+          <span className="font-mono-data">{formatKm(vehicle.kmDriven)}</span> km ·{" "}
+          {FUEL_TYPE_LABELS[vehicle.fuelType] ?? vehicle.fuelType} ·{" "}
+          {TRANSMISSION_LABELS[vehicle.transmission] ?? vehicle.transmission}
+        </p>
+        <div className="flex items-center justify-between gap-2 text-[11px]">
+          <span className="font-mono-data rounded bg-muted px-1.5 py-0.5 font-bold tracking-[0.06em] text-foreground">
+            {formatPlate(vehicle.registrationNumber)}
+          </span>
+          {age && (
+            <span className={cn("shrink-0", age.aging ? "font-semibold text-warning" : "text-subtle-foreground")}>
+              {age.days}d in stock
+            </span>
+          )}
+        </div>
+      </div>
+    </Link>
+  )
+}

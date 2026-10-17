@@ -7,7 +7,7 @@ import { LayoutGrid, List, Loader2, Search, SlidersHorizontal, X } from "lucide-
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { FilterSheet } from "@/components/filter-sheet"
 import { Toggle } from "@/components/ui/toggle"
 import { OptionSelect } from "@/features/leads/components/option-select"
 import type { MakeReadModel, ModelReadModel } from "@/features/catalog/types"
@@ -76,13 +76,13 @@ function ChoiceChip({
 
 function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex h-7 items-center gap-1 rounded-full bg-card pr-1 pl-2.5 text-xs font-medium text-foreground ring-1 ring-[#E5E7EB]">
+    <span className="inline-flex h-7 shrink-0 items-center gap-1 rounded-full bg-card pr-1 pl-2.5 text-xs font-medium whitespace-nowrap text-foreground ring-1 ring-border pointer-coarse:h-8">
       {label}
       <button
         type="button"
         onClick={onRemove}
         aria-label={`Remove ${label} filter`}
-        className="rounded-full p-0.5 text-subtle-foreground hover:bg-muted hover:text-foreground"
+        className="rounded-full p-0.5 text-subtle-foreground hover:bg-muted hover:text-foreground pointer-coarse:p-1.5"
       >
         <X className="size-3" />
       </button>
@@ -171,12 +171,13 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <InputGroup className="h-9 w-full bg-background sm:w-72">
+      <InputGroup className="h-9 pointer-coarse:h-10 min-w-0 flex-1 bg-background sm:w-72 sm:flex-none">
         <InputGroupAddon>
           <Search />
         </InputGroupAddon>
         <InputGroupInput
           type="search"
+          enterKeyHint="search"
           placeholder="Search plate, make or model"
           aria-label="Search vehicles"
           value={search}
@@ -184,7 +185,7 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
         />
       </InputGroup>
 
-      <Popover
+      <FilterSheet
         open={open}
         onOpenChange={(next) => {
           setOpen(next)
@@ -193,22 +194,48 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
             setDraftModels(models)
           }
         }}
+        title="Filter vehicles"
+        popoverClassName="w-[min(340px,calc(100vw-2rem))]"
+        triggerClassName={cn(
+          "inline-flex h-9 pointer-coarse:h-10 items-center gap-1.5 rounded-lg border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:border-primary",
+          activeCount > 0 ? "border-primary/30" : "border-border"
+        )}
+        trigger={
+          <>
+            <SlidersHorizontal className="size-4" />
+            <span className="max-sm:sr-only">Filters</span>
+            {activeCount > 0 && (
+              <span className="rounded-full bg-primary px-1.5 text-[11px] font-semibold text-white">
+                {activeCount}
+              </span>
+            )}
+          </>
+        }
+        footer={
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              className="text-xs font-medium text-muted-foreground hover:text-primary pointer-coarse:h-10 pointer-coarse:px-2 pointer-coarse:text-sm"
+              onClick={() => {
+                setOpen(false)
+                navigate({ makeId: undefined, modelId: undefined, fuel: [], transmission: [], yearMin: undefined, yearMax: undefined, kmMin: undefined, kmMax: undefined })
+              }}
+            >
+              Reset
+            </button>
+            <Button
+              size="sm"
+              className="max-sm:flex-1"
+              onClick={() => {
+                setOpen(false)
+                navigate(draft)
+              }}
+            >
+              Apply filters
+            </Button>
+          </div>
+        }
       >
-        <PopoverTrigger
-          className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-lg border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:border-primary",
-            activeCount > 0 ? "border-primary/30" : "border-border"
-          )}
-        >
-          <SlidersHorizontal className="size-4" />
-          Filters
-          {activeCount > 0 && (
-            <span className="rounded-full bg-primary px-1.5 text-[11px] font-semibold text-white">
-              {activeCount}
-            </span>
-          )}
-        </PopoverTrigger>
-        <PopoverContent className="w-[min(340px,calc(100vw-2rem))] space-y-4">
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <span className={fieldLabel}>Make</span>
@@ -291,34 +318,15 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
               </div>
             </div>
           </div>
+      </FilterSheet>
 
-          <div className="flex items-center justify-between border-t border-border/50 pt-3">
-            <button
-              type="button"
-              className="text-xs font-medium text-muted-foreground hover:text-primary"
-              onClick={() => {
-                setOpen(false)
-                navigate({ makeId: undefined, modelId: undefined, fuel: [], transmission: [], yearMin: undefined, yearMax: undefined, kmMin: undefined, kmMax: undefined })
-              }}
-            >
-              Reset
-            </button>
-            <Button
-              size="sm"
-              onClick={() => {
-                setOpen(false)
-                navigate(draft)
-              }}
-            >
-              Apply filters
-            </Button>
-          </div>
-        </PopoverContent>
-      </Popover>
-
-      {chips.map((chip) => (
-        <ActiveChip key={chip.key} label={chip.label} onRemove={() => navigate(chip.clear)} />
-      ))}
+      {chips.length > 0 && (
+        <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 scrollbar-none max-sm:order-last max-sm:w-[calc(100%+2rem)] sm:contents">
+          {chips.map((chip) => (
+            <ActiveChip key={chip.key} label={chip.label} onRemove={() => navigate(chip.clear)} />
+          ))}
+        </div>
+      )}
       {hasAnything && (
         <button
           type="button"
@@ -335,7 +343,7 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
       )}
       {isPending && <Loader2 className="size-4 animate-spin text-primary" aria-label="Loading" />}
 
-      <div className="ml-auto inline-flex rounded-lg border border-border bg-card p-0.5">
+      <div className="ml-auto hidden rounded-lg border border-border bg-card p-0.5 sm:inline-flex">
         {(["grid", "table"] as const).map((layout) => {
           const Icon = layout === "grid" ? LayoutGrid : List
           const active = params.layout === layout

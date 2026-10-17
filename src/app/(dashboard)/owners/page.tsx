@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 import { Users } from "lucide-react"
 import { getOwners } from "@/features/owners/api"
 import { CreateOwnerSheet } from "@/features/owners/components/create-owner-sheet"
+import { PageHeader } from "@/components/page-header"
+import { OwnersCardList } from "@/features/owners/components/owners-card-list"
 import { OwnersPagination } from "@/features/owners/components/owners-pagination"
 import { OwnersTable } from "@/features/owners/components/owners-table"
 import { OwnersToolbar } from "@/features/owners/components/owners-toolbar"
@@ -33,16 +35,16 @@ export default async function OwnersPage({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Owners</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+      <PageHeader
+        title="Owners"
+        subtitle={
+          <>
             {total} {total === 1 ? "owner" : "owners"}
             {hasFilters ? " match the filters" : ""}
-          </p>
-        </div>
-        <CreateOwnerSheet />
-      </div>
+          </>
+        }
+        action={<CreateOwnerSheet />}
+      />
 
       <OwnersToolbar params={params} />
 
@@ -59,7 +61,14 @@ export default async function OwnersPage({
           </p>
         </div>
       ) : (
-        <OwnersTable owners={owners} />
+        <>
+          <div className="hidden md:block">
+            <OwnersTable owners={owners} />
+          </div>
+          <div className="md:hidden">
+            <OwnersCardList owners={owners} />
+          </div>
+        </>
       )}
 
       {total > 0 && (

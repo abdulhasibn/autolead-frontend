@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth"
 import { ApiError } from "@/lib/api-error"
 import { formatDate, formatDateTime } from "@/lib/format"
 import { Detail } from "@/components/info-card"
+import { MobileActionBar } from "@/components/mobile-action-bar"
 import { getLeads, getVehicleLeadMatches } from "@/features/leads/api"
 import type { LeadReadModel, VehicleLeadMatches } from "@/features/leads/types"
 import { getOwner } from "@/features/owners/api"
@@ -112,7 +113,7 @@ export default async function VehicleDetailPage({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 space-y-1.5">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
+            <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">{title}</h1>
             <VehicleStatusBadge status={vehicle.status} />
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -136,7 +137,7 @@ export default async function VehicleDetailPage({
             )}
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <MobileActionBar>
           <VehicleFormSheet mode="edit" vehicle={vehicle} />
           {isAdmin && (
             <ChangeVehicleStatusDialog
@@ -146,7 +147,7 @@ export default async function VehicleDetailPage({
               linkedLeadCount={vehicle.linkedLeadCount}
             />
           )}
-        </div>
+        </MobileActionBar>
       </div>
 
       {vehicle.status === "sold" && (
@@ -173,8 +174,11 @@ export default async function VehicleDetailPage({
         />
         <aside className="space-y-4">
           <GlancePanel vehicle={vehicle} />
-          <PaperworkPanel vehicle={vehicle} now={now} />
-          <OwnerCard vehicle={vehicle} owner={owner} />
+          {/* Phones show these after the tabs, so the tabs are reachable sooner. */}
+          <div className="space-y-4 max-lg:hidden">
+            <PaperworkPanel vehicle={vehicle} now={now} />
+            <OwnerCard vehicle={vehicle} owner={owner} />
+          </div>
         </aside>
       </div>
 
@@ -240,6 +244,11 @@ export default async function VehicleDetailPage({
           },
         ]}
       />
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:hidden">
+        <OwnerCard vehicle={vehicle} owner={owner} />
+        <PaperworkPanel vehicle={vehicle} now={now} />
+      </div>
     </div>
   )
 }

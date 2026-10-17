@@ -176,3 +176,11 @@
     font-feature-settings: "tnum" 1, "zero" 1;
   }
 }
+/* Horizontal chip/tab strips on phones: scroll without a visible bar. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

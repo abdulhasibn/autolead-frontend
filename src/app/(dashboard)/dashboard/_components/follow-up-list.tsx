@@ -2,7 +2,7 @@ import Link from "next/link"
 import { CompleteFollowUpDialog } from "@/features/leads/components/complete-follow-up-dialog"
 import type { FollowUpCard } from "@/features/dashboard/types"
 import { TASK_TYPE_LABELS, formatTime, relativeTime } from "@/features/dashboard/format"
-import { Check } from "lucide-react"
+import { Check, Phone } from "lucide-react"
 import { EmptyState } from "@/components/empty-state"
 import { cn } from "@/lib/utils"
 
@@ -113,6 +113,15 @@ export function FollowUpList({
                 )}
               </div>
             </Link>
+            {item.contactPhone && (
+              <a
+                href={`tel:${item.contactPhone}`}
+                aria-label={`Call ${item.contactName}`}
+                className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-accent text-primary md:hidden"
+              >
+                <Phone className="size-4" />
+              </a>
+            )}
             <CompleteFollowUpDialog leadId={item.leadId} followUpId={item.followUpId} compact />
           </li>
         )

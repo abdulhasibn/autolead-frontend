@@ -51,13 +51,13 @@ export function VehicleTabs({ tabs }: { tabs: VehicleTab[] }) {
       <TabsList
         variant="line"
         aria-label="Vehicle sections"
-        className="h-auto w-full justify-start gap-5 rounded-none border-b border-muted p-0 px-4"
+        className="h-auto w-full justify-start gap-5 overflow-x-auto rounded-none border-b border-muted p-0 px-4 scrollbar-none max-md:sticky max-md:top-[calc(3.5rem+env(safe-area-inset-top))] max-md:z-10 max-md:gap-4 max-md:rounded-t-xl max-md:bg-card"
       >
         {tabs.map((tab) => (
           <TabsTrigger
             key={tab.id}
             value={tab.id}
-            className="h-auto flex-none rounded-none px-0 py-3 text-muted-foreground after:hidden hover:text-foreground"
+            className="h-auto flex-none rounded-none px-0 py-3 whitespace-nowrap text-muted-foreground after:hidden hover:text-foreground max-md:min-h-12"
           >
             {tab.label}
             {tab.count !== undefined &&
@@ -73,7 +73,7 @@ export function VehicleTabs({ tabs }: { tabs: VehicleTab[] }) {
       </TabsList>
       {tabs.map((tab) => (
         // Panels stay mounted so in-progress uploads and form state survive switching.
-        <TabsContent key={tab.id} value={tab.id} keepMounted className="p-5">
+        <TabsContent key={tab.id} value={tab.id} keepMounted className="p-4 sm:p-5">
           {tab.content}
         </TabsContent>
       ))}

@@ -3,7 +3,9 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ArrowLeft, Car, FileText, Phone, User } from "lucide-react"
 import { auth } from "@/lib/auth"
+import { ContactActions } from "@/components/contact-actions"
 import { Detail, InfoCard } from "@/components/info-card"
+import { MobileActionBar } from "@/components/mobile-action-bar"
 import { getOwner } from "@/features/owners/api"
 import { DeactivateOwnerDialog } from "@/features/owners/components/deactivate-owner-dialog"
 import { EditOwnerSheet } from "@/features/owners/components/edit-owner-sheet"
@@ -56,15 +58,15 @@ export default async function OwnerDetailPage({
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-4">
           <span
             aria-hidden
             className="flex size-12 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-accent text-lg font-semibold text-primary"
           >
             {owner.fullName.charAt(0).toUpperCase()}
           </span>
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <div className="min-w-0 space-y-1">
+            <h1 className="text-xl font-bold tracking-tight break-words text-foreground sm:text-2xl">
               {owner.fullName}
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -72,12 +74,18 @@ export default async function OwnerDetailPage({
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <ContactActions
+          phone={owner.phone}
+          email={owner.email}
+          name={owner.fullName}
+          className="w-full md:hidden"
+        />
+        <MobileActionBar>
           <EditOwnerSheet owner={owner} />
           {isAdmin && (
             <DeactivateOwnerDialog ownerId={owner.id} ownerName={owner.fullName} />
           )}
-        </div>
+        </MobileActionBar>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -140,7 +148,7 @@ export default async function OwnerDetailPage({
         <InfoCard
           title={vehicles.length > 0 ? `Vehicles (${vehicles.length})` : "Vehicles"}
           icon={Car}
-          className="lg:col-span-3"
+          className="max-lg:order-first lg:col-span-3"
         >
           <OwnerVehiclesPanel vehicles={vehicles} />
         </InfoCard>

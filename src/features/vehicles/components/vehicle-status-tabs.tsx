@@ -21,7 +21,7 @@ export function VehicleStatusTabs({ params, counts }: VehicleStatusTabsProps) {
   ]
 
   return (
-    <nav aria-label="Filter by status" className="-mx-1 overflow-x-auto px-1">
+    <nav aria-label="Filter by status" className="-mx-4 snap-x overflow-x-auto px-4 scrollbar-none sm:-mx-1 sm:px-1">
       <div className="inline-flex rounded-lg bg-muted/70 p-1 text-sm font-medium text-muted-foreground">
         {tabs.map((tab) => {
           const active = params.status === tab.value
@@ -32,7 +32,7 @@ export function VehicleStatusTabs({ params, counts }: VehicleStatusTabsProps) {
               href={buildVehiclesHref({ ...params, status: tab.value, page: 1 })}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex items-center gap-1.5 rounded-md px-3 py-1.5 whitespace-nowrap transition-colors",
+                "flex snap-start items-center gap-1.5 rounded-md px-3 py-1.5 whitespace-nowrap transition-colors pointer-coarse:py-2",
                 active
                   ? "bg-card text-foreground shadow-sm"
                   : "hover:text-foreground"

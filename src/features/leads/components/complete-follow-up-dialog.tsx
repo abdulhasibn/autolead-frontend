@@ -107,7 +107,7 @@ export function CompleteFollowUpDialog({
             title={compact ? "Mark done" : undefined}
             className={cn(
               "h-7 border-primary/20 bg-accent text-xs text-primary hover:bg-accent hover:text-primary/80",
-              compact ? "w-7 px-0" : "px-2"
+              compact ? "w-7 px-0 pointer-coarse:size-10" : "px-2"
             )}
           />
         }

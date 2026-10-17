@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MobileSidebar } from "@/components/layout/sidebar"
 import { ConfirmDialog } from "@/components/confirm-dialog"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { ThemeMenuItems, ThemeToggle } from "@/components/theme-toggle"
 import { useSignOut } from "@/features/auth/use-sign-out"
 import { NotificationDrawer } from "@/features/notifications/components/notification-drawer"
 import type { UserRole } from "@/types/auth"
@@ -56,7 +56,8 @@ function PageTitle() {
   const label = BREADCRUMB_LABELS[section] ?? section
 
   return (
-    <div className="flex items-center gap-1.5 text-sm">
+    // Detail pages carry their own back link and title, so phones skip the crumb there.
+    <div className={cn("flex min-w-0 items-center gap-1.5 text-sm", sub && "hidden md:flex")}>
       <span className="font-semibold text-foreground">{label}</span>
       {sub && (
         <>
@@ -84,16 +85,16 @@ export function Header({ notifications = [], unreadCount = 0, roles = [] }: Head
   const primaryRole = roles[0] ?? session?.user?.roles?.[0]
 
   return (
-    <header className="flex h-14 items-center justify-between px-4 gap-3">
+    <header className="flex h-14 items-center justify-between gap-3 px-2 sm:px-4">
       {/* Left: mobile menu + page title */}
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2">
         <MobileSidebar roles={roles} />
         <PageTitle />
       </div>
 
       {/* Right: theme toggle + notifications + user menu */}
       <div className="flex items-center gap-1.5">
-        <ThemeToggle />
+        <ThemeToggle className="hidden sm:inline-flex" />
 
         <NotificationDrawer
           initialNotifications={notifications}
@@ -103,7 +104,7 @@ export function Header({ notifications = [], unreadCount = 0, roles = [] }: Head
         {/* User dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-muted transition-colors outline-none"
+            className="flex items-center gap-2 rounded-lg px-2 py-1 pointer-coarse:min-h-10 hover:bg-muted transition-colors outline-none"
             aria-label="User menu"
           >
             <Avatar className="h-7 w-7">
@@ -139,6 +140,8 @@ export function Header({ notifications = [], unreadCount = 0, roles = [] }: Head
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
+            <ThemeMenuItems className="sm:hidden" />
+            <DropdownMenuSeparator className="sm:hidden" />
             <DropdownMenuItem
               className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
               disabled={signOutPending !== null}

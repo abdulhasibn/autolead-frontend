@@ -42,11 +42,12 @@ export default async function DashboardPage({
   const conversionPrev = data.kpis.conversionRate.previous
 
   return (
-    <div className="space-y-6">
+    // Phones read the actionable lists first: today → attention → KPIs → stock.
+    <div className="flex flex-col gap-4 sm:gap-6">
       {/* Page header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
             {greeting()}, {firstName} 👋
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -60,7 +61,7 @@ export default async function DashboardPage({
       </div>
 
       {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 max-lg:order-2">
         <KpiCard
           label="Cars sold"
           value={data.kpis.carsSold.value}
@@ -87,9 +88,9 @@ export default async function DashboardPage({
       </div>
 
       {/* Main two-column grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 max-lg:contents">
         {/* Left: attention + today */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-4 max-lg:order-1">
           {/* Today's follow-ups */}
           <SectionCard
             title="Today's follow-ups"
@@ -133,7 +134,7 @@ export default async function DashboardPage({
         </div>
 
         {/* Right: pipeline, inventory, aged stock */}
-        <div className="space-y-4">
+        <div className="space-y-4 max-lg:order-3">
           <PipelineCard pipeline={data.pipeline} />
           <InventoryCard inventory={data.inventory} />
           <SectionCard
@@ -152,7 +153,7 @@ export default async function DashboardPage({
       </div>
 
       {/* Footer */}
-      <p className="text-[11px] text-subtle-foreground text-right pb-2">
+      <p className="text-[11px] text-subtle-foreground text-right pb-2 max-lg:order-4">
         Updated {new Date(data.generatedAt).toLocaleTimeString("en-IN", {
           hour: "2-digit",
           minute: "2-digit",
