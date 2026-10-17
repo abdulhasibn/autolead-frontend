@@ -1,5 +1,8 @@
+"use client"
+
+import { useState } from "react"
 import Link from "next/link"
-import { Car, ChevronRight, Sparkles } from "lucide-react"
+import { Car, ChevronDown, ChevronRight, ChevronUp, Sparkles } from "lucide-react"
 import { NumberPlate } from "@/features/vehicles/components/number-plate"
 import { FUEL_TYPE_LABELS, TRANSMISSION_LABELS } from "@/features/vehicles/constants"
 import { formatKm } from "@/features/vehicles/utils"
@@ -79,6 +82,8 @@ function VehicleRow({
   )
 }
 
+const INITIAL_SHOW = 3
+
 /**
  * Cars from this showroom scored against the lead's preferences, plus the lead's linked car.
  * Scores are computed per request, so the panel is always current.
@@ -95,6 +100,9 @@ export function LeadMatchesPanel({
 }) {
   const { linked, suggested, truncated } = matches
   const noPref = !hasPreference(lead)
+  const [showAll, setShowAll] = useState(false)
+  const visibleSuggested = showAll ? suggested : suggested.slice(0, INITIAL_SHOW)
+  const hiddenCount = suggested.length - INITIAL_SHOW
 
   return (
     <div className="space-y-6">
@@ -133,34 +141,54 @@ export function LeadMatchesPanel({
             <EmptyRow message="No cars in this showroom match closely enough yet." />
           )
         ) : (
-          <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-border/50 text-sm">
-            {suggested.map((entry) => {
-              const vehicleName =
-                [entry.vehicle.makeName, entry.vehicle.modelName].filter(Boolean).join(" ") ||
-                "This car"
-              return (
-                <VehicleRow
-                  key={entry.vehicle.id}
-                  entry={entry}
-                  lead={lead}
-                  action={
-                    canLink ? (
-                      <LinkSuggestedVehicleButton
-                        leadId={lead.id}
-                        vehicleId={entry.vehicle.id}
-                        vehicleName={vehicleName}
-                      />
-                    ) : (
-                      <Link href={`/vehicles/${entry.vehicle.id}`} className={actionClass}>
-                        Open car
-                        <ChevronRight aria-hidden className="size-3.5" />
-                      </Link>
-                    )
-                  }
-                />
-              )
-            })}
-          </ul>
+          <>
+            <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-border/50 text-sm">
+              {visibleSuggested.map((entry) => {
+                const vehicleName =
+                  [entry.vehicle.makeName, entry.vehicle.modelName].filter(Boolean).join(" ") ||
+                  "This car"
+                return (
+                  <VehicleRow
+                    key={entry.vehicle.id}
+                    entry={entry}
+                    lead={lead}
+                    action={
+                      canLink ? (
+                        <LinkSuggestedVehicleButton
+                          leadId={lead.id}
+                          vehicleId={entry.vehicle.id}
+                          vehicleName={vehicleName}
+                        />
+                      ) : (
+                        <Link href={`/vehicles/${entry.vehicle.id}`} className={actionClass}>
+                          Open car
+                          <ChevronRight aria-hidden className="size-3.5" />
+                        </Link>
+                      )
+                    }
+                  />
+                )
+              })}
+            </ul>
+            {hiddenCount > 0 && (
+              <button
+                onClick={() => setShowAll((v) => !v)}
+                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-border/50 py-2 text-xs font-medium text-subtle-foreground transition-colors hover:border-border hover:text-foreground"
+              >
+                {showAll ? (
+                  <>
+                    <ChevronUp className="size-3.5" />
+                    Show less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="size-3.5" />
+                    Show {hiddenCount} more
+                  </>
+                )}
+              </button>
+            )}
+          </>
         )}
         {truncated && (
           <p className="text-xs text-subtle-foreground">
