@@ -61,6 +61,15 @@ export async function updateVehicle(
   return serverApiClient.patch<VehicleDto>(`/vehicles/${id}`, body)
 }
 
+export async function setVehicleListedPrice(
+  id: string,
+  listedPrice: number | null
+): Promise<{ listedPrice: number | null }> {
+  return serverApiClient.put<{ listedPrice: number | null }>(`/vehicles/${id}/listed-price`, {
+    listedPrice,
+  })
+}
+
 export async function changeVehicleStatus(
   id: string,
   body: { status: "open" | "dropped"; reason: string | null; confirmUnlinkLeads: boolean }

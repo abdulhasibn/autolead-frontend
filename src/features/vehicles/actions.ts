@@ -25,6 +25,7 @@ import {
   getVehicle,
   requestDocumentUpload,
   requestMediaUpload,
+  setVehicleListedPrice,
   updateVehicle,
 } from "./api"
 import {
@@ -34,6 +35,7 @@ import {
   createVehicleSchema,
   documentUploadSchema,
   mediaUploadSchema,
+  setListedPriceSchema,
   updateVehicleSchema,
 } from "./schemas"
 import type {
@@ -107,6 +109,24 @@ export async function updateVehicleAction(
     })
     revalidateVehicles()
     return actionOk(vehicle)
+  } catch (err) {
+    return actionError(err)
+  }
+}
+
+export async function setListedPriceAction(
+  vehicleId: string,
+  input: unknown
+): Promise<ActionResult<{ listedPrice: number | null }>> {
+  try {
+    await requireSession()
+    const id = idSchema.safeParse(vehicleId)
+    const parsed = setListedPriceSchema.safeParse(input)
+    if (!id.success || !parsed.success) return validationError()
+
+    const result = await setVehicleListedPrice(id.data, parsed.data.listedPrice)
+    revalidateVehicles()
+    return actionOk(result)
   } catch (err) {
     return actionError(err)
   }
