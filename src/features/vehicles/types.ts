@@ -42,6 +42,8 @@ export interface VehicleDto {
   loanStatus: string | null
   location: string | null
   description: string | null
+  /** Public asking price on the customer website; null shows "Price on request". */
+  listedPrice: number | null
   status: VehicleStatus
   soldLeadId: string | null
   acquisitionType: AcquisitionType

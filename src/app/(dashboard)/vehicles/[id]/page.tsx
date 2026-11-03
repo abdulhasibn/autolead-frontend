@@ -32,6 +32,7 @@ import {
 } from "@/features/vehicles/utils"
 import { ChangeVehicleStatusDialog } from "@/features/vehicles/components/change-vehicle-status-dialog"
 import { DocumentsPanel } from "@/features/vehicles/components/documents-panel"
+import { ListedPricePanel } from "@/features/vehicles/components/listed-price-panel"
 import { NumberPlate } from "@/features/vehicles/components/number-plate"
 import { PhotoManager } from "@/features/vehicles/components/photo-manager"
 import { SignedUrlRefresher } from "@/features/vehicles/components/signed-url-refresher"
@@ -174,6 +175,12 @@ export default async function VehicleDetailPage({
         />
         <aside className="space-y-4">
           <GlancePanel vehicle={vehicle} />
+          <ListedPricePanel
+            vehicleId={vehicle.id}
+            listedPrice={vehicle.listedPrice}
+            status={vehicle.status}
+            canEdit={isAdmin}
+          />
           {/* Phones show these after the tabs, so the tabs are reachable sooner. */}
           <div className="space-y-4 max-lg:hidden">
             <PaperworkPanel vehicle={vehicle} now={now} />

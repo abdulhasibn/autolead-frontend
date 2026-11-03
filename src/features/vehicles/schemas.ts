@@ -55,6 +55,21 @@ export const changeVehicleStatusSchema = z.object({
 })
 export type ChangeVehicleStatusInput = z.infer<typeof changeVehicleStatusSchema>
 
+export const setListedPriceSchema = z.object({
+  listedPrice: z.number().int().positive().max(9_999_999_999).nullable(),
+})
+
+/** Rupee amount typed by an admin: blank clears it, commas and spaces are ignored. */
+export const listedPriceFormSchema = z
+  .string()
+  .trim()
+  .transform((value) => value.replace(/[,\s₹]/g, ""))
+  .refine(
+    (value) => value === "" || (/^\d+$/.test(value) && Number(value) > 0 && Number(value) <= 9_999_999_999),
+    "Enter the price in whole rupees, or leave it blank"
+  )
+  .transform((value) => (value === "" ? null : Number(value)))
+
 export const mediaUploadSchema = z.object({
   category: z.enum(MEDIA_CATEGORIES),
   contentType: z.enum(["image/jpeg", "image/png", "image/webp"]),

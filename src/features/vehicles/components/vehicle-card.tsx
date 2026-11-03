@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Camera, Cog, Fuel, Gauge, MapPin, User, Users2 } from "lucide-react"
+import { formatCurrency } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { FUEL_TYPE_LABELS, TRANSMISSION_LABELS } from "../constants"
 import type { VehicleDto } from "../types"
@@ -86,7 +87,11 @@ export function VehicleCard({ vehicle, now }: { vehicle: VehicleDto; now: Date }
         </div>
         <div className="flex items-center justify-between gap-2 border-t border-white/15 pt-2 text-[11px]">
           <span className="flex min-w-0 items-center gap-1 text-white/70">
-            {vehicle.location && (
+            {vehicle.listedPrice != null ? (
+              <span className="font-mono-data truncate text-xs font-semibold text-white">
+                {formatCurrency(vehicle.listedPrice)}
+              </span>
+            ) : vehicle.location && (
               <>
                 <MapPin aria-hidden className="size-3 shrink-0" />
                 <span className="truncate">{vehicle.location}</span>
@@ -153,6 +158,14 @@ export function VehicleCardCompact({ vehicle, now }: { vehicle: VehicleDto; now:
           <p className="truncate text-xs text-subtle-foreground">{vehicle.variantName ?? " "}</p>
         </div>
         <p className="truncate text-xs text-muted-foreground">
+          {vehicle.listedPrice != null && (
+            <>
+              <span className="font-mono-data font-semibold text-foreground">
+                {formatCurrency(vehicle.listedPrice)}
+              </span>{" "}
+              ·{" "}
+            </>
+          )}
           <span className="font-mono-data">{formatKm(vehicle.kmDriven)}</span> km ·{" "}
           {FUEL_TYPE_LABELS[vehicle.fuelType] ?? vehicle.fuelType} ·{" "}
           {TRANSMISSION_LABELS[vehicle.transmission] ?? vehicle.transmission}
