@@ -15,6 +15,8 @@ import { ContactActions } from "@/components/contact-actions"
 import { Detail, InfoCard } from "@/components/info-card"
 import { MobileActionBar } from "@/components/mobile-action-bar"
 import { getMakes } from "@/features/catalog/api"
+import { getLeadJourney } from "@/features/insights/api"
+import { WebsiteJourneyCard } from "@/features/insights/components/website-journey-card"
 import {
   getLead,
   getLeadFollowUps,
@@ -62,7 +64,7 @@ export default async function LeadDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const [lead, vehicles, makes, openFollowUps, closedFollowUps, statusHistory, vehicleMatches] =
+  const [lead, vehicles, makes, openFollowUps, closedFollowUps, statusHistory, vehicleMatches, journey] =
     await Promise.all([
       loadLead(id),
       getVehicleOptions(),
@@ -74,6 +76,8 @@ export default async function LeadDetailPage({
       getLeadStatusHistory(id).then((page) => page.items).catch(() => []),
       // Matches are secondary; the page still works without them.
       getLeadVehicleMatches(id).catch(() => null),
+      // Website journey is secondary, and absent for leads the website never saw.
+      getLeadJourney(id).catch(() => null),
     ])
 
   const closed = isLeadClosed(lead.status)
@@ -189,6 +193,8 @@ export default async function LeadDetailPage({
           closed={closed}
           className="max-lg:order-4 lg:col-span-3"
         />
+
+        <WebsiteJourneyCard journey={journey} className="max-lg:order-3 lg:col-span-3" />
 
         {vehicleMatches && (
           <InfoCard title="Matching cars" icon={Sparkles} className="max-lg:order-3 lg:col-span-3">

@@ -9,6 +9,9 @@ import { Detail } from "@/components/info-card"
 import { MobileActionBar } from "@/components/mobile-action-bar"
 import { getLeads, getVehicleLeadMatches } from "@/features/leads/api"
 import type { LeadReadModel, VehicleLeadMatches } from "@/features/leads/types"
+import { getVehicleInsightDetail } from "@/features/insights/api"
+import { BuyerInterestCard } from "@/features/insights/components/buyer-interest-card"
+import type { VehicleInsightDetail } from "@/features/insights/types"
 import { getOwner } from "@/features/owners/api"
 import type { OwnerDto } from "@/features/owners/types"
 import {
@@ -77,7 +80,7 @@ export default async function VehicleDetailPage({
   const { id } = await params
   const vehicle = await loadVehicle(id)
 
-  const [session, media, documents, history, leads, owner, matches] = await Promise.all([
+  const [session, media, documents, history, leads, owner, matches, interest] = await Promise.all([
     auth(),
     items<VehicleMediaDto>(() => getVehicleMedia(id)),
     items<VehicleDocumentDto>(() => getVehicleDocuments(id)),
@@ -86,6 +89,8 @@ export default async function VehicleDetailPage({
     getOwner(vehicle.ownerId).catch((): OwnerDto | null => null),
     // Falls back to the plain linked-leads list if scoring is unavailable.
     getVehicleLeadMatches(id).catch((): VehicleLeadMatches | null => null),
+    // Admin-only; a salesperson's 403, or no analytics yet, just hides the card.
+    getVehicleInsightDetail(id).catch((): VehicleInsightDetail | null => null),
   ])
 
   const isAdmin = session?.user.roles?.includes("admin") ?? false
@@ -181,6 +186,7 @@ export default async function VehicleDetailPage({
             status={vehicle.status}
             canEdit={isAdmin}
           />
+          {isAdmin && interest && <BuyerInterestCard insight={interest} />}
           {/* Phones show these after the tabs, so the tabs are reachable sooner. */}
           <div className="space-y-4 max-lg:hidden">
             <PaperworkPanel vehicle={vehicle} now={now} />

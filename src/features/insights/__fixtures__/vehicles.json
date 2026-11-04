@@ -1,0 +1,116 @@
+{
+  "period": {
+    "from": "2026-10-01T00:00:00+05:30",
+    "to": "2026-10-31T23:59:59+05:30"
+  },
+  "items": [
+    {
+      "vehicleId": "7c1e2b8a-3f41-4d2a-9b6e-2a1f0c9d4e01",
+      "title": "2021 Hyundai Creta SX",
+      "listedPrice": 1240000,
+      "daysInStock": 18,
+      "views": 486,
+      "uniqueViewers": 312,
+      "repeatViewers": 74,
+      "testDriveOpens": 58,
+      "contactClicks": 41,
+      "leads": 14,
+      "leadRate": 0.0449,
+      "topChannel": "instagram_ads",
+      "signal": {
+        "code": "hot",
+        "reason": "Strong demand. Hold firm, small or no discount."
+      }
+    },
+    {
+      "vehicleId": "7c1e2b8a-3f41-4d2a-9b6e-2a1f0c9d4e02",
+      "title": "2019 Honda City VX",
+      "listedPrice": 890000,
+      "daysInStock": 34,
+      "views": 352,
+      "uniqueViewers": 260,
+      "repeatViewers": 22,
+      "testDriveOpens": 9,
+      "contactClicks": 6,
+      "leads": 2,
+      "leadRate": 0.0077,
+      "topChannel": "instagram_ads",
+      "signal": {
+        "code": "seen_not_enquired",
+        "reason": "Price may look high, or the photos may be weak."
+      }
+    },
+    {
+      "vehicleId": "7c1e2b8a-3f41-4d2a-9b6e-2a1f0c9d4e06",
+      "title": "2020 Maruti Swift VXI",
+      "listedPrice": 510000,
+      "daysInStock": 26,
+      "views": 268,
+      "uniqueViewers": 201,
+      "repeatViewers": 19,
+      "testDriveOpens": 21,
+      "contactClicks": 12,
+      "leads": 8,
+      "leadRate": 0.0398,
+      "topChannel": "instagram_ads",
+      "signal": {
+        "code": "normal",
+        "reason": "Demand in line with similar stock."
+      }
+    },
+    {
+      "vehicleId": "7c1e2b8a-3f41-4d2a-9b6e-2a1f0c9d4e04",
+      "title": "2017 Toyota Innova Crysta 2.4 VX",
+      "listedPrice": 1580000,
+      "daysInStock": 63,
+      "views": 138,
+      "uniqueViewers": 110,
+      "repeatViewers": 9,
+      "testDriveOpens": 6,
+      "contactClicks": 5,
+      "leads": 2,
+      "leadRate": 0.0182,
+      "topChannel": "google_organic",
+      "signal": {
+        "code": "ageing_cooling",
+        "reason": "Negotiate flexibly or review the price."
+      }
+    },
+    {
+      "vehicleId": "7c1e2b8a-3f41-4d2a-9b6e-2a1f0c9d4e03",
+      "title": "2018 Maruti Ciaz Alpha",
+      "listedPrice": 720000,
+      "daysInStock": 21,
+      "views": 41,
+      "uniqueViewers": 36,
+      "repeatViewers": 2,
+      "testDriveOpens": 3,
+      "contactClicks": 2,
+      "leads": 1,
+      "leadRate": 0.0278,
+      "topChannel": "google_organic",
+      "signal": {
+        "code": "low_visibility",
+        "reason": "Reach problem, not price. Feature it in an ad."
+      }
+    },
+    {
+      "vehicleId": "7c1e2b8a-3f41-4d2a-9b6e-2a1f0c9d4e05",
+      "title": "2023 Kia Sonet HTX",
+      "listedPrice": 940000,
+      "daysInStock": 4,
+      "views": 22,
+      "uniqueViewers": 19,
+      "repeatViewers": 1,
+      "testDriveOpens": 2,
+      "contactClicks": 1,
+      "leads": 0,
+      "leadRate": 0,
+      "topChannel": "instagram_ads",
+      "signal": {
+        "code": "insufficient_data",
+        "reason": "Fewer than 30 views so far. Check back later."
+      }
+    }
+  ]
+}

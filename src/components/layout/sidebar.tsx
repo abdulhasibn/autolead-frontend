@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
 import {
   LayoutDashboard,
+  ChartNoAxesCombined,
   Users2,
   Car,
   UserCheck,
@@ -32,6 +33,7 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
     label: "Overview",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"] },
+      { href: "/insights", label: "Insights", icon: ChartNoAxesCombined, roles: ["admin"] },
     ],
   },
   {

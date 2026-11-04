@@ -1,0 +1,24 @@
+{
+  "channel": "instagram_ads",
+  "campaign": "Diwali SUVs",
+  "content": "Creta reel",
+  "firstVisitAt": "2026-10-22T19:42:00+05:30",
+  "visits": 4,
+  "viewsOfThisCar": 6,
+  "galleryOpens": 3,
+  "otherCarsViewed": [
+    {
+      "vehicleId": "7c1e2b8a-3f41-4d2a-9b6e-2a1f0c9d4e02",
+      "title": "2019 Honda City VX",
+      "listedPrice": 890000,
+      "views": 2
+    },
+    {
+      "vehicleId": "7c1e2b8a-3f41-4d2a-9b6e-2a1f0c9d4e05",
+      "title": "2023 Kia Sonet HTX",
+      "listedPrice": 940000,
+      "views": 1
+    }
+  ],
+  "intent": "high"
+}

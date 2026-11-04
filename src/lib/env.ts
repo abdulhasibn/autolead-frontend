@@ -7,6 +7,8 @@ export const env = createEnv({
     API_BASE_URL: z.string().url(),
     /** Used when creating records for accounts without a home showroom. */
     DEFAULT_SHOWROOM_ID: z.guid().optional(),
+    /** "1" serves the Insights pages from local fixtures until the backend endpoints ship. */
+    INSIGHTS_USE_FIXTURES: z.enum(["0", "1"]).optional(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),

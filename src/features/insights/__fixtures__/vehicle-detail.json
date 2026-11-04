@@ -1,0 +1,211 @@
+{
+  "vehicleId": "7c1e2b8a-3f41-4d2a-9b6e-2a1f0c9d4e02",
+  "title": "2019 Honda City VX",
+  "listedPrice": 890000,
+  "daysInStock": 34,
+  "views": 352,
+  "uniqueViewers": 260,
+  "repeatViewers": 22,
+  "testDriveOpens": 9,
+  "contactClicks": 6,
+  "leads": 2,
+  "leadRate": 0.0077,
+  "topChannel": "instagram_ads",
+  "signal": {
+    "code": "seen_not_enquired",
+    "reason": "Price may look high, or the photos may be weak."
+  },
+  "period": {
+    "from": "2026-10-05T00:00:00+05:30",
+    "to": "2026-11-03T23:59:59+05:30"
+  },
+  "daily": [
+    {
+      "date": "2026-10-05",
+      "views": 8,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-06",
+      "views": 10,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-07",
+      "views": 9,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-08",
+      "views": 7,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-09",
+      "views": 11,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-10",
+      "views": 9,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-11",
+      "views": 8,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-12",
+      "views": 10,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-13",
+      "views": 9,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-14",
+      "views": 12,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-15",
+      "views": 8,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-16",
+      "views": 9,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-17",
+      "views": 10,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-18",
+      "views": 8,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-19",
+      "views": 7,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-20",
+      "views": 13,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-21",
+      "views": 15,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-22",
+      "views": 14,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-23",
+      "views": 16,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-24",
+      "views": 12,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-25",
+      "views": 15,
+      "leads": 1
+    },
+    {
+      "date": "2026-10-26",
+      "views": 14,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-27",
+      "views": 17,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-28",
+      "views": 13,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-29",
+      "views": 15,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-30",
+      "views": 14,
+      "leads": 0
+    },
+    {
+      "date": "2026-10-31",
+      "views": 16,
+      "leads": 1
+    },
+    {
+      "date": "2026-11-01",
+      "views": 13,
+      "leads": 0
+    },
+    {
+      "date": "2026-11-02",
+      "views": 15,
+      "leads": 0
+    },
+    {
+      "date": "2026-11-03",
+      "views": 15,
+      "leads": 0
+    }
+  ],
+  "priceChanges": [
+    {
+      "at": "2026-10-20T11:15:00+05:30",
+      "from": 940000,
+      "to": 890000,
+      "before": {
+        "viewsPerDay": 9,
+        "leadsPerDay": 0
+      },
+      "after": {
+        "viewsPerDay": 14.5,
+        "leadsPerDay": 0.13
+      }
+    }
+  ],
+  "channels": [
+    {
+      "channel": "instagram_ads",
+      "views": 198
+    },
+    {
+      "channel": "google_organic",
+      "views": 72
+    },
+    {
+      "channel": "direct",
+      "views": 48
+    },
+    {
+      "channel": "whatsapp",
+      "views": 34
+    }
+  ],
+  "budgetContext": {
+    "segment": "Sedan",
+    "shareBelowPrice": 64
+  }
+}

@@ -41,6 +41,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
 
 const BREADCRUMB_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
+  insights: "Insights",
   leads: "Leads",
   vehicles: "Vehicles",
   owners: "Owners",
