@@ -1,0 +1,82 @@
+{
+  "period": {
+    "from": "2026-10-01T00:00:00+05:30",
+    "to": "2026-10-31T23:59:59+05:30"
+  },
+  "budgetBands": [
+    {
+      "band": "<4L",
+      "searchShare": 18,
+      "stockShare": 5
+    },
+    {
+      "band": "4-6L",
+      "searchShare": 31,
+      "stockShare": 15
+    },
+    {
+      "band": "6-8L",
+      "searchShare": 27,
+      "stockShare": 20
+    },
+    {
+      "band": "8-12L",
+      "searchShare": 17,
+      "stockShare": 40
+    },
+    {
+      "band": "12L+",
+      "searchShare": 7,
+      "stockShare": 20
+    }
+  ],
+  "segments": [
+    {
+      "label": "Compact SUV",
+      "demandShare": 34,
+      "stockShare": 18,
+      "gap": "under"
+    },
+    {
+      "label": "Hatchback",
+      "demandShare": 29,
+      "stockShare": 22,
+      "gap": null
+    },
+    {
+      "label": "Premium SUV",
+      "demandShare": 14,
+      "stockShare": 14,
+      "gap": null
+    },
+    {
+      "label": "Sedan",
+      "demandShare": 14,
+      "stockShare": 26,
+      "gap": "over"
+    },
+    {
+      "label": "MUV / MPV",
+      "demandShare": 9,
+      "stockShare": 20,
+      "gap": "over"
+    }
+  ],
+  "zeroResultSearches": {
+    "count": 63,
+    "top": [
+      {
+        "label": "Creta under ₹10L",
+        "count": 18
+      },
+      {
+        "label": "Automatic under ₹6L",
+        "count": 14
+      },
+      {
+        "label": "Diesel Brezza",
+        "count": 9
+      }
+    ]
+  }
+}

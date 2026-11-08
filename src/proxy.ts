@@ -30,7 +30,10 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/dashboard", req.url))
   }
 
-  return NextResponse.next()
+  // Lets server code (the finance 423 handler) build a `?next=` back-link.
+  const requestHeaders = new Headers(req.headers)
+  requestHeaders.set("x-pathname", pathname + req.nextUrl.search)
+  return NextResponse.next({ request: { headers: requestHeaders } })
 })
 
 export const config = {

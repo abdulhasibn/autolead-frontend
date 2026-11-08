@@ -13,6 +13,7 @@ import { LeadList } from "./_components/lead-list"
 import { AgedStockList } from "./_components/aged-stock-list"
 import { PipelineCard } from "./_components/pipeline-card"
 import { InventoryCard } from "./_components/inventory-card"
+import { DashboardMoneyRow } from "@/features/finance/components/dashboard-money-row"
 
 export const metadata: Metadata = { title: "Dashboard" }
 
@@ -57,6 +58,13 @@ export default async function DashboardPage({
         </div>
         <Suspense>
           <PeriodTabs activePeriod={period} />
+        </Suspense>
+      </div>
+
+      {/* Money row: only when finance is unlocked */}
+      <div className="max-lg:order-2">
+        <Suspense>
+          <DashboardMoneyRow />
         </Suspense>
       </div>
 

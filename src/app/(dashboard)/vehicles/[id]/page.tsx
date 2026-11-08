@@ -9,6 +9,9 @@ import { Detail } from "@/components/info-card"
 import { MobileActionBar } from "@/components/mobile-action-bar"
 import { getLeads, getVehicleLeadMatches } from "@/features/leads/api"
 import type { LeadReadModel, VehicleLeadMatches } from "@/features/leads/types"
+import { getVehicleInsightDetail } from "@/features/insights/api"
+import { BuyerInterestCard } from "@/features/insights/components/buyer-interest-card"
+import type { VehicleInsightDetail } from "@/features/insights/types"
 import { getOwner } from "@/features/owners/api"
 import type { OwnerDto } from "@/features/owners/types"
 import {
@@ -42,7 +45,9 @@ import { VehicleGallery } from "@/features/vehicles/components/vehicle-gallery"
 import { VehicleMatchesPanel } from "@/features/vehicles/components/vehicle-matches-panel"
 import { VehicleStatusBadge } from "@/features/vehicles/components/vehicle-status-badge"
 import { GlancePanel, OwnerCard, PaperworkPanel } from "@/features/vehicles/components/vehicle-summary"
-import { VehicleTabs } from "@/features/vehicles/components/vehicle-tabs"
+import { VehicleTabs, type VehicleTab } from "@/features/vehicles/components/vehicle-tabs"
+import { getShowrooms, loadVehicleMoney } from "@/features/finance/api"
+import { MoneyLocked, MoneyTab } from "@/features/finance/components/vehicle-money/money-tab"
 
 export const metadata: Metadata = { title: "Vehicle Details" }
 
@@ -77,7 +82,7 @@ export default async function VehicleDetailPage({
   const { id } = await params
   const vehicle = await loadVehicle(id)
 
-  const [session, media, documents, history, leads, owner, matches] = await Promise.all([
+  const [session, media, documents, history, leads, owner, matches, interest] = await Promise.all([
     auth(),
     items<VehicleMediaDto>(() => getVehicleMedia(id)),
     items<VehicleDocumentDto>(() => getVehicleDocuments(id)),
@@ -86,9 +91,28 @@ export default async function VehicleDetailPage({
     getOwner(vehicle.ownerId).catch((): OwnerDto | null => null),
     // Falls back to the plain linked-leads list if scoring is unavailable.
     getVehicleLeadMatches(id).catch((): VehicleLeadMatches | null => null),
+    // Admin-only; a salesperson's 403, or no analytics yet, just hides the card.
+    getVehicleInsightDetail(id).catch((): VehicleInsightDetail | null => null),
   ])
 
   const isAdmin = session?.user.roles?.includes("admin") ?? false
+  // Finance is admin-only and never blocks the page; locked → the tab says so.
+  const [finance, showrooms] = isAdmin
+    ? await Promise.all([loadVehicleMoney(id).catch(() => null), getShowrooms()])
+    : [null, []]
+  const moneyTab: VehicleTab[] = isAdmin
+    ? [
+        {
+          id: "money",
+          label: "Money",
+          content: finance ? (
+            <MoneyTab money={finance.money} entries={finance.entries} tags={finance.tags} showrooms={showrooms} />
+          ) : (
+            <MoneyLocked vehicleId={vehicle.id} />
+          ),
+        },
+      ]
+    : []
   const now = new Date()
   const title = formatVehicleTitle(vehicle)
   const age = stockAge(vehicle, now)
@@ -181,6 +205,7 @@ export default async function VehicleDetailPage({
             status={vehicle.status}
             canEdit={isAdmin}
           />
+          {isAdmin && interest && <BuyerInterestCard insight={interest} />}
           {/* Phones show these after the tabs, so the tabs are reachable sooner. */}
           <div className="space-y-4 max-lg:hidden">
             <PaperworkPanel vehicle={vehicle} now={now} />
@@ -244,6 +269,7 @@ export default async function VehicleDetailPage({
               <VehicleLeadsList leads={leads} />
             ),
           },
+          ...moneyTab,
           {
             id: "history",
             label: "History",

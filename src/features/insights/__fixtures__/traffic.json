@@ -1,0 +1,115 @@
+{
+  "period": {
+    "from": "2026-10-01T00:00:00+05:30",
+    "to": "2026-10-31T23:59:59+05:30"
+  },
+  "visitors": 3412,
+  "sessions": 4186,
+  "leads": 74,
+  "visitorToLeadRate": 0.0217,
+  "previous": {
+    "visitors": 2310,
+    "sessions": 2851,
+    "leads": 51,
+    "visitorToLeadRate": 0.0221
+  },
+  "channels": [
+    {
+      "channel": "instagram_ads",
+      "visitors": 1820,
+      "carViews": 1240,
+      "testDriveOpens": 212,
+      "leads": 47,
+      "bookings": 14,
+      "sold": 6
+    },
+    {
+      "channel": "google_organic",
+      "visitors": 604,
+      "carViews": 410,
+      "testDriveOpens": 48,
+      "leads": 11,
+      "bookings": 4,
+      "sold": 2
+    },
+    {
+      "channel": "direct",
+      "visitors": 415,
+      "carViews": 260,
+      "testDriveOpens": 15,
+      "leads": 2,
+      "bookings": 1,
+      "sold": 0
+    },
+    {
+      "channel": "whatsapp",
+      "visitors": 312,
+      "carViews": 240,
+      "testDriveOpens": 22,
+      "leads": 5,
+      "bookings": 2,
+      "sold": 1
+    },
+    {
+      "channel": "instagram_organic",
+      "visitors": 261,
+      "carViews": 190,
+      "testDriveOpens": 31,
+      "leads": 9,
+      "bookings": 3,
+      "sold": 2
+    }
+  ],
+  "campaigns": [
+    {
+      "campaign": "Diwali SUVs",
+      "content": "Creta reel",
+      "visits": 742,
+      "leads": 23,
+      "leadRate": 0.031,
+      "bookings": 7
+    },
+    {
+      "campaign": "Under 5 lakh",
+      "content": "carousel",
+      "visits": 655,
+      "leads": 16,
+      "leadRate": 0.0244,
+      "bookings": 5
+    },
+    {
+      "campaign": "Swift story",
+      "content": null,
+      "visits": 423,
+      "leads": 8,
+      "leadRate": 0.0189,
+      "bookings": 2
+    }
+  ],
+  "devices": {
+    "mobile": 2970,
+    "desktop": 442
+  },
+  "cities": [
+    {
+      "city": "Kochi",
+      "visitors": 1420
+    },
+    {
+      "city": "Thrissur",
+      "visitors": 610
+    },
+    {
+      "city": "Kottayam",
+      "visitors": 388
+    },
+    {
+      "city": "Kozhikode",
+      "visitors": 301
+    },
+    {
+      "city": "Other",
+      "visitors": 693
+    }
+  ]
+}
