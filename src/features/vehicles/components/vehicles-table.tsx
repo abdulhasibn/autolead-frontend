@@ -17,13 +17,28 @@ import type { VehicleDto } from "../types"
 import { formatKm, formatVehicleTitle, stockAge } from "../utils"
 import { NumberPlate } from "./number-plate"
 import { VehicleStatusBadge } from "./vehicle-status-badge"
+import { Money } from "@/features/finance/components/money"
+import { useVehicleMoney } from "@/features/finance/use-vehicle-money"
 
 const EMPTY = <span className="text-subtle-foreground">—</span>
 
 /** Dense view for scanning many cars at once; rows open the vehicle. */
-export function VehiclesTable({ vehicles, now }: { vehicles: VehicleDto[]; now: string }) {
+export function VehiclesTable({
+  vehicles,
+  now,
+  financeUnlocked = false,
+}: {
+  vehicles: VehicleDto[]
+  now: string
+  /** Admin with an unlocked finance session: money columns load separately. */
+  financeUnlocked?: boolean
+}) {
   const router = useRouter()
   const nowDate = new Date(now)
+  const money = useVehicleMoney(
+    vehicles.map((v) => v.id),
+    financeUnlocked
+  )
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
@@ -36,6 +51,13 @@ export function VehiclesTable({ vehicles, now }: { vehicles: VehicleDto[]; now: 
             <TableHead className="hidden text-[11px] font-semibold tracking-wide text-subtle-foreground uppercase lg:table-cell">Fuel · Gearbox</TableHead>
             <TableHead className="text-[11px] font-semibold tracking-wide text-subtle-foreground uppercase">Status</TableHead>
             <TableHead className="hidden text-[11px] font-semibold tracking-wide text-subtle-foreground uppercase sm:table-cell">Leads</TableHead>
+            {money && (
+              <>
+                <TableHead className="hidden text-right text-[11px] font-semibold tracking-wide text-subtle-foreground uppercase xl:table-cell">Landing cost</TableHead>
+                <TableHead className="hidden text-right text-[11px] font-semibold tracking-wide text-subtle-foreground uppercase xl:table-cell">Quote</TableHead>
+                <TableHead className="hidden text-right text-[11px] font-semibold tracking-wide text-subtle-foreground uppercase md:table-cell">Profit</TableHead>
+              </>
+            )}
             <TableHead className="text-right text-[11px] font-semibold tracking-wide text-subtle-foreground uppercase">In stock</TableHead>
           </TableRow>
         </TableHeader>
@@ -93,6 +115,19 @@ export function VehiclesTable({ vehicles, now }: { vehicles: VehicleDto[]; now: 
                 <TableCell className="font-mono-data hidden text-xs sm:table-cell">
                   {vehicle.linkedLeadCount || EMPTY}
                 </TableCell>
+                {money && (
+                  <>
+                    <TableCell className="hidden text-right text-xs xl:table-cell">
+                      <Money value={money.get(vehicle.id)?.purchaseRate == null ? null : money.get(vehicle.id)?.landingCost} />
+                    </TableCell>
+                    <TableCell className="hidden text-right text-xs xl:table-cell">
+                      <Money value={money.get(vehicle.id)?.currentQuote} />
+                    </TableCell>
+                    <TableCell className="hidden text-right text-xs md:table-cell">
+                      <Money value={money.get(vehicle.id)?.profit} tone signed />
+                    </TableCell>
+                  </>
+                )}
                 <TableCell
                   className={cn(
                     "text-right text-xs",

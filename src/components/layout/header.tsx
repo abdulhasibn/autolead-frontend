@@ -42,6 +42,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
 const BREADCRUMB_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
   insights: "Insights",
+  finance: "Finance",
   leads: "Leads",
   vehicles: "Vehicles",
   owners: "Owners",
@@ -76,9 +77,10 @@ interface HeaderProps {
   notifications?: NotificationReadModel[]
   unreadCount?: number
   roles?: UserRole[]
+  financeUnlocked?: boolean
 }
 
-export function Header({ notifications = [], unreadCount = 0, roles = [] }: HeaderProps) {
+export function Header({ notifications = [], unreadCount = 0, roles = [], financeUnlocked = false }: HeaderProps) {
   const { data: session } = useSession()
   const { pending: signOutPending, signOutWith } = useSignOut()
   const [confirmSignOutAll, setConfirmSignOutAll] = useState(false)
@@ -89,7 +91,7 @@ export function Header({ notifications = [], unreadCount = 0, roles = [] }: Head
     <header className="flex h-14 items-center justify-between gap-3 px-2 sm:px-4">
       {/* Left: mobile menu + page title */}
       <div className="flex min-w-0 items-center gap-2">
-        <MobileSidebar roles={roles} />
+        <MobileSidebar roles={roles} financeUnlocked={financeUnlocked} />
         <PageTitle />
       </div>
 

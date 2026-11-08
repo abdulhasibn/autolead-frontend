@@ -23,6 +23,8 @@ import { VehicleStatusTabs } from "@/features/vehicles/components/vehicle-status
 import { VehiclesPagination } from "@/features/vehicles/components/vehicles-pagination"
 import { VehiclesTable } from "@/features/vehicles/components/vehicles-table"
 import { VehiclesToolbar } from "@/features/vehicles/components/vehicles-toolbar"
+import { auth } from "@/lib/auth"
+import { hasFinanceSession } from "@/features/finance/session"
 
 export const metadata: Metadata = { title: "Vehicles" }
 
@@ -75,6 +77,8 @@ export default async function VehiclesPage({
   ])
 
   const vehicles = vehiclesPage.items
+  const session = await auth()
+  const financeUnlocked = Boolean(session?.user.roles?.includes("admin")) && (await hasFinanceSession())
   const now = new Date()
   const hasFilters = Boolean(params.q) || countActiveFilters(params) > 0
   const resultCount = vehiclesPage.total
@@ -123,7 +127,7 @@ export default async function VehiclesPage({
           </ul>
           <div className="hidden sm:block">
             {params.layout === "table" ? (
-              <VehiclesTable vehicles={vehicles} now={now.toISOString()} />
+              <VehiclesTable vehicles={vehicles} now={now.toISOString()} financeUnlocked={financeUnlocked} />
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {vehicles.map((vehicle) => (

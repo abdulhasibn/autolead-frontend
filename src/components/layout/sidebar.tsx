@@ -13,6 +13,9 @@ import {
   UserCog,
   Menu,
   LogOut,
+  Wallet,
+  Lock,
+  LockOpen,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -34,6 +37,7 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"] },
       { href: "/insights", label: "Insights", icon: ChartNoAxesCombined, roles: ["admin"] },
+      { href: "/finance", label: "Finance", icon: Wallet, roles: ["admin"] },
     ],
   },
   {
@@ -89,7 +93,21 @@ function Logo() {
   )
 }
 
-function NavLink({ item, active }: { item: NavItem; active: boolean }) {
+/** Finance lock state, from the cookie's presence only (the token itself never reaches the client). */
+function FinanceLockIndicator({ unlocked, className }: { unlocked: boolean; className?: string }) {
+  const Icon = unlocked ? LockOpen : Lock
+  return (
+    <span
+      className={cn("inline-flex items-center", unlocked ? "text-success" : "text-subtle-foreground", className)}
+      title={unlocked ? "Finance unlocked" : "Finance locked"}
+    >
+      <Icon aria-hidden className="size-3" />
+      <span className="sr-only">{unlocked ? "(unlocked)" : "(locked)"}</span>
+    </span>
+  )
+}
+
+function NavLink({ item, active, financeUnlocked }: { item: NavItem; active: boolean; financeUnlocked: boolean }) {
   const Icon = item.icon
   return (
     <Link
@@ -105,14 +123,21 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
       )}
       <Icon className={cn("shrink-0 h-[18px] w-[18px]", active && "text-primary")} />
-      <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-75 whitespace-nowrap text-[13px] leading-none">
+      {item.href === "/finance" && (
+        <FinanceLockIndicator
+          unlocked={financeUnlocked}
+          className="absolute top-1.5 left-7 group-hover:hidden"
+        />
+      )}
+      <span className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-75 whitespace-nowrap text-[13px] leading-none">
         {item.label}
+        {item.href === "/finance" && <FinanceLockIndicator unlocked={financeUnlocked} />}
       </span>
     </Link>
   )
 }
 
-function SidebarNav({ roles }: { roles: UserRole[] }) {
+function SidebarNav({ roles, financeUnlocked }: { roles: UserRole[]; financeUnlocked: boolean }) {
   const pathname = usePathname()
 
   return (
@@ -134,7 +159,7 @@ function SidebarNav({ roles }: { roles: UserRole[] }) {
                   pathname === item.href || pathname.startsWith(`${item.href}/`)
                 return (
                   <li key={item.href}>
-                    <NavLink item={item} active={active} />
+                    <NavLink item={item} active={active} financeUnlocked={financeUnlocked} />
                   </li>
                 )
               })}
@@ -146,7 +171,7 @@ function SidebarNav({ roles }: { roles: UserRole[] }) {
   )
 }
 
-export function Sidebar({ roles = [] }: { roles?: UserRole[] }) {
+export function Sidebar({ roles = [], financeUnlocked = false }: { roles?: UserRole[]; financeUnlocked?: boolean }) {
   return (
     <aside
       className={cn(
@@ -159,12 +184,12 @@ export function Sidebar({ roles = [] }: { roles?: UserRole[] }) {
       )}
     >
       <Logo />
-      <SidebarNav roles={roles} />
+      <SidebarNav roles={roles} financeUnlocked={financeUnlocked} />
     </aside>
   )
 }
 
-export function MobileSidebar({ roles = [] }: { roles?: UserRole[] }) {
+export function MobileSidebar({ roles = [], financeUnlocked = false }: { roles?: UserRole[]; financeUnlocked?: boolean }) {
   const { activeModal, openModal, closeModal } = useUIStore()
   const isOpen = activeModal === "mobile-sidebar"
   const pathname = usePathname()
@@ -225,7 +250,7 @@ export function MobileSidebar({ roles = [] }: { roles?: UserRole[] }) {
             </div>
           </SheetHeader>
           {/* Render nav with all labels visible in mobile sheet */}
-          <MobileNav roles={roles} />
+          <MobileNav roles={roles} financeUnlocked={financeUnlocked} />
           <MobileAccount />
         </SheetContent>
       </Sheet>
@@ -265,7 +290,7 @@ function MobileAccount() {
   )
 }
 
-function MobileNav({ roles }: { roles: UserRole[] }) {
+function MobileNav({ roles, financeUnlocked }: { roles: UserRole[]; financeUnlocked: boolean }) {
   const pathname = usePathname()
 
   return (
@@ -301,6 +326,7 @@ function MobileNav({ roles }: { roles: UserRole[] }) {
                       )}
                       <Icon className={cn("shrink-0 size-[18px]", active && "text-primary")} />
                       {item.label}
+                      {item.href === "/finance" && <FinanceLockIndicator unlocked={financeUnlocked} />}
                     </Link>
                   </li>
                 )

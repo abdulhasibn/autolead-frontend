@@ -45,7 +45,9 @@ import { VehicleGallery } from "@/features/vehicles/components/vehicle-gallery"
 import { VehicleMatchesPanel } from "@/features/vehicles/components/vehicle-matches-panel"
 import { VehicleStatusBadge } from "@/features/vehicles/components/vehicle-status-badge"
 import { GlancePanel, OwnerCard, PaperworkPanel } from "@/features/vehicles/components/vehicle-summary"
-import { VehicleTabs } from "@/features/vehicles/components/vehicle-tabs"
+import { VehicleTabs, type VehicleTab } from "@/features/vehicles/components/vehicle-tabs"
+import { getShowrooms, loadVehicleMoney } from "@/features/finance/api"
+import { MoneyLocked, MoneyTab } from "@/features/finance/components/vehicle-money/money-tab"
 
 export const metadata: Metadata = { title: "Vehicle Details" }
 
@@ -94,6 +96,23 @@ export default async function VehicleDetailPage({
   ])
 
   const isAdmin = session?.user.roles?.includes("admin") ?? false
+  // Finance is admin-only and never blocks the page; locked → the tab says so.
+  const [finance, showrooms] = isAdmin
+    ? await Promise.all([loadVehicleMoney(id).catch(() => null), getShowrooms()])
+    : [null, []]
+  const moneyTab: VehicleTab[] = isAdmin
+    ? [
+        {
+          id: "money",
+          label: "Money",
+          content: finance ? (
+            <MoneyTab money={finance.money} entries={finance.entries} tags={finance.tags} showrooms={showrooms} />
+          ) : (
+            <MoneyLocked vehicleId={vehicle.id} />
+          ),
+        },
+      ]
+    : []
   const now = new Date()
   const title = formatVehicleTitle(vehicle)
   const age = stockAge(vehicle, now)
@@ -250,6 +269,7 @@ export default async function VehicleDetailPage({
               <VehicleLeadsList leads={leads} />
             ),
           },
+          ...moneyTab,
           {
             id: "history",
             label: "History",

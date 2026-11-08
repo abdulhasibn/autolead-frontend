@@ -4,6 +4,7 @@ import { getNotifications } from "@/features/notifications/api"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 import { ScrollGradient } from "@/components/layout/scroll-gradient"
+import { hasFinanceSession } from "@/features/finance/session"
 
 export default async function DashboardLayout({
   children,
@@ -17,6 +18,8 @@ export default async function DashboardLayout({
   }
 
   const roles = session.user.roles ?? []
+  // Cookie presence only, for the sidebar lock icon; the token stays server-side.
+  const financeUnlocked = roles.includes("admin") && (await hasFinanceSession())
 
   // Fetch notifications for the drawer initial state — swallow errors so a
   // backend hiccup doesn't break the whole shell.
@@ -32,13 +35,13 @@ export default async function DashboardLayout({
 
   return (
     <div className="h-dvh overflow-hidden bg-muted">
-      <Sidebar roles={roles} />
+      <Sidebar roles={roles} financeUnlocked={financeUnlocked} />
       <div className="flex flex-col h-full overflow-hidden md:ml-[80px]">
         <div className="relative flex-1 min-h-0">
           <ScrollGradient>{children}</ScrollGradient>
           {/* Floating header — no card, just text */}
           <div className="absolute inset-x-0 top-0 z-20 pt-[env(safe-area-inset-top)] md:pr-3">
-            <Header notifications={initialNotifications} unreadCount={unreadCount} roles={roles} />
+            <Header notifications={initialNotifications} unreadCount={unreadCount} roles={roles} financeUnlocked={financeUnlocked} />
           </div>
         </div>
       </div>
