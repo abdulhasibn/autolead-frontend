@@ -1,18 +1,13 @@
 "use client"
 
+import { BrandMark } from "@/components/brand-logo"
+
 export function SystemHeader() {
   return (
     <header className="w-full border-b border-border bg-card px-6 py-3 flex items-center justify-between">
       <div className="flex items-center gap-2.5">
         <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center text-white">
-          {/* Steering wheel icon */}
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <circle cx="12" cy="12" r="3" />
-            <line x1="12" y1="2" x2="12" y2="9" />
-            <line x1="4.22" y1="6.22" x2="9.17" y2="9.17" />
-            <line x1="19.78" y1="6.22" x2="14.83" y2="9.17" />
-          </svg>
+          <BrandMark className="h-5" />
         </div>
         <div>
           <span className="text-sm font-bold tracking-tight text-foreground">

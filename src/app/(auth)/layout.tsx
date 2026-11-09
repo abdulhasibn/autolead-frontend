@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/brand-logo"
 import { SystemHeader } from "./_components/system-header"
 
 const FEATURES = [
@@ -62,11 +63,9 @@ export default function AuthLayout({
               <div className="absolute bottom-0 left-0 w-80 h-80 bg-primary/20 rounded-full blur-3xl -translate-x-1/4 translate-y-1/4" />
             </div>
 
-            {/* Faint car silhouette */}
-            <div className="absolute bottom-24 right-0 opacity-[0.04] pointer-events-none translate-x-8">
-              <svg viewBox="0 0 500 200" className="w-[440px]" fill="white">
-                <path d="M460,120 C460,110 452,105 440,105 L430,105 L420,75 C415,62 400,55 370,55 L170,55 C145,55 130,62 120,75 L95,105 L70,105 C55,105 45,110 45,120 L45,140 C45,148 52,155 60,155 L80,155 C82,165 91,173 102,173 C113,173 122,165 124,155 L370,155 C372,165 381,173 392,173 C403,173 412,165 414,155 L440,155 C448,155 460,150 460,140 Z M150,80 L280,80 L295,105 L130,105 Z M300,80 L360,80 L375,105 L315,105 Z" />
-              </svg>
+            {/* Faint brand mark */}
+            <div className="absolute -bottom-10 -right-10 opacity-[0.05] pointer-events-none text-white">
+              <BrandMark className="w-[340px]" />
             </div>
 
             <div className="relative z-10 flex flex-col gap-10">
@@ -74,13 +73,7 @@ export default function AuthLayout({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 rounded-xl bg-card/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white">
-                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <circle cx="12" cy="12" r="3" />
-                      <line x1="12" y1="2" x2="12" y2="9" />
-                      <line x1="4.22" y1="6.22" x2="9.17" y2="9.17" />
-                      <line x1="19.78" y1="6.22" x2="14.83" y2="9.17" />
-                    </svg>
+                    <BrandMark className="h-8" />
                   </div>
                   <div>
                     <span className="text-xl font-bold tracking-tight text-white">

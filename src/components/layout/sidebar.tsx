@@ -18,6 +18,7 @@ import {
   LockOpen,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { BrandMark } from "@/components/brand-logo"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { useUIStore } from "@/stores/ui.store"
@@ -61,26 +62,19 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
   },
 ]
 
+/** Teal tile with the white brand mark; stays visible when the rail is collapsed. */
+function BrandTile() {
+  return (
+    <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white shrink-0">
+      <BrandMark className="h-6" />
+    </div>
+  )
+}
+
 function Logo() {
   return (
     <div className="flex h-14 items-center gap-3 px-3.5 border-b border-white/[0.06] shrink-0">
-      <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white shrink-0">
-        <svg
-          style={{ width: "1.1rem", height: "1.1rem" }}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <circle cx="12" cy="12" r="3" />
-          <line x1="12" y1="2" x2="12" y2="9" />
-          <line x1="4.22" y1="6.22" x2="9.17" y2="9.17" />
-          <line x1="19.78" y1="6.22" x2="14.83" y2="9.17" />
-        </svg>
-      </div>
+      <BrandTile />
       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-75 whitespace-nowrap overflow-hidden min-w-0">
         <span className="text-sm font-bold tracking-tight text-foreground block leading-tight">
           Wheels <span className="text-primary">Experts</span>
@@ -222,23 +216,7 @@ export function MobileSidebar({ roles = [], financeUnlocked = false }: { roles?:
             <SheetTitle className="sr-only">Navigation</SheetTitle>
             {/* Inline logo for mobile sheet */}
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white shrink-0">
-                <svg
-                  style={{ width: "1.1rem", height: "1.1rem" }}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <circle cx="12" cy="12" r="3" />
-                  <line x1="12" y1="2" x2="12" y2="9" />
-                  <line x1="4.22" y1="6.22" x2="9.17" y2="9.17" />
-                  <line x1="19.78" y1="6.22" x2="14.83" y2="9.17" />
-                </svg>
-              </div>
+              <BrandTile />
               <div>
                 <span className="text-sm font-bold tracking-tight text-foreground">
                   Wheels <span className="text-primary">Experts</span>
