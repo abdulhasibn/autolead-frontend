@@ -36,6 +36,7 @@ import {
 } from "@/features/vehicles/utils"
 import { ChangeVehicleStatusDialog } from "@/features/vehicles/components/change-vehicle-status-dialog"
 import { DocumentsPanel } from "@/features/vehicles/components/documents-panel"
+import { MarkVehicleSoldDialog } from "@/features/vehicles/components/mark-vehicle-sold-dialog"
 import { ListedPricePanel } from "@/features/vehicles/components/listed-price-panel"
 import { NumberPlate } from "@/features/vehicles/components/number-plate"
 import { PhotoManager } from "@/features/vehicles/components/photo-manager"
@@ -164,6 +165,13 @@ export default async function VehicleDetailPage({
           </div>
         </div>
         <MobileActionBar>
+          {isVehicleLinkable(vehicle) && (
+            <MarkVehicleSoldDialog
+              vehicleId={vehicle.id}
+              title={title}
+              linkedLeads={matches ? matches.linked : leads}
+            />
+          )}
           <VehicleFormSheet mode="edit" vehicle={vehicle} />
           {isAdmin && (
             <ChangeVehicleStatusDialog

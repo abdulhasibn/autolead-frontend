@@ -17,6 +17,8 @@ import {
   changeLeadStatus,
   completeFollowUp,
   createLead,
+  getLead,
+  getLeads,
   scheduleFollowUp,
   suggestVehicles,
   updateLeadPreference,
@@ -30,6 +32,7 @@ import {
   scheduleFollowUpSchema,
   suggestVehiclesSchema,
 } from "./schemas"
+import { isLeadClosed } from "./constants"
 import type {
   CompleteFollowUpResult,
   FollowUpDto,
@@ -225,6 +228,66 @@ export async function suggestVehiclesAction(
       }
       throw err
     }
+  } catch (err) {
+    return actionError(err)
+  }
+}
+
+/**
+ * Open leads that could buy a car, for the car page's "Mark as sold" picker.
+ * Read-only. The API caps a page at 100 and salespeople only get their own
+ * leads, so this is the same view the leads list gives them.
+ */
+export async function getSaleCandidateLeadsAction(): Promise<ActionResult<LeadReadModel[]>> {
+  try {
+    await requireSession()
+    const page = await getLeads({ limit: 100 })
+    return actionOk(page.items.filter((lead) => !isLeadClosed(lead.status)))
+  } catch (err) {
+    return actionError(err)
+  }
+}
+
+const markVehicleSoldSchema = z.object({
+  vehicleId: z.guid(),
+  leadId: z.guid(),
+  notes: z.string().trim().max(2000).nullable().optional(),
+})
+
+/**
+ * Sells a car from the car page by converting the buying lead, which is what
+ * marks the car sold. Walks the lead through the same steps the lead page
+ * would: link it to this car (if it isn't), confirm the booking (if it isn't),
+ * then convert. A failure part-way leaves the earlier steps in place; the
+ * error names the step so the user can finish from the lead page.
+ */
+export async function markVehicleSoldAction(
+  input: unknown
+): Promise<ActionResult<LeadReadModel>> {
+  try {
+    await requireSession()
+    const parsed = markVehicleSoldSchema.safeParse(input)
+    if (!parsed.success) return validationError()
+    const { vehicleId, leadId } = parsed.data
+    const notes = parsed.data.notes || null
+
+    let lead = await getLead(leadId)
+    if (isLeadClosed(lead.status)) {
+      throw new ApiError(422, "LEAD_CLOSED", "This lead is already closed.")
+    }
+    try {
+      if (lead.vehicleId !== vehicleId) {
+        lead = await associateVehicle(leadId, vehicleId)
+      }
+      if (lead.status !== "booking_confirmed") {
+        lead = await changeLeadStatus(leadId, { status: "booking_confirmed", notes })
+      }
+      lead = await changeLeadStatus(leadId, { status: "converted", notes })
+    } finally {
+      // Earlier steps may have landed even if a later one failed.
+      revalidateLeads()
+    }
+    return actionOk(lead)
   } catch (err) {
     return actionError(err)
   }
