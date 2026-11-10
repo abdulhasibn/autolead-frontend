@@ -11,6 +11,7 @@ import {
 import { VEHICLE_STATUS_LABELS } from "@/features/vehicles/constants"
 import type { VehicleDto } from "@/features/vehicles/types"
 import { VehicleCardCompact } from "@/features/vehicles/components/vehicle-card"
+import { variantLabel } from "@/features/vehicles/utils"
 
 interface OwnerVehiclesPanelProps {
   vehicles: VehicleDto[]
@@ -58,7 +59,7 @@ export function OwnerVehiclesPanel({ vehicles }: OwnerVehiclesPanelProps) {
       </TableHeader>
       <TableBody>
         {vehicles.map((v) => {
-          const label = [v.makeName, v.modelName, v.variantName]
+          const label = [v.makeName, v.modelName, variantLabel(v.variantName)]
             .filter(Boolean)
             .join(" ")
           return (

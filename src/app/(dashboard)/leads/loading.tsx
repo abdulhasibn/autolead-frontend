@@ -16,7 +16,7 @@ export default function LeadsLoading() {
       </div>
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="h-10 border-b border-border/50 bg-card/50" />
-        <div className="divide-y divide-[#F3F4F6]">
+        <div className="divide-y divide-border">
           {Array.from({ length: 8 }, (_, i) => (
             <div key={i} className="flex items-center gap-3 px-4 py-3">
               <Skeleton className="size-8 rounded-full bg-accent" />

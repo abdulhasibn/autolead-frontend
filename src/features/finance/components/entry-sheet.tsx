@@ -7,12 +7,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/date-picker"
+import { DatePicker, pastDateYears } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
 import { FormField } from "@/features/leads/components/form-field"
-import { OptionSelect } from "@/features/leads/components/option-select"
+import { OptionSelect } from "@/components/option-select"
 import { SegmentedChoice } from "@/features/leads/components/segmented-choice"
 import { createEntryAction, updateEntryAction } from "../actions"
 import { todayIST } from "../logic/dates"
@@ -237,7 +237,7 @@ function EntryForm(props: EntrySheetProps) {
               control={control}
               name="entryDate"
               render={({ field }) => (
-                <DatePicker id="entry-date" value={field.value} onChange={field.onChange} invalid={Boolean(errors.entryDate)} />
+                <DatePicker {...pastDateYears()} id="entry-date" value={field.value} onChange={field.onChange} invalid={Boolean(errors.entryDate)} />
               )}
             />
           </FormField>
@@ -308,7 +308,7 @@ function EntryForm(props: EntrySheetProps) {
           <Textarea id="entry-note" rows={3} maxLength={1000} {...register("note")} />
         </FormField>
       </div>
-      <div className="sticky bottom-0 flex gap-2 border-t border-border bg-popover px-4 py-3 sm:px-6">
+      <div className="sticky bottom-0 flex gap-2 border-t border-border bg-popover px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-3">
         <Button type="button" variant="outline" className="flex-1" onClick={() => onOpenChange(false)} disabled={isPending}>
           Cancel
         </Button>

@@ -7,7 +7,7 @@ import { Loader2, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/date-picker"
+import { DatePicker, pastDateYears } from "@/components/ui/date-picker"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -161,7 +161,7 @@ function AddQuoteDialog({ vehicleId, open, onOpenChange }: { vehicleId: string; 
               <MoneyInput id="quote-amount" value={amount} onValueChange={setAmount} aria-invalid={errors.amount ? true : undefined} />
             </FormField>
             <FormField id="quote-date" label="Date" error={errors.quotedOn}>
-              <DatePicker id="quote-date" value={quotedOn} onChange={setQuotedOn} />
+              <DatePicker {...pastDateYears()} id="quote-date" value={quotedOn} onChange={setQuotedOn} />
             </FormField>
           </div>
           <FormField id="quote-to" label="Display name (optional)">

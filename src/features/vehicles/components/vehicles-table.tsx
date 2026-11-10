@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils"
 import { FUEL_TYPE_LABELS, TRANSMISSION_LABELS } from "../constants"
 import type { VehicleDto } from "../types"
-import { formatKm, formatVehicleTitle, stockAge } from "../utils"
+import { formatKm, formatVehicleTitle, stockAge, variantLabel } from "../utils"
 import { NumberPlate } from "./number-plate"
 import { VehicleStatusBadge } from "./vehicle-status-badge"
 import { Money } from "@/features/finance/components/money"
@@ -102,7 +102,7 @@ export function VehiclesTable({
                       >
                         {title}
                       </Link>
-                      <p className="truncate text-xs text-subtle-foreground">{vehicle.variantName}</p>
+                      <p className="truncate text-xs text-subtle-foreground">{variantLabel(vehicle.variantName)}</p>
                     </div>
                   </div>
                 </TableCell>

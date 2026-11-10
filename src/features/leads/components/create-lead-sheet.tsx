@@ -29,7 +29,7 @@ import {
   type CreateLeadInput,
 } from "../schemas"
 import { FormField } from "./form-field"
-import { OptionSelect } from "./option-select"
+import { OptionSelect } from "@/components/option-select"
 import { PreferenceFields, preferenceErrors } from "./preference-fields"
 import { SegmentedChoice } from "./segmented-choice"
 import { SuggestedVehiclesPicker } from "./suggested-vehicles-picker"
@@ -261,7 +261,7 @@ export function CreateLeadSheet({
                 <SectionTitle>Budget &amp; timing</SectionTitle>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <FormField id="budget" label="Max budget (₹)" error={errors.budget?.message}>
-                    <Input id="budget" type="number" min={0} step={1000} inputMode="numeric" placeholder="e.g. 650000" aria-invalid={!!errors.budget} {...register("budget")} />
+                    <Input id="budget" inputMode="numeric" enterKeyHint="next" placeholder="e.g. 650000" aria-invalid={!!errors.budget} {...register("budget")} />
                   </FormField>
                   <FormField id="purchaseTimeline" label="Purchase timeline">
                     <Input id="purchaseTimeline" placeholder="e.g. Within a month" {...register("purchaseTimeline")} />

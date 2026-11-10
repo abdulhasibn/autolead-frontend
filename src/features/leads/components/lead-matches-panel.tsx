@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Car, ChevronDown, ChevronRight, ChevronUp, Sparkles } from "lucide-react"
 import { NumberPlate } from "@/features/vehicles/components/number-plate"
 import { FUEL_TYPE_LABELS, TRANSMISSION_LABELS } from "@/features/vehicles/constants"
-import { formatKm } from "@/features/vehicles/utils"
+import { formatKm, variantLabel } from "@/features/vehicles/utils"
 import { formatCurrency } from "@/lib/format"
 import { hasPreference } from "../preference"
 import type { LeadReadModel, LeadVehicleMatches, VehicleWithMatch } from "../types"
@@ -49,7 +49,7 @@ function VehicleRow({
   action: React.ReactNode
 }) {
   const { vehicle, match } = entry
-  const title = [vehicle.makeName, vehicle.modelName, vehicle.variantName]
+  const title = [vehicle.makeName, vehicle.modelName, variantLabel(vehicle.variantName)]
     .filter(Boolean)
     .join(" ")
   const summary = [
@@ -109,7 +109,7 @@ export function LeadMatchesPanel({
       <section className="space-y-2">
         <SectionHeading count={linked ? 1 : 0}>Linked car</SectionHeading>
         {linked ? (
-          <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-border/50 text-sm">
+          <ul className="divide-y divide-border rounded-lg border border-border/50 text-sm">
             <VehicleRow
               entry={linked}
               lead={lead}
@@ -142,7 +142,7 @@ export function LeadMatchesPanel({
           )
         ) : (
           <>
-            <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-border/50 text-sm">
+            <ul className="divide-y divide-border rounded-lg border border-border/50 text-sm">
               {visibleSuggested.map((entry) => {
                 const vehicleName =
                   [entry.vehicle.makeName, entry.vehicle.modelName].filter(Boolean).join(" ") ||

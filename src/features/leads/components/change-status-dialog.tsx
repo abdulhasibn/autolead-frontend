@@ -30,7 +30,7 @@ import {
 } from "../schemas"
 import type { LeadReadModel } from "../types"
 import { FormField } from "./form-field"
-import { OptionSelect } from "./option-select"
+import { OptionSelect } from "@/components/option-select"
 
 const DEFAULT_VALUES: ChangeLeadStatusFormInput = {
   status: "" as ChangeLeadStatusFormInput["status"],

@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Check, Loader2, Pencil, Plus, Search, Sparkles, UserPlus } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/date-picker"
+import { DatePicker, expiryDateYears } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import {
   Sheet,
@@ -20,7 +20,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import type { MakeReadModel, ModelReadModel, VariantReadModel } from "@/features/catalog/types"
 import { FormField } from "@/features/leads/components/form-field"
-import { OptionSelect } from "@/features/leads/components/option-select"
+import { OptionSelect } from "@/components/option-select"
 import { recordAcquisitionAction } from "@/features/finance/actions"
 import {
   buildAcquisition,
@@ -61,7 +61,7 @@ import {
   type VehicleFormOutput,
 } from "../schemas"
 import type { VehicleDto } from "../types"
-import { formatPlate, formatVehicleTitle } from "../utils"
+import { formatPlate, formatVehicleTitle, variantLabel } from "../utils"
 import { AcquisitionMoneyFields, AcquisitionMoneyLocked } from "./acquisition-money-fields"
 import { PhotoManager } from "./photo-manager"
 
@@ -252,13 +252,19 @@ export function VehicleFormSheet(props: Props) {
     setLoadingCatalog(true)
     const result = await getVariantsAction(modelId)
     setLoadingCatalog(false)
-    if (result.ok) setVariants(result.data)
-    else handleError(result.error, "Could not load variants.")
+    if (!result.ok) {
+      handleError(result.error, "Could not load variants.")
+      return
+    }
+    setVariants(result.data)
+    // A model with only one variant (often the "NA" placeholder) needs no choice.
+    const [only] = result.data
+    if (result.data.length === 1 && only) chooseVariant(only.id, result.data)
   }
 
-  function chooseVariant(variantId: string) {
+  function chooseVariant(variantId: string, list: VariantReadModel[] = variants) {
     setValue("variantId", variantId, { shouldValidate: true })
-    const variant = variants.find((v) => v.id === variantId)
+    const variant = list.find((v) => v.id === variantId)
     let filled = false
     if (variant && isFuelType(variant.fuelType)) {
       setValue("fuelType", variant.fuelType, { shouldValidate: true })
@@ -434,7 +440,7 @@ export function VehicleFormSheet(props: Props) {
             <>
               {isCreate ? (
                 <div className="space-y-2">
-                  <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="grid gap-3 md:grid-cols-3">
                     <FormField id="makeId" label="Make *" error={errors.makeId?.message}>
                       <OptionSelect
                         id="makeId"
@@ -460,12 +466,17 @@ export function VehicleFormSheet(props: Props) {
                       <OptionSelect
                         id="variantId"
                         value={values.variantId ?? ""}
-                        onValueChange={chooseVariant}
+                        onValueChange={(id) => chooseVariant(id)}
                         options={variants.map((v) => ({ value: v.id, label: v.name }))}
                         placeholder={values.modelId ? "Select variant" : "Pick a model first"}
                         disabled={!values.modelId || loadingCatalog}
                         invalid={!!errors.variantId}
                       />
+                      {values.modelId && !loadingCatalog && variants.length === 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          No variants for this model. Ask an admin to add one.
+                        </p>
+                      )}
                     </FormField>
                   </div>
                   {prefilled && (
@@ -477,7 +488,7 @@ export function VehicleFormSheet(props: Props) {
                 </div>
               ) : (
                 <p className="rounded-lg bg-card/50 px-3 py-2 text-xs text-muted-foreground">
-                  {[props.vehicle.makeName, props.vehicle.modelName, props.vehicle.variantName]
+                  {[props.vehicle.makeName, props.vehicle.modelName, variantLabel(props.vehicle.variantName)]
                     .filter(Boolean)
                     .join(" · ")}{" "}
                   — the model, owner and acquisition type can&apos;t be changed after adding.
@@ -490,6 +501,9 @@ export function VehicleFormSheet(props: Props) {
                     id="registrationNumber"
                     autoComplete="off"
                     autoCapitalize="characters"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    enterKeyHint="next"
                     placeholder="KL 07 CU 4521"
                     className="font-mono-data tracking-[0.06em] uppercase"
                     aria-invalid={!!errors.registrationNumber}
@@ -497,7 +511,7 @@ export function VehicleFormSheet(props: Props) {
                   />
                 </FormField>
                 <FormField id="year" label="Year *" error={errors.year?.message}>
-                  <Input id="year" inputMode="numeric" placeholder="2021" className="font-mono-data" aria-invalid={!!errors.year} {...register("year")} />
+                  <Input id="year" inputMode="numeric" enterKeyHint="next" placeholder="2021" className="font-mono-data" aria-invalid={!!errors.year} {...register("year")} />
                 </FormField>
                 <FormField id="fuelType" label="Fuel *" error={errors.fuelType?.message}>
                   <Controller
@@ -520,10 +534,10 @@ export function VehicleFormSheet(props: Props) {
                   />
                 </FormField>
                 <FormField id="kmDriven" label="Km driven *" error={errors.kmDriven?.message}>
-                  <Input id="kmDriven" inputMode="numeric" placeholder="42,150" className="font-mono-data" aria-invalid={!!errors.kmDriven} {...register("kmDriven")} />
+                  <Input id="kmDriven" inputMode="numeric" enterKeyHint="next" placeholder="42,150" className="font-mono-data" aria-invalid={!!errors.kmDriven} {...register("kmDriven")} />
                 </FormField>
                 <FormField id="numPreviousOwners" label="Previous owners *" error={errors.numPreviousOwners?.message}>
-                  <Input id="numPreviousOwners" inputMode="numeric" className="font-mono-data" aria-invalid={!!errors.numPreviousOwners} {...register("numPreviousOwners")} />
+                  <Input id="numPreviousOwners" inputMode="numeric" enterKeyHint="next" className="font-mono-data" aria-invalid={!!errors.numPreviousOwners} {...register("numPreviousOwners")} />
                 </FormField>
                 <FormField id="colour" label="Colour *" error={errors.colour?.message} className="sm:col-span-2">
                   <Input id="colour" placeholder="e.g. Polar White" aria-invalid={!!errors.colour} {...register("colour")} />
@@ -540,6 +554,7 @@ export function VehicleFormSheet(props: Props) {
                   <DatePicker
                     id="insuranceValidUntil"
                     value={field.value}
+                    {...expiryDateYears()}
                     onChange={field.onChange}
                     invalid={!!errors.insuranceValidUntil}
                     className="sm:w-56"
@@ -626,7 +641,7 @@ export function VehicleFormSheet(props: Props) {
                         New
                       </Button>
                     </div>
-                    <ul className="max-h-64 divide-y divide-[#F3F4F6] overflow-y-auto rounded-lg border border-border">
+                    <ul className="max-h-64 divide-y divide-border overflow-y-auto rounded-lg border border-border">
                       {filteredOwners.length === 0 ? (
                         <li className="px-3 py-6 text-center text-xs text-subtle-foreground">
                           No owners match. Add them as a new owner.

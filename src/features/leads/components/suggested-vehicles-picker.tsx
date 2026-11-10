@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Car, Check, ChevronDown, ChevronUp, Loader2, Sparkles } from "lucide-react"
 import { NumberPlate } from "@/features/vehicles/components/number-plate"
 import { FUEL_TYPE_LABELS, TRANSMISSION_LABELS } from "@/features/vehicles/constants"
-import { formatKm } from "@/features/vehicles/utils"
+import { formatKm, variantLabel } from "@/features/vehicles/utils"
 import { formatCurrency } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { suggestVehiclesAction } from "../actions"
@@ -148,9 +148,9 @@ export function SuggestedVehiclesPicker({
 
     body = (
       <>
-        <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-border/50 text-sm">
+        <ul className="divide-y divide-border rounded-lg border border-border/50 text-sm">
           {visible.map(({ vehicle, match }) => {
-            const title = [vehicle.makeName, vehicle.modelName, vehicle.variantName]
+            const title = [vehicle.makeName, vehicle.modelName, variantLabel(vehicle.variantName)]
               .filter(Boolean)
               .join(" ")
             const summary = [

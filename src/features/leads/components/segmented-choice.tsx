@@ -1,7 +1,7 @@
 "use client"
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import type { SelectOption } from "./option-select"
+import type { SelectOption } from "@/components/option-select"
 
 interface SegmentedChoiceProps {
   id?: string

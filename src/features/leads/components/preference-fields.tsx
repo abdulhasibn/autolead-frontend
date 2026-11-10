@@ -18,7 +18,7 @@ import type { LeadPreferenceFormInput } from "../schemas"
 import { ChipMultiSelect } from "./chip-multi-select"
 import { ColourTagsInput } from "./colour-tags-input"
 import { FormField } from "./form-field"
-import { OptionSelect } from "./option-select"
+import { OptionSelect } from "@/components/option-select"
 
 const FUEL_OPTIONS = FUEL_TYPES.map((v) => ({ value: v, label: FUEL_TYPE_LABELS[v] }))
 const TRANSMISSION_OPTIONS = TRANSMISSIONS.map((v) => ({ value: v, label: TRANSMISSION_LABELS[v] }))
@@ -275,9 +275,8 @@ function NumberField({
     <FormField id={id} label={label} error={error}>
       <Input
         id={id}
-        type="number"
         inputMode="numeric"
-        min={0}
+        enterKeyHint="next"
         placeholder="Any"
         value={value}
         onChange={(e) => onChange(e.target.value)}

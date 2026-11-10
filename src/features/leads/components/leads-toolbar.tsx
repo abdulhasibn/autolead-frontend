@@ -10,7 +10,7 @@ import { Toggle } from "@/components/ui/toggle"
 import { cn } from "@/lib/utils"
 import { LEAD_STATUSES, LEAD_STATUS_LABELS } from "../constants"
 import { buildLeadsHref, type LeadsSearchParams } from "../search-params"
-import { OptionSelect } from "./option-select"
+import { OptionSelect } from "@/components/option-select"
 import type { VehicleOption } from "./types"
 
 const ALL = "all"

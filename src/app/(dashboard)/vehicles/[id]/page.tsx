@@ -32,6 +32,7 @@ import {
   formatVehicleTitle,
   isVehicleLinkable,
   stockAge,
+  variantLabel,
 } from "@/features/vehicles/utils"
 import { ChangeVehicleStatusDialog } from "@/features/vehicles/components/change-vehicle-status-dialog"
 import { DocumentsPanel } from "@/features/vehicles/components/documents-panel"
@@ -142,9 +143,9 @@ export default async function VehicleDetailPage({
             <VehicleStatusBadge status={vehicle.status} />
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            {vehicle.variantName && (
+            {variantLabel(vehicle.variantName) && (
               <>
-                <span>{vehicle.variantName}</span>
+                <span>{variantLabel(vehicle.variantName)}</span>
                 <span aria-hidden className="text-subtle-foreground">·</span>
               </>
             )}

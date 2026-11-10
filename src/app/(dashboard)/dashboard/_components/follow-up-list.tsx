@@ -58,7 +58,7 @@ export function FollowUpList({
   }
 
   return (
-    <ul className="divide-y divide-[#F3F4F6]">
+    <ul className="divide-y divide-border">
       {items.map((item) => {
         const icon = TASK_ICONS[item.taskType] ?? DEFAULT_ICON
         const timeLabel =

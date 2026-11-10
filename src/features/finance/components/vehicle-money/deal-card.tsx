@@ -6,7 +6,7 @@ import { Loader2, Pencil } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { DatePicker } from "@/components/ui/date-picker"
+import { DatePicker, pastDateYears } from "@/components/ui/date-picker"
 import { Textarea } from "@/components/ui/textarea"
 import { FormField } from "@/features/leads/components/form-field"
 import { setDealAction } from "../../actions"
@@ -160,7 +160,7 @@ export function DealCard({
           </FormField>
         )}
         <FormField id="deal-date" label={commission ? "Agreed on (optional)" : "Purchased on (optional)"}>
-          <DatePicker id="deal-date" value={form.purchasedOn} onChange={(v) => setForm({ ...form, purchasedOn: v })} />
+          <DatePicker {...pastDateYears()} id="deal-date" value={form.purchasedOn} onChange={(v) => setForm({ ...form, purchasedOn: v })} />
         </FormField>
         <FormField id="deal-owner" label="Owner’s expected price (optional)" error={errors.ownerExpectedPrice}>
           <MoneyInput id="deal-owner" value={form.ownerExpectedPrice} onValueChange={(v) => setForm({ ...form, ownerExpectedPrice: v })} />

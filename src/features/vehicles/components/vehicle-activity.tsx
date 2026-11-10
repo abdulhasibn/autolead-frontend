@@ -22,7 +22,7 @@ export function VehicleLeadsList({ leads }: { leads: LeadReadModel[] }) {
       b.updatedAt.localeCompare(a.updatedAt)
   )
   return (
-    <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-border/50 text-sm">
+    <ul className="divide-y divide-border rounded-lg border border-border/50 text-sm">
       {sorted.map((lead) => (
         <li key={lead.id}>
           <Link href={`/leads/${lead.id}`} className="flex items-center gap-3 px-3 py-3 hover:bg-card/50">

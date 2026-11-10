@@ -28,6 +28,31 @@ const TIME_SLOTS = Array.from({ length: (22 - 6) * 4 + 1 }, (_, i) => {
   return { value, label: format(parse(value, TIME_FORMAT, new Date()), "h:mm a") }
 })
 
+/** Years offered by the calendar's year dropdown when a caller doesn't narrow them. */
+const DEFAULT_FROM_YEAR = 1990
+const DEFAULT_YEARS_AHEAD = 15
+
+/** Month range for the month/year dropdowns, widened to include `selected`. */
+function yearRange(fromYear: number | undefined, toYear: number | undefined, selected?: Date) {
+  const thisYear = new Date().getFullYear()
+  let from = fromYear ?? DEFAULT_FROM_YEAR
+  let to = toYear ?? thisYear + DEFAULT_YEARS_AHEAD
+  if (selected) {
+    from = Math.min(from, selected.getFullYear())
+    to = Math.max(to, selected.getFullYear())
+  }
+  return { startMonth: new Date(from, 0, 1), endMonth: new Date(to, 11, 31) }
+}
+
+/** Month to open on: the selection, else today kept inside the allowed range. */
+function openingMonth(selected: Date | undefined, range: { startMonth: Date; endMonth: Date }) {
+  if (selected) return selected
+  const today = new Date()
+  if (today < range.startMonth) return range.startMonth
+  if (today > range.endMonth) return range.endMonth
+  return today
+}
+
 function parseValue(value: string, pattern: string): Date | undefined {
   if (!value) return undefined
   const date = parse(value, pattern, new Date())
@@ -48,7 +73,7 @@ function PickerTrigger({ icon: Icon, label, placeholder, invalid, className, ...
       type="button"
       data-invalid={invalid || undefined}
       className={cn(
-        "flex h-8 w-full min-w-0 items-center gap-2 rounded-lg border border-input bg-transparent px-2.5 text-left text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 data-invalid:border-destructive data-invalid:ring-3 data-invalid:ring-destructive/20 data-popup-open:border-ring md:text-sm",
+        "flex h-8 w-full min-w-0 items-center gap-2 rounded-lg border border-input bg-transparent px-2.5 pointer-coarse:h-10 dark:bg-input/30 dark:hover:bg-input/50 text-left text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 data-invalid:border-destructive data-invalid:ring-3 data-invalid:ring-destructive/20 data-popup-open:border-ring md:text-sm",
         className
       )}
       {...props}
@@ -71,6 +96,10 @@ interface DatePickerProps {
   disabled?: boolean
   /** Days before this are not selectable. */
   minDate?: Date
+  /** First year in the year dropdown (default 1990). */
+  fromYear?: number
+  /** Last year in the year dropdown (default this year + 15). */
+  toYear?: number
   className?: string
 }
 
@@ -82,10 +111,13 @@ export function DatePicker({
   invalid,
   disabled,
   minDate,
+  fromYear,
+  toYear,
   className,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
   const selected = parseValue(value, DATE_FORMAT)
+  const range = yearRange(fromYear, toYear, selected)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -102,11 +134,15 @@ export function DatePicker({
           />
         }
       />
-      <PopoverContent className="w-auto p-0">
+      <PopoverContent align="start" className="w-auto min-w-(--anchor-width) p-0">
         <Calendar
           mode="single"
+          captionLayout="dropdown"
+          startMonth={range.startMonth}
+          endMonth={range.endMonth}
+          className="mx-auto"
           selected={selected}
-          defaultMonth={selected}
+          defaultMonth={openingMonth(selected, range)}
           disabled={minDate ? { before: startOfDay(minDate) } : undefined}
           onSelect={(date) => {
             onChange(date ? format(date, DATE_FORMAT) : "")
@@ -144,6 +180,8 @@ interface DateTimePickerProps {
   disabled?: boolean
   /** Days before this are not selectable; defaults to today. */
   minDate?: Date
+  /** Last year in the year dropdown (default next year). */
+  toYear?: number
   className?: string
 }
 
@@ -157,10 +195,16 @@ export function DateTimePicker({
   invalid,
   disabled,
   minDate,
+  toYear,
   className,
 }: DateTimePickerProps) {
   const [open, setOpen] = React.useState(false)
   const selected = parseValue(value, DATE_TIME_FORMAT)
+  const range = yearRange(
+    (minDate ?? new Date()).getFullYear(),
+    toYear ?? new Date().getFullYear() + 1,
+    selected
+  )
   const time = selected ? format(selected, TIME_FORMAT) : DEFAULT_TIME
   // Keep an off-grid time (e.g. 10:07 from older data) selectable.
   const timeSlots = TIME_SLOTS.some((slot) => slot.value === time)
@@ -193,7 +237,7 @@ export function DateTimePicker({
           />
         }
       />
-      <PopoverContent className="w-auto p-0">
+      <PopoverContent align="start" className="w-auto min-w-(--anchor-width) p-0">
         <div className="flex gap-1.5 border-b border-border p-2">
           {presets.map((preset) => (
             <Button
@@ -210,8 +254,12 @@ export function DateTimePicker({
         </div>
         <Calendar
           mode="single"
+          captionLayout="dropdown"
+          startMonth={range.startMonth}
+          endMonth={range.endMonth}
+          className="mx-auto"
           selected={selected}
-          defaultMonth={selected}
+          defaultMonth={openingMonth(selected, range)}
           disabled={{ before: startOfDay(minDate ?? today) }}
           onSelect={(date) => date && emit(date, time)}
         />
@@ -242,4 +290,15 @@ export function DateTimePicker({
       </PopoverContent>
     </Popover>
   )
+}
+
+/** Year dropdown for dates that have already happened (purchase, payment, sale). */
+export function pastDateYears(): { fromYear: number; toYear: number } {
+  return { fromYear: 2000, toYear: new Date().getFullYear() }
+}
+
+/** Year dropdown for expiry dates such as insurance: last year to ten years out. */
+export function expiryDateYears(): { fromYear: number; toYear: number } {
+  const thisYear = new Date().getFullYear()
+  return { fromYear: thisYear - 1, toYear: thisYear + 10 }
 }

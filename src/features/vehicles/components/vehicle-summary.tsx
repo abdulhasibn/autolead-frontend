@@ -27,12 +27,12 @@ function Tile({ value, label, mono }: { value: React.ReactNode; label: string; m
 export function GlancePanel({ vehicle }: { vehicle: VehicleDto }) {
   return (
     <section aria-label="Key specs" className="rounded-xl border border-border bg-card">
-      <div className="grid grid-cols-3 divide-x divide-[#F3F4F6] border-b border-border/50">
+      <div className="grid grid-cols-3 divide-x divide-border border-b border-border/50">
         <Tile value={formatKm(vehicle.kmDriven)} label="km driven" mono />
         <Tile value={FUEL_TYPE_LABELS[vehicle.fuelType] ?? vehicle.fuelType} label="fuel" />
         <Tile value={TRANSMISSION_LABELS[vehicle.transmission] ?? vehicle.transmission} label="transmission" />
       </div>
-      <div className="grid grid-cols-3 divide-x divide-[#F3F4F6]">
+      <div className="grid grid-cols-3 divide-x divide-border">
         <Tile value={vehicle.year} label="year" mono />
         <Tile
           value={vehicle.numPreviousOwners === 0 ? "None" : formatOwners(vehicle.numPreviousOwners).replace(" owner", "")}
@@ -82,7 +82,7 @@ export function PaperworkPanel({ vehicle, now }: { vehicle: VehicleDto; now: Dat
           </span>
         )}
       </div>
-      <ul className="divide-y divide-[#F3F4F6] text-sm">
+      <ul className="divide-y divide-border text-sm">
         {items.map((item) => {
           const Icon = ICONS[item.key]
           const tone = TONES[item.tone]

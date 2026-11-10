@@ -1,7 +1,7 @@
 "use client"
 
-import { DatePicker } from "@/components/ui/date-picker"
-import { OptionSelect } from "@/features/leads/components/option-select"
+import { DatePicker, pastDateYears } from "@/components/ui/date-picker"
+import { OptionSelect } from "@/components/option-select"
 import { presetRange, RANGE_PRESET_LABELS, type DateRange, type RangePreset } from "../logic/dates"
 
 const PRESETS = Object.keys(RANGE_PRESET_LABELS) as RangePreset[]
@@ -35,7 +35,7 @@ export function DateRangeField({
           options={PRESETS.map((p) => ({ value: p, label: RANGE_PRESET_LABELS[p] }))}
         />
         <div className="flex items-center gap-1.5">
-          <DatePicker
+          <DatePicker {...pastDateYears()}
             value={value.from}
             onChange={(from) => from && onChange({ ...value, from })}
             invalid={Boolean(error)}
@@ -43,7 +43,7 @@ export function DateRangeField({
             className="w-36"
           />
           <span className="text-xs text-subtle-foreground">to</span>
-          <DatePicker
+          <DatePicker {...pastDateYears()}
             value={value.to}
             onChange={(to) => to && onChange({ ...value, to })}
             invalid={Boolean(error)}

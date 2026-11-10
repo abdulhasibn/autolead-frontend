@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { FOLLOW_UP_TASK_TYPES, FOLLOW_UP_TASK_TYPE_LABELS } from "../constants"
 import type { FollowUpTaskType } from "../types"
 import { FormField } from "./form-field"
-import { OptionSelect } from "./option-select"
+import { OptionSelect } from "@/components/option-select"
 
 const TASK_TYPE_OPTIONS = FOLLOW_UP_TASK_TYPES.map((t) => ({
   value: t,

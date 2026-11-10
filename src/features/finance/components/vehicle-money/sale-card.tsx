@@ -6,7 +6,7 @@ import { Loader2, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/date-picker"
+import { DatePicker, pastDateYears } from "@/components/ui/date-picker"
 import { FormField } from "@/features/leads/components/form-field"
 import { recordSaleAction, removeSaleAction } from "../../actions"
 import { formatYmd, todayIST } from "../../logic/dates"
@@ -66,7 +66,7 @@ export function SaleCard({ vehicleId, sale, suggestedPrice }: { vehicleId: strin
             <MoneyInput id="sale-price" value={price} onValueChange={(v) => { setPrice(v); setError(null) }} aria-invalid={error ? true : undefined} />
           </FormField>
           <FormField id="sale-date" label="Sold on">
-            <DatePicker id="sale-date" value={soldOn} onChange={(v) => { setSoldOn(v); setError(null) }} />
+            <DatePicker {...pastDateYears()} id="sale-date" value={soldOn} onChange={(v) => { setSoldOn(v); setError(null) }} />
           </FormField>
         </div>
         {error && <p className="text-xs text-destructive">{error}</p>}

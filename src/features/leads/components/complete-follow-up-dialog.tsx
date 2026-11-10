@@ -29,7 +29,7 @@ import {
 } from "../schemas"
 import { FollowUpFields } from "./follow-up-fields"
 import { FormField } from "./form-field"
-import { OptionSelect } from "./option-select"
+import { OptionSelect } from "@/components/option-select"
 
 const OUTCOME_OPTIONS = FOLLOW_UP_OUTCOMES.map((o) => ({
   value: o,

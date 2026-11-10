@@ -1,5 +1,6 @@
 import type { LeadPreferenceFormInput } from "./schemas"
 import type { LeadPreference, LeadReadModel } from "./types"
+import { variantLabel } from "@/features/vehicles/utils"
 
 export const EMPTY_PREFERENCE_FORM: LeadPreferenceFormInput = {
   preferredMakeId: "",
@@ -61,7 +62,7 @@ export function capitalize(value: string): string {
 export function formatPreferredCatalog(
   lead: Pick<LeadReadModel, "preferredMakeName" | "preferredModelName" | "preferredVariantName">
 ): string | null {
-  const name = [lead.preferredMakeName, lead.preferredModelName, lead.preferredVariantName]
+  const name = [lead.preferredMakeName, lead.preferredModelName, variantLabel(lead.preferredVariantName)]
     .filter(Boolean)
     .join(" ")
   return name || null

@@ -16,7 +16,7 @@ import {
 import { useApiError } from "@/hooks/use-api-error"
 import { associateVehicleAction } from "../actions"
 import { FormField } from "./form-field"
-import { OptionSelect } from "./option-select"
+import { OptionSelect } from "@/components/option-select"
 import type { VehicleOption } from "./types"
 
 interface LinkVehicleDialogProps {

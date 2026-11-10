@@ -2,7 +2,7 @@
 
 import { Check } from "lucide-react"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import type { SelectOption } from "./option-select"
+import type { SelectOption } from "@/components/option-select"
 
 interface ChipMultiSelectProps<T extends string> {
   id?: string

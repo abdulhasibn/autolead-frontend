@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { FileImage, FileText, FileUp, Loader2, Lock, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { OptionSelect } from "@/features/leads/components/option-select"
+import { OptionSelect } from "@/components/option-select"
 import { useApiError } from "@/hooks/use-api-error"
 import { formatDate } from "@/lib/format"
 import {
@@ -136,7 +136,7 @@ export function DocumentsPanel({ vehicleId, documents, canDelete }: DocumentsPan
         </div>
       </div>
 
-      <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-border/50 text-sm">
+      <ul className="divide-y divide-border rounded-lg border border-border/50 text-sm">
         {documents.map((doc) => {
           const isPdf = doc.storagePath.toLowerCase().endsWith(".pdf")
           const Icon = isPdf ? FileText : FileImage

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { OptionSelect } from "@/features/leads/components/option-select"
+import { OptionSelect } from "@/components/option-select"
 import { SegmentedChoice } from "@/features/leads/components/segmented-choice"
 import type { ReportFilters, ReportTab } from "../../search-params"
 import { REPORT_TABS } from "../../search-params"

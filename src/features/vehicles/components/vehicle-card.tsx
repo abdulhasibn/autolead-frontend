@@ -4,7 +4,7 @@ import { formatCurrency } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { FUEL_TYPE_LABELS, TRANSMISSION_LABELS } from "../constants"
 import type { VehicleDto } from "../types"
-import { formatKm, formatOwners, formatPlate, formatVehicleTitle, stockAge } from "../utils"
+import { formatKm, formatOwners, formatPlate, formatVehicleTitle, stockAge, variantLabel } from "../utils"
 import { VehicleStatusBadge } from "./vehicle-status-badge"
 
 function SpecChip({ icon: Icon, children }: { icon: typeof Gauge; children: React.ReactNode }) {
@@ -155,7 +155,7 @@ export function VehicleCardCompact({ vehicle, now }: { vehicle: VehicleDto; now:
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-1 py-0.5">
         <div className="min-w-0">
           <h3 className="truncate text-[15px] leading-tight font-semibold text-foreground">{title}</h3>
-          <p className="truncate text-xs text-subtle-foreground">{vehicle.variantName ?? " "}</p>
+          <p className="truncate text-xs text-subtle-foreground">{variantLabel(vehicle.variantName) ?? " "}</p>
         </div>
         <p className="truncate text-xs text-muted-foreground">
           {vehicle.listedPrice != null && (

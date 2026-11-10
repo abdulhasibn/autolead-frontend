@@ -16,13 +16,22 @@ export function isVehicleLinkable(vehicle: Pick<VehicleDto, "status">): boolean 
   return vehicle.status === "open" || vehicle.status === "linked"
 }
 
+/** The catalog's placeholder variant for models with no listed variants. */
+export const NA_VARIANT_NAME = "NA"
+
+/** Variant name for display; the "NA" placeholder shows as nothing. */
+export function variantLabel(name: string | null | undefined): string | null {
+  if (!name || name.trim().toUpperCase() === NA_VARIANT_NAME) return null
+  return name
+}
+
 export function formatVehicleLabel(
   vehicle: Pick<
     VehicleDto,
     "year" | "makeName" | "modelName" | "variantName" | "registrationNumber"
   >
 ): string {
-  const name = [vehicle.year, vehicle.makeName, vehicle.modelName, vehicle.variantName]
+  const name = [vehicle.year, vehicle.makeName, vehicle.modelName, variantLabel(vehicle.variantName)]
     .filter(Boolean)
     .join(" ")
   return `${name} · ${formatPlate(vehicle.registrationNumber)}`

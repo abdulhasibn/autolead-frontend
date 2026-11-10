@@ -1,5 +1,5 @@
 import { FUEL_TYPE_LABELS, TRANSMISSION_LABELS } from "@/features/vehicles/constants"
-import { formatKm } from "@/features/vehicles/utils"
+import { formatKm, variantLabel } from "@/features/vehicles/utils"
 import { formatCurrency } from "@/lib/format"
 import { BODY_TYPE_LABELS, MATCH_CRITERION_LABELS } from "./constants"
 import { capitalize, formatPreferredCatalog, formatYearWindow } from "./preference"
@@ -33,7 +33,7 @@ function wantedVsHas(
   switch (entry.criterion) {
     case "catalog": {
       const wanted = formatPreferredCatalog(lead)
-      const has = [vehicle.makeName, vehicle.modelName, vehicle.variantName].filter(Boolean).join(" ")
+      const has = [vehicle.makeName, vehicle.modelName, variantLabel(vehicle.variantName)].filter(Boolean).join(" ")
       return wanted ? `Wants ${wanted} · car is ${has}` : null
     }
     case "budget":

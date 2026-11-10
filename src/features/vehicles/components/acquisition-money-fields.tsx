@@ -1,7 +1,7 @@
 "use client"
 
 import { Lock } from "lucide-react"
-import { DatePicker } from "@/components/ui/date-picker"
+import { DatePicker, pastDateYears } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { MoneyInput } from "@/features/finance/components/money-input"
 import type { AcquisitionForm, SellerPaid } from "@/features/finance/logic/acquisition"
@@ -85,7 +85,7 @@ export function AcquisitionMoneyFields({
           />
         </FormField>
         <FormField id="acq-date" label="Bought on">
-          <DatePicker id="acq-date" value={form.purchasedOn} onChange={(v) => set("purchasedOn", v)} />
+          <DatePicker {...pastDateYears()} id="acq-date" value={form.purchasedOn} onChange={(v) => set("purchasedOn", v)} />
         </FormField>
       </div>
 
@@ -112,7 +112,7 @@ export function AcquisitionMoneyFields({
             </FormField>
           )}
           <FormField id="acq-paid-on" label="Paid on" error={errors.paidOn}>
-            <DatePicker id="acq-paid-on" value={form.paidOn} onChange={(v) => set("paidOn", v)} invalid={!!errors.paidOn} />
+            <DatePicker {...pastDateYears()} id="acq-paid-on" value={form.paidOn} onChange={(v) => set("paidOn", v)} invalid={!!errors.paidOn} />
           </FormField>
         </div>
       )}

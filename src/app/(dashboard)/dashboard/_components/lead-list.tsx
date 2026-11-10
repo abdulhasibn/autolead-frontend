@@ -32,7 +32,7 @@ export function LeadList({
   }
 
   return (
-    <ul className="divide-y divide-[#F3F4F6]">
+    <ul className="divide-y divide-border">
       {items.map((item) => (
         <li key={item.leadId}>
           <Link

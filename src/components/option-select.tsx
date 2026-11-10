@@ -7,7 +7,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { SearchableSelect } from "@/components/ui/combobox"
 import { cn } from "@/lib/utils"
+
+/** Lists longer than this get a search box. */
+export const SEARCH_THRESHOLD = 8
 
 export interface SelectOption {
   value: string
@@ -25,9 +29,16 @@ interface OptionSelectProps {
   disabled?: boolean
   className?: string
   "aria-label"?: string
+  /** Force the search box on (true) or off (false); default: on for long lists. */
+  searchable?: boolean
+  /** Heading of the phone bottom sheet when searchable. */
+  title?: string
 }
 
-/** Single-value select over a flat option list; "" means nothing selected. */
+/**
+ * Single-value select over a flat option list; "" means nothing selected.
+ * Lists longer than `SEARCH_THRESHOLD` become a searchable select.
+ */
 export function OptionSelect({
   id,
   value,
@@ -38,7 +49,26 @@ export function OptionSelect({
   disabled,
   className,
   "aria-label": ariaLabel,
+  searchable,
+  title,
 }: OptionSelectProps) {
+  if (searchable ?? options.length > SEARCH_THRESHOLD) {
+    return (
+      <SearchableSelect
+        id={id}
+        value={value}
+        onValueChange={onValueChange}
+        options={options}
+        placeholder={placeholder}
+        title={title}
+        invalid={invalid}
+        disabled={disabled}
+        className={className}
+        aria-label={ariaLabel}
+      />
+    )
+  }
+
   const items = Object.fromEntries(options.map((o) => [o.value, o.label]))
 
   return (

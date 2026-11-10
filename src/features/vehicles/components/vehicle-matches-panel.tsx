@@ -131,7 +131,7 @@ export function VehicleMatchesPanel({
           <EmptyRow message="No leads are linked to this car yet." />
         ) : (
           <>
-            <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-border/50 text-sm">
+            <ul className="divide-y divide-border rounded-lg border border-border/50 text-sm">
               {visibleLinked.map((lead) => (
                 <LeadRow
                   key={lead.id}
@@ -184,7 +184,7 @@ export function VehicleMatchesPanel({
           <EmptyRow message="No open leads match this car closely enough yet." />
         ) : (
           <>
-            <ul className="divide-y divide-[#F3F4F6] rounded-lg border border-border/50 text-sm">
+            <ul className="divide-y divide-border rounded-lg border border-border/50 text-sm">
               {visibleSuggested.map((lead) => (
                 <LeadRow
                   key={lead.id}

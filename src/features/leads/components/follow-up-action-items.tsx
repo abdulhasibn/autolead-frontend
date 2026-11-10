@@ -24,7 +24,7 @@ export function FollowUpActionItems({
   }
 
   return (
-    <ul className="-my-2 divide-y divide-[#F3F4F6]">
+    <ul className="-my-2 divide-y divide-border">
       {items.map((item) => {
         const overdue = isPast(item.scheduledAt)
         return (
