@@ -80,7 +80,7 @@ describe("createLeadFormSchema", () => {
   it("rejects bad phone, email, budget and missing source", () => {
     const result = createLeadFormSchema.safeParse({
       ...baseForm,
-      phone: "9876543210",
+      phone: "98765",
       email: "nope",
       budget: "-5",
       source: "",
@@ -88,6 +88,25 @@ describe("createLeadFormSchema", () => {
     expect(result.success).toBe(false)
     const fields = result.error!.issues.map((i) => i.path[0])
     expect(fields).toEqual(expect.arrayContaining(["phone", "email", "budget", "source"]))
+  })
+})
+
+describe("createLeadFormSchema phone", () => {
+  it.each(["9876543210", "98765 43210", "098765-43210", "919876543210", "+91 98765 43210"])(
+    "reads %s as an Indian mobile number",
+    (phone) => {
+      expect(createLeadFormSchema.parse({ ...baseForm, phone }).phone).toBe("+919876543210")
+    }
+  )
+
+  it("keeps other E.164 numbers as typed", () => {
+    expect(createLeadFormSchema.parse({ ...baseForm, phone: "+447700900123" }).phone).toBe(
+      "+447700900123"
+    )
+  })
+
+  it.each(["987654321", "98765432101", "abcdefghij", "+0123"])("rejects %s", (phone) => {
+    expect(createLeadFormSchema.safeParse({ ...baseForm, phone }).success).toBe(false)
   })
 })
 

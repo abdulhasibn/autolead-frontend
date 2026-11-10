@@ -18,6 +18,7 @@ import {
   completeFollowUp,
   createLead,
   scheduleFollowUp,
+  suggestVehicles,
   updateLeadPreference,
 } from "./api"
 import {
@@ -27,12 +28,14 @@ import {
   createLeadSchema,
   leadPreferenceSchema,
   scheduleFollowUpSchema,
+  suggestVehiclesSchema,
 } from "./schemas"
 import type {
   CompleteFollowUpResult,
   FollowUpDto,
   LeadPreference,
   LeadReadModel,
+  VehicleSuggestions,
 } from "./types"
 
 const leadIdSchema = z.guid()
@@ -192,6 +195,36 @@ export async function cancelFollowUpAction(
     const result = await cancelFollowUp(lead.data, followUp.data)
     revalidateLeads()
     return actionOk(result)
+  } catch (err) {
+    return actionError(err)
+  }
+}
+
+/** Read-only: suggested cars for the new-lead form, before the lead exists. */
+export async function suggestVehiclesAction(
+  input: unknown
+): Promise<ActionResult<VehicleSuggestions>> {
+  try {
+    await requireSession()
+    const parsed = suggestVehiclesSchema.safeParse(input)
+    if (!parsed.success) return validationError()
+
+    // Same showroom fallback as createLeadAction, so suggestions come from
+    // the showroom the lead will be filed under.
+    try {
+      return actionOk(await suggestVehicles({ ...parsed.data, showroomId: null }))
+    } catch (err) {
+      if (
+        ApiError.isApiError(err) &&
+        err.code === "SHOWROOM_REQUIRED" &&
+        env.DEFAULT_SHOWROOM_ID
+      ) {
+        return actionOk(
+          await suggestVehicles({ ...parsed.data, showroomId: env.DEFAULT_SHOWROOM_ID })
+        )
+      }
+      throw err
+    }
   } catch (err) {
     return actionError(err)
   }

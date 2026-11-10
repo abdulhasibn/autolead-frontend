@@ -16,6 +16,7 @@ import { clearFinanceSession, setFinanceSession } from "./session"
 import {
   changeKeySchema,
   createTagSchema,
+  acquisitionSchema,
   dealSchema,
   entrySchema,
   quoteSchema,
@@ -219,6 +220,46 @@ export async function setDealAction(vehicleId: string, input: unknown): Promise<
     const parsed = dealSchema.safeParse(input)
     if (!id.success || !parsed.success) return validationError(parsed.error?.issues[0]?.message)
     await api.setDeal(id.data, parsed.data)
+    revalidateVehicle(id.data)
+    revalidateFinance()
+    return actionOk(undefined)
+  })
+}
+
+/**
+ * Saves the money side of a car just added: its deal (purchase rate or
+ * commission %) and any payment already made to the seller, as a `purchase`
+ * expense. Only offered while finance is unlocked.
+ */
+export async function recordAcquisitionAction(vehicleId: string, input: unknown): Promise<ActionResult> {
+  return financeAction(async () => {
+    const id = idSchema.safeParse(vehicleId)
+    const parsed = acquisitionSchema.safeParse(input)
+    if (!id.success || !parsed.success) return validationError(parsed.error?.issues[0]?.message)
+    const { purchaseRate, commissionPercent, purchasedOn, payment, party } = parsed.data
+    if (purchaseRate !== null || commissionPercent !== null) {
+      await api.setDeal(id.data, {
+        purchaseRate,
+        commissionPercent,
+        purchasedOn,
+        ownerExpectedPrice: null,
+        minimumSellingPrice: null,
+        note: null,
+      })
+    }
+    if (payment) {
+      await api.createEntry({
+        kind: "expense",
+        amount: payment.amount,
+        entryDate: payment.paidOn,
+        tagIds: [],
+        vehicleId: id.data,
+        purpose: "purchase",
+        party,
+        note: "Paid to the seller when the car was added",
+        showroomId: null,
+      })
+    }
     revalidateVehicle(id.data)
     revalidateFinance()
     return actionOk(undefined)

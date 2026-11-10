@@ -9,8 +9,8 @@ export const PURPOSE_LABELS: Record<EntryPurpose, string> = {
 }
 
 export const PURPOSE_HINTS: Record<EntryPurpose, string> = {
-  purchase: "Counts towards the purchase rate owed to the seller",
-  cost: "Adds to landing cost (painting, service, mediator…)",
+  purchase: "Counts towards what we owe the seller (or the owner of a commission car)",
+  cost: "Adds to landing cost (painting, service, mediator…). Commission cars: taken from the owner's payout",
   sale: "Counts towards what the buyer owes",
   other: "Car income that isn't the buyer's payment",
   general: "Not tied to a car",

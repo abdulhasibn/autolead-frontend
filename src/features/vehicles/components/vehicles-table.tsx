@@ -19,6 +19,13 @@ import { NumberPlate } from "./number-plate"
 import { VehicleStatusBadge } from "./vehicle-status-badge"
 import { Money } from "@/features/finance/components/money"
 import { useVehicleMoney } from "@/features/finance/use-vehicle-money"
+import type { VehicleMoneySummary } from "@/features/finance/types"
+
+/** A purchase car's landing cost needs its rate; a commission car's is its costs. */
+function landingCostOf(summary: VehicleMoneySummary | undefined): number | null {
+  if (!summary) return null
+  return summary.saleModel === "commission" || summary.purchaseRate != null ? summary.landingCost : null
+}
 
 const EMPTY = <span className="text-subtle-foreground">—</span>
 
@@ -118,7 +125,7 @@ export function VehiclesTable({
                 {money && (
                   <>
                     <TableCell className="hidden text-right text-xs xl:table-cell">
-                      <Money value={money.get(vehicle.id)?.purchaseRate == null ? null : money.get(vehicle.id)?.landingCost} />
+                      <Money value={landingCostOf(money.get(vehicle.id))} />
                     </TableCell>
                     <TableCell className="hidden text-right text-xs xl:table-cell">
                       <Money value={money.get(vehicle.id)?.currentQuote} />

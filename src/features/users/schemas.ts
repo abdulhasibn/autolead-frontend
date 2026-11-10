@@ -1,10 +1,9 @@
 import { z } from "zod"
-
-const e164Regex = /^\+[1-9]\d{1,14}$/
+import { indianPhoneFormSchema } from "@/lib/phone"
 
 export const createUserSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
-  phone: z.string().regex(e164Regex, "Enter a valid E.164 phone number"),
+  phone: indianPhoneFormSchema,
   email: z.email("Enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   showroomId: z.string().uuid().nullable().optional(),

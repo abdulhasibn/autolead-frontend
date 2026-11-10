@@ -5,6 +5,7 @@ import { z } from "zod"
 import { auth } from "@/lib/auth"
 import { env } from "@/lib/env"
 import { ApiError } from "@/lib/api-error"
+import { indianPhoneFormSchema } from "@/lib/phone"
 import {
   actionError,
   actionOk,
@@ -295,7 +296,7 @@ export async function getVariantsAction(
 
 const quickOwnerSchema = z.object({
   fullName: z.string().trim().min(1),
-  phone: z.string().trim().regex(/^\+[1-9]\d{6,14}$/),
+  phone: indianPhoneFormSchema,
   city: z
     .string()
     .trim()

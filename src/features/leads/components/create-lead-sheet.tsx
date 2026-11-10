@@ -32,6 +32,7 @@ import { FormField } from "./form-field"
 import { OptionSelect } from "./option-select"
 import { PreferenceFields, preferenceErrors } from "./preference-fields"
 import { SegmentedChoice } from "./segmented-choice"
+import { SuggestedVehiclesPicker } from "./suggested-vehicles-picker"
 import type { VehicleOption } from "./types"
 
 const SOURCE_OPTIONS = LEAD_SOURCES.map((s) => ({
@@ -120,6 +121,7 @@ export function CreateLeadSheet({
   const vehicleOptions = vehicles
     .filter((v) => v.linkable)
     .map((v) => ({ value: v.id, label: v.label }))
+  const linkableIds = new Set(vehicleOptions.map((v) => v.value))
 
   function close() {
     setOpen(false)
@@ -224,7 +226,7 @@ export function CreateLeadSheet({
                     <Input id="fullName" autoComplete="off" autoCapitalize="words" enterKeyHint="next" autoFocus aria-invalid={!!errors.fullName} {...register("fullName")} />
                   </FormField>
                   <FormField id="phone" label="Phone *" error={errors.phone?.message}>
-                    <Input id="phone" type="tel" autoComplete="off" enterKeyHint="next" placeholder="+919876543210" aria-invalid={!!errors.phone} {...register("phone")} />
+                    <Input id="phone" type="tel" autoComplete="off" enterKeyHint="next" maxLength={16} placeholder="9876543210" aria-invalid={!!errors.phone} {...register("phone")} />
                   </FormField>
                   <FormField id="email" label="Email" error={errors.email?.message} className="sm:col-span-2">
                     <Input id="email" type="email" autoComplete="off" enterKeyHint="next" aria-invalid={!!errors.email} {...register("email")} />
@@ -286,7 +288,14 @@ export function CreateLeadSheet({
             <>
               <section className="space-y-3">
                 <SectionTitle>Vehicle</SectionTitle>
-                <FormField id="vehicleId" label="Link a car in stock" error={errors.vehicleId?.message}>
+                <SuggestedVehiclesPicker
+                  values={values}
+                  selectedId={values.vehicleId ?? ""}
+                  linkableIds={linkableIds}
+                  onSelect={(id) => setValue("vehicleId", id, { shouldDirty: true })}
+                  onEditRequirements={() => setStep(1)}
+                />
+                <FormField id="vehicleId" label="Linked car" error={errors.vehicleId?.message}>
                   <Controller
                     control={control}
                     name="vehicleId"

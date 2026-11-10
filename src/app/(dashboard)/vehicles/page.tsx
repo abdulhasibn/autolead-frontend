@@ -78,7 +78,8 @@ export default async function VehiclesPage({
 
   const vehicles = vehiclesPage.items
   const session = await auth()
-  const financeUnlocked = Boolean(session?.user.roles?.includes("admin")) && (await hasFinanceSession())
+  const isAdmin = Boolean(session?.user.roles?.includes("admin"))
+  const financeUnlocked = isAdmin && (await hasFinanceSession())
   const now = new Date()
   const hasFilters = Boolean(params.q) || countActiveFilters(params) > 0
   const resultCount = vehiclesPage.total
@@ -97,7 +98,14 @@ export default async function VehiclesPage({
             {hasFilters ? " match the filters" : params.status ? "" : " in inventory"}
           </>
         }
-        action={<VehicleFormSheet mode="create" makes={makes} owners={owners} />}
+        action={
+          <VehicleFormSheet
+            mode="create"
+            makes={makes}
+            owners={owners}
+            money={isAdmin ? (financeUnlocked ? "unlocked" : "locked") : "hidden"}
+          />
+        }
       />
 
       <VehicleStatusTabs params={params} counts={counts} />

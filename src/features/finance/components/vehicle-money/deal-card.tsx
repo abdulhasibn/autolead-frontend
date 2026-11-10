@@ -5,19 +5,36 @@ import { useRouter } from "next/navigation"
 import { Loader2, Pencil } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Textarea } from "@/components/ui/textarea"
 import { FormField } from "@/features/leads/components/form-field"
 import { setDealAction } from "../../actions"
+import { DEFAULT_COMMISSION_PERCENT, parsePercent } from "../../logic/acquisition"
 import { formatYmd } from "../../logic/dates"
 import { financeErrorMessage } from "../../logic/errors"
 import { formatMoneyInput, parseMoneyInput } from "../../logic/money"
-import type { DealTerms } from "../../types"
+import { commissionPercent as commissionPercentSchema } from "../../schemas"
+import type { DealTerms, SaleModel } from "../../types"
 import { Money } from "../money"
 import { MoneyInput } from "../money-input"
 
-/** Purchase rate and terms. PUT replaces these fields; the listed price is edited in its own panel. */
-export function DealCard({ vehicleId, deal }: { vehicleId: string; deal: DealTerms | null }) {
+/**
+ * Terms agreed with the owner: a purchase rate for a car we buy outright, or
+ * a commission % for a car we sell for them. PUT replaces these fields; the
+ * listed price is edited in its own panel.
+ */
+export function DealCard({
+  vehicleId,
+  deal,
+  saleModel,
+}: {
+  vehicleId: string
+  deal: DealTerms | null
+  saleModel: SaleModel
+}) {
+  const commission = saleModel === "commission"
+  const termsSet = commission ? deal?.commissionPercent != null : deal?.purchaseRate != null
   const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -27,6 +44,7 @@ export function DealCard({ vehicleId, deal }: { vehicleId: string; deal: DealTer
   function toForm(d: DealTerms | null) {
     return {
       purchaseRate: formatMoneyInput(d?.purchaseRate),
+      commissionPercent: d?.commissionPercent == null ? DEFAULT_COMMISSION_PERCENT : String(d.commissionPercent),
       purchasedOn: d?.purchasedOn ?? "",
       ownerExpectedPrice: formatMoneyInput(d?.ownerExpectedPrice),
       minimumSellingPrice: formatMoneyInput(d?.minimumSellingPrice),
@@ -36,12 +54,17 @@ export function DealCard({ vehicleId, deal }: { vehicleId: string; deal: DealTer
 
   function submit(event: React.FormEvent) {
     event.preventDefault()
-    const purchaseRate = parseMoneyInput(form.purchaseRate)
+    const purchaseRate = commission ? null : parseMoneyInput(form.purchaseRate)
+    const percent = commission ? parsePercent(form.commissionPercent) : null
     const optional = (v: string) => (v.trim() === "" ? null : parseMoneyInput(v))
     const ownerExpectedPrice = optional(form.ownerExpectedPrice)
     const minimumSellingPrice = optional(form.minimumSellingPrice)
     const next: Record<string, string> = {}
-    if (purchaseRate === null || purchaseRate <= 0) next.purchaseRate = "Enter the purchase rate"
+    if (commission) {
+      const check = commissionPercentSchema.safeParse(percent)
+      if (percent === null) next.commissionPercent = "Enter the commission %, e.g. 3.5"
+      else if (!check.success) next.commissionPercent = check.error.issues[0]?.message ?? "Enter a valid %"
+    } else if (purchaseRate === null || purchaseRate <= 0) next.purchaseRate = "Enter the purchase rate"
     if (form.ownerExpectedPrice.trim() && (ownerExpectedPrice === null || ownerExpectedPrice <= 0)) next.ownerExpectedPrice = "Enter an amount or leave blank"
     if (form.minimumSellingPrice.trim() && (minimumSellingPrice === null || minimumSellingPrice <= 0)) next.minimumSellingPrice = "Enter an amount or leave blank"
     setErrors(next)
@@ -49,6 +72,7 @@ export function DealCard({ vehicleId, deal }: { vehicleId: string; deal: DealTer
     startTransition(async () => {
       const result = await setDealAction(vehicleId, {
         purchaseRate,
+        commissionPercent: percent,
         purchasedOn: form.purchasedOn || null,
         ownerExpectedPrice,
         minimumSellingPrice,
@@ -68,19 +92,26 @@ export function DealCard({ vehicleId, deal }: { vehicleId: string; deal: DealTer
     return (
       <section aria-label="Deal" className="rounded-xl border border-border p-4">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold">Deal with the seller</h3>
+          <h3 className="text-sm font-semibold">{commission ? "Deal with the owner" : "Deal with the seller"}</h3>
           <Button variant="outline" size="sm" onClick={() => { setForm(toForm(deal)); setErrors({}); setEditing(true) }}>
             <Pencil /> {deal ? "Edit" : "Add deal"}
           </Button>
         </div>
-        {deal ? (
+        {deal && termsSet ? (
           <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
+            {commission ? (
+              <div>
+                <dt className="text-xs text-muted-foreground">Our commission</dt>
+                <dd className="font-semibold">{deal.commissionPercent}% of the sale price</dd>
+              </div>
+            ) : (
+              <div>
+                <dt className="text-xs text-muted-foreground">Purchase rate</dt>
+                <dd className="font-semibold"><Money value={deal.purchaseRate} /></dd>
+              </div>
+            )}
             <div>
-              <dt className="text-xs text-muted-foreground">Purchase rate</dt>
-              <dd className="font-semibold"><Money value={deal.purchaseRate} /></dd>
-            </div>
-            <div>
-              <dt className="text-xs text-muted-foreground">Purchased on</dt>
+              <dt className="text-xs text-muted-foreground">{commission ? "Agreed on" : "Purchased on"}</dt>
               <dd>{formatYmd(deal.purchasedOn)}</dd>
             </div>
             <div>
@@ -94,7 +125,11 @@ export function DealCard({ vehicleId, deal }: { vehicleId: string; deal: DealTer
             {deal.note && <p className="col-span-2 text-xs whitespace-pre-wrap text-muted-foreground">{deal.note}</p>}
           </dl>
         ) : (
-          <p className="mt-2 text-sm text-muted-foreground">No purchase rate yet. Profit can’t be worked out without it.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {commission
+              ? "No commission % yet. Commission and the owner’s payout can’t be worked out without it."
+              : "No purchase rate yet. Profit can’t be worked out without it."}
+          </p>
         )}
       </section>
     )
@@ -102,12 +137,29 @@ export function DealCard({ vehicleId, deal }: { vehicleId: string; deal: DealTer
 
   return (
     <form onSubmit={submit} aria-label="Edit deal" className="space-y-3 rounded-xl border border-primary/40 p-4">
-      <h3 className="text-sm font-semibold">Deal with the seller</h3>
+      <h3 className="text-sm font-semibold">{commission ? "Deal with the owner" : "Deal with the seller"}</h3>
       <div className="grid gap-3 sm:grid-cols-2">
-        <FormField id="deal-rate" label="Purchase rate" error={errors.purchaseRate}>
-          <MoneyInput id="deal-rate" value={form.purchaseRate} onValueChange={(v) => setForm({ ...form, purchaseRate: v })} aria-invalid={errors.purchaseRate ? true : undefined} />
-        </FormField>
-        <FormField id="deal-date" label="Purchased on (optional)">
+        {commission ? (
+          <FormField id="deal-commission" label="Our commission (% of sale price)" error={errors.commissionPercent}>
+            <div className="relative">
+              <Input
+                id="deal-commission"
+                inputMode="decimal"
+                placeholder="e.g. 3.5"
+                value={form.commissionPercent}
+                onChange={(e) => setForm({ ...form, commissionPercent: e.target.value })}
+                aria-invalid={errors.commissionPercent ? true : undefined}
+                className="pr-8"
+              />
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">%</span>
+            </div>
+          </FormField>
+        ) : (
+          <FormField id="deal-rate" label="Purchase rate" error={errors.purchaseRate}>
+            <MoneyInput id="deal-rate" value={form.purchaseRate} onValueChange={(v) => setForm({ ...form, purchaseRate: v })} aria-invalid={errors.purchaseRate ? true : undefined} />
+          </FormField>
+        )}
+        <FormField id="deal-date" label={commission ? "Agreed on (optional)" : "Purchased on (optional)"}>
           <DatePicker id="deal-date" value={form.purchasedOn} onChange={(v) => setForm({ ...form, purchasedOn: v })} />
         </FormField>
         <FormField id="deal-owner" label="Owner’s expected price (optional)" error={errors.ownerExpectedPrice}>

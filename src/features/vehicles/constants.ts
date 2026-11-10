@@ -12,11 +12,11 @@ import type {
 export const VEHICLE_STATUSES = ["open", "linked", "sold", "dropped"] as const
 export const FUEL_TYPES = ["petrol", "diesel", "cng", "electric", "hybrid"] as const
 export const TRANSMISSIONS = ["manual", "automatic", "amt", "cvt", "dct"] as const
-export const ACQUISITION_TYPES = [
-  "dealership_purchase",
-  "consignment",
-  "intermediary_sale",
-] as const
+/**
+ * The two ways we sell a car: bought outright and resold as ours, or marketed
+ * for the owner for a commission on the sale price.
+ */
+export const ACQUISITION_TYPES = ["dealership_purchase", "consignment"] as const
 export const RC_STATUSES = ["clear", "hypothecation", "under_transfer"] as const
 export const SERVICE_HISTORIES = ["full", "partial", "none", "unknown"] as const
 export const MEDIA_CATEGORIES = [
@@ -84,9 +84,14 @@ export const TRANSMISSION_LABELS: Record<Transmission, string> = {
 }
 
 export const ACQUISITION_TYPE_LABELS: Record<AcquisitionType, string> = {
-  dealership_purchase: "Dealership purchase",
-  consignment: "Consignment",
-  intermediary_sale: "Intermediary sale",
+  dealership_purchase: "Bought outright",
+  consignment: "Commission sale",
+}
+
+export const ACQUISITION_TYPE_HINTS: Record<AcquisitionType, string> = {
+  dealership_purchase: "We buy the car from the owner and sell it under our name.",
+  consignment:
+    "The owner keeps the car; we market it and keep a % of the sale price. Costs we pay come out of the owner’s payout.",
 }
 
 export const RC_STATUS_LABELS: Record<RcStatus, string> = {

@@ -84,13 +84,39 @@ export const entryFormSchema = z
 
 export type EntryFormValues = z.infer<typeof entryFormSchema>
 
-export const dealSchema = z.object({
-  purchaseRate: amount,
-  purchasedOn: ymd.nullable(),
-  ownerExpectedPrice: amount.nullable(),
-  minimumSellingPrice: amount.nullable(),
-  note: optionalText(1000),
-})
+/** Our % of the sale price on a commission car: above 0, up to 100, 2 decimals. */
+export const commissionPercent = z
+  .number()
+  .gt(0, "Enter a percentage above 0")
+  .max(100, "At most 100%")
+  .refine((n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-6, "Up to 2 decimals")
+
+/** A purchase car sends `purchaseRate`; a commission car sends `commissionPercent`. */
+export const dealSchema = z
+  .object({
+    purchaseRate: amount.nullable(),
+    commissionPercent: commissionPercent.nullable(),
+    purchasedOn: ymd.nullable(),
+    ownerExpectedPrice: amount.nullable(),
+    minimumSellingPrice: amount.nullable(),
+    note: optionalText(1000),
+  })
+  .refine((v) => (v.purchaseRate === null) !== (v.commissionPercent === null), {
+    message: "Enter the purchase rate or the commission %",
+  })
+
+/** Money recorded while adding a car: the deal and a payment already made to the seller. */
+export const acquisitionSchema = z
+  .object({
+    purchaseRate: amount.nullable(),
+    commissionPercent: commissionPercent.nullable(),
+    purchasedOn: ymd.nullable(),
+    payment: z.object({ amount, paidOn: ymd }).nullable(),
+    party: optionalText(120),
+  })
+  .refine((v) => v.purchaseRate === null || v.commissionPercent === null, {
+    message: "Enter the purchase rate or the commission %, not both",
+  })
 
 export const saleSchema = z.object({
   finalisedPrice: amount,

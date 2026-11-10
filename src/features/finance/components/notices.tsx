@@ -40,7 +40,7 @@ export function TruncatedBanner({ truncated, className }: { truncated: boolean; 
   )
 }
 
-/** Sold cars without a purchase rate stay out of sales and profit. */
+/** Sold cars without a purchase rate or commission % stay out of sales and profit. */
 export function UncountedSalesWarning({
   uncountedSales,
   carsMissingPurchaseRate,
@@ -55,8 +55,8 @@ export function UncountedSalesWarning({
   if (!(uncountedSales > 0)) return null
   return (
     <Notice tone="warning" className={className}>
-      <span className="font-semibold">{formatMoney(uncountedSales)}</span> of sales not counted until a purchase rate
-      is entered
+      <span className="font-semibold">{formatMoney(uncountedSales)}</span> of sales not counted until the purchase rate
+      or commission % is entered
       {carsMissingPurchaseRate ? ` (${carsMissingPurchaseRate} ${carsMissingPurchaseRate === 1 ? "car" : "cars"})` : ""}.{" "}
       <Link href={href} className="font-semibold underline underline-offset-2">
         See which cars →

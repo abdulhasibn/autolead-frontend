@@ -194,3 +194,10 @@ export interface LeadVehicleMatches {
   /** True when only the newest 1,000 cars were scored. */
   truncated: boolean
 }
+
+/** POST /leads/vehicle-suggestions: live cars scored against a preference, best first. */
+export interface VehicleSuggestions {
+  suggestions: VehicleWithMatch[]
+  /** True when only the newest 1,000 cars were scored. */
+  truncated: boolean
+}

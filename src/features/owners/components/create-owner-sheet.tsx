@@ -73,8 +73,7 @@ export function CreateOwnerSheet() {
         <SheetHeader className="px-4 py-5 sm:px-6">
           <SheetTitle>Add owner</SheetTitle>
           <SheetDescription>
-            Create a new owner record. Phone must be in E.164 format (e.g.
-            +971501234567).
+            Create a new owner record. A 10-digit mobile number is enough.
           </SheetDescription>
         </SheetHeader>
 

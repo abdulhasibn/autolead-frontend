@@ -2,7 +2,7 @@ import Link from "next/link"
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import { formatBucketLabel, formatYmd } from "../../logic/dates"
-import type { CashFlowReport, DuesReport, PnlLine, PnlReport, StockReport, VehicleProfitReport } from "../../types"
+import type { CashFlowReport, DuesReport, PnlLine, PnlReport, SaleModel, StockReport, VehicleProfitReport } from "../../types"
 import { Money } from "../money"
 
 const NUM = "text-right font-mono-data whitespace-nowrap"
@@ -15,6 +15,17 @@ function CarLink({ id, label }: { id: string; label: string }) {
   )
 }
 
+/** Purchase rate, or "4% commission" for a car sold for the owner. */
+function TermsCell({ row, missing }: { row: { saleModel: SaleModel; purchaseRate: number | null; commissionPercent: number | null }; missing?: boolean }) {
+  const value = row.saleModel === "commission" ? row.commissionPercent : row.purchaseRate
+  if (value == null) return missing ? <span className="text-xs text-warning">Missing</span> : <Money value={null} />
+  return row.saleModel === "commission" ? (
+    <span className="text-xs font-medium whitespace-nowrap">{row.commissionPercent}% commission</span>
+  ) : (
+    <Money value={row.purchaseRate} />
+  )
+}
+
 /** Wide tables scroll sideways inside their card on phones, never the page. */
 function Scroll({ children }: { children: React.ReactNode }) {
   return <div className="overflow-x-auto">{children}</div>
@@ -23,6 +34,7 @@ function Scroll({ children }: { children: React.ReactNode }) {
 const PNL_ROWS: Array<{ key: keyof PnlLine; label: string; tone?: boolean; strong?: boolean; count?: boolean; negate?: boolean }> = [
   { key: "sales", label: "Sales" },
   { key: "costOfSales", label: "Cost of sales", negate: true },
+  { key: "commissions", label: "Commissions" },
   { key: "grossProfit", label: "Gross profit", tone: true, strong: true },
   { key: "laterCarCosts", label: "Later car costs", negate: true },
   { key: "otherIncome", label: "Other income" },
@@ -57,7 +69,7 @@ export function PnlTable({ report }: { report: PnlReport }) {
                     <>
                       {b.carsSold}
                       {b.carsMissingPurchaseRate > 0 && (
-                        <span className="text-warning" title="Cars without a purchase rate">
+                        <span className="text-warning" title="Cars without a purchase rate or commission %">
                           {" "}
                           (+{b.carsMissingPurchaseRate})
                         </span>
@@ -132,7 +144,7 @@ export function VehicleProfitTable({ report }: { report: VehicleProfitReport }) 
           <TableRow>
             <TableHead>Car</TableHead>
             <TableHead>Sold on</TableHead>
-            <TableHead className="text-right">Purchase rate</TableHead>
+            <TableHead className="text-right">Terms</TableHead>
             <TableHead className="text-right">Costs</TableHead>
             <TableHead className="text-right">Landing cost</TableHead>
             <TableHead className="text-right">Sale price</TableHead>
@@ -144,16 +156,20 @@ export function VehicleProfitTable({ report }: { report: VehicleProfitReport }) 
             <TableRow key={r.vehicle.id}>
               <TableCell className="max-w-56 truncate"><CarLink id={r.vehicle.id} label={r.vehicle.label} /></TableCell>
               <TableCell className="text-xs whitespace-nowrap text-muted-foreground">{formatYmd(r.soldOn)}</TableCell>
-              <TableCell className={NUM}>
-                {r.purchaseRate == null ? <span className="text-xs text-warning">Missing</span> : <Money value={r.purchaseRate} />}
-              </TableCell>
+              <TableCell className={NUM}><TermsCell row={r} missing /></TableCell>
               <TableCell className={NUM}><Money value={r.costs} /></TableCell>
-              <TableCell className={NUM}><Money value={r.purchaseRate == null ? null : r.landingCost} /></TableCell>
+              <TableCell className={NUM}>
+                {r.saleModel === "commission" ? (
+                  <span className="text-xs text-muted-foreground" title="Costs come out of the owner's payout">Owner pays</span>
+                ) : (
+                  <Money value={r.purchaseRate == null ? null : r.landingCost} />
+                )}
+              </TableCell>
               <TableCell className={NUM}><Money value={r.finalisedPrice} /></TableCell>
               <TableCell className={NUM}>
                 {r.profit == null ? (
                   <Link href={`/vehicles/${r.vehicle.id}?tab=money#vehicle-tabs`} className="text-xs text-warning underline-offset-2 hover:underline">
-                    rate missing
+                    {r.saleModel === "commission" ? "% missing" : "rate missing"}
                   </Link>
                 ) : (
                   <Money value={r.profit} tone signed className="font-semibold" />
@@ -167,7 +183,7 @@ export function VehicleProfitTable({ report }: { report: VehicleProfitReport }) 
             <TableCell colSpan={4}>
               {report.totals.cars} {report.totals.cars === 1 ? "car" : "cars"}
               {report.totals.carsMissingPurchaseRate > 0 && (
-                <span className="text-xs font-normal text-muted-foreground"> · totals exclude {report.totals.carsMissingPurchaseRate} without a purchase rate</span>
+                <span className="text-xs font-normal text-muted-foreground"> · totals exclude {report.totals.carsMissingPurchaseRate} without a purchase rate or commission %</span>
               )}
             </TableCell>
             <TableCell className={NUM}><Money value={report.totals.landingCost} /></TableCell>
@@ -188,9 +204,9 @@ export function DuesTable({ report }: { report: DuesReport }) {
         <TableHeader>
           <TableRow>
             <TableHead>Car</TableHead>
-            <TableHead className="text-right">Purchase rate</TableHead>
-            <TableHead className="text-right">Paid to seller</TableHead>
-            <TableHead className="text-right">Owed to seller</TableHead>
+            <TableHead className="text-right">Terms</TableHead>
+            <TableHead className="text-right">Paid to seller / owner</TableHead>
+            <TableHead className="text-right">Owed to seller / owner</TableHead>
             <TableHead className="text-right">Sale price</TableHead>
             <TableHead className="text-right">From buyer</TableHead>
             <TableHead className="text-right">Owed by buyer</TableHead>
@@ -200,7 +216,7 @@ export function DuesTable({ report }: { report: DuesReport }) {
           {report.items.map((r) => (
             <TableRow key={r.vehicle.id}>
               <TableCell className="max-w-56 truncate"><CarLink id={r.vehicle.id} label={r.vehicle.label} /></TableCell>
-              <TableCell className={NUM}><Money value={r.purchaseRate} /></TableCell>
+              <TableCell className={NUM}><TermsCell row={r} /></TableCell>
               <TableCell className={NUM}><Money value={r.paidToSeller} /></TableCell>
               <TableCell className={NUM}><Money value={r.owedToSeller} tone className="font-semibold" /></TableCell>
               <TableCell className={NUM}><Money value={r.finalisedPrice} /></TableCell>
@@ -218,7 +234,9 @@ export function DuesTable({ report }: { report: DuesReport }) {
           </TableRow>
         </TableFooter>
       </Table>
-      <p className="px-4 py-2 text-[11px] text-subtle-foreground">Negative means overpaid.</p>
+      <p className="px-4 py-2 text-[11px] text-subtle-foreground">
+        Negative means overpaid. A commission car’s owner is owed the sale price minus our commission and the costs we paid.
+      </p>
     </Scroll>
   )
 }
@@ -234,7 +252,7 @@ export function StockTable({ report }: { report: StockReport }) {
           <TableRow>
             <TableHead>Car</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="text-right">Purchase rate</TableHead>
+            <TableHead className="text-right">Terms</TableHead>
             <TableHead className="text-right">Costs</TableHead>
             <TableHead className="text-right">Landing cost</TableHead>
             <TableHead className="text-right">Current quote</TableHead>
@@ -248,7 +266,7 @@ export function StockTable({ report }: { report: StockReport }) {
               <TableCell className={cn("text-xs", r.status === "dropped" ? "text-warning" : "text-muted-foreground")}>
                 {STATUS_LABEL[r.status] ?? r.status}
               </TableCell>
-              <TableCell className={NUM}><Money value={r.purchaseRate} /></TableCell>
+              <TableCell className={NUM}><TermsCell row={r} /></TableCell>
               <TableCell className={NUM}><Money value={r.costs} /></TableCell>
               <TableCell className={NUM}><Money value={r.landingCost} className="font-semibold" /></TableCell>
               <TableCell className={NUM}><Money value={r.currentQuote} /></TableCell>

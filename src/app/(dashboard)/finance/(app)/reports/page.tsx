@@ -16,6 +16,7 @@ import {
 import { Tile } from "@/features/finance/components/summary-tiles"
 import { Money } from "@/features/finance/components/money"
 import { financeErrorMessage } from "@/features/finance/logic/errors"
+import { formatMoney } from "@/features/finance/logic/money"
 import { parseReportSearchParams, type RawSearchParams, type ReportFilters } from "@/features/finance/search-params"
 
 export const metadata: Metadata = { title: "Finance reports" }
@@ -63,9 +64,11 @@ async function ReportBody({ filters }: { filters: ReportFilters }) {
           />
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             <Tile label="Sales"><Money value={report.totals.sales} /></Tile>
-            <Tile label="Gross profit"><Money value={report.totals.grossProfit} tone /></Tile>
+            <Tile label="Gross profit" footer={report.totals.commissions ? `Includes ${formatMoney(report.totals.commissions)} commission` : undefined}>
+              <Money value={report.totals.grossProfit} tone />
+            </Tile>
             <Tile label="Net profit"><Money value={report.totals.netProfit} tone /></Tile>
-            <Tile label="Cars sold" footer={report.totals.carsMissingPurchaseRate ? `${report.totals.carsMissingPurchaseRate} without a purchase rate` : undefined}>
+            <Tile label="Cars sold" footer={report.totals.carsMissingPurchaseRate ? `${report.totals.carsMissingPurchaseRate} missing a rate or %` : undefined}>
               <span className="font-mono-data">{report.totals.carsSold}</span>
             </Tile>
           </div>
@@ -105,7 +108,7 @@ async function ReportBody({ filters }: { filters: ReportFilters }) {
           {report.totals.uncountedSales > 0 && (
             <Notice tone="warning">
               {report.totals.carsMissingPurchaseRate} {report.totals.carsMissingPurchaseRate === 1 ? "car has" : "cars have"} no
-              purchase rate, so <Money value={report.totals.uncountedSales} /> of sales isn’t in the totals. Open the car to
+              purchase rate or commission %, so <Money value={report.totals.uncountedSales} /> of sales isn’t in the totals. Open the car to
               enter it.
             </Notice>
           )}

@@ -3,7 +3,16 @@ import { formatKm } from "@/features/vehicles/utils"
 import { formatCurrency } from "@/lib/format"
 import { BODY_TYPE_LABELS, MATCH_CRITERION_LABELS } from "./constants"
 import { capitalize, formatPreferredCatalog, formatYearWindow } from "./preference"
-import type { LeadReadModel, MatchableVehicle, MatchBreakdownEntry } from "./types"
+import type {
+  LeadPreference,
+  LeadReadModel,
+  MatchableVehicle,
+  MatchBreakdownEntry,
+} from "./types"
+
+/** What the chips read from a lead; the new-lead form passes its draft values. */
+export type MatchLead = LeadPreference &
+  Pick<LeadReadModel, "budget" | "preferredMakeName" | "preferredModelName" | "preferredVariantName">
 
 export interface MatchChip {
   /** Short pill text, e.g. "Km a bit over". */
@@ -18,7 +27,7 @@ function list<T extends string>(values: readonly T[], labels?: Record<T, string>
 
 function wantedVsHas(
   entry: MatchBreakdownEntry,
-  lead: LeadReadModel,
+  lead: MatchLead,
   vehicle: MatchableVehicle
 ): string | null {
   switch (entry.criterion) {
@@ -60,7 +69,7 @@ function wantedVsHas(
   }
 }
 
-function chipLabel(entry: MatchBreakdownEntry, lead: LeadReadModel): string {
+function chipLabel(entry: MatchBreakdownEntry, lead: MatchLead): string {
   const base = MATCH_CRITERION_LABELS[entry.criterion] ?? entry.criterion
   const { criterion, outcome } = entry
 
@@ -114,7 +123,7 @@ function chipLabel(entry: MatchBreakdownEntry, lead: LeadReadModel): string {
 
 export function matchChip(
   entry: MatchBreakdownEntry,
-  lead: LeadReadModel,
+  lead: MatchLead,
   vehicle: MatchableVehicle
 ): MatchChip {
   return { label: chipLabel(entry, lead), detail: wantedVsHas(entry, lead, vehicle) }

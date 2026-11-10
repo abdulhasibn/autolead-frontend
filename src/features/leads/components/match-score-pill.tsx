@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils"
 import { MATCH_OUTCOME_CLASSES, matchScoreOutcome } from "../constants"
-import { matchChip } from "../match"
-import type { LeadMatch, LeadReadModel, MatchableVehicle } from "../types"
+import { matchChip, type MatchLead } from "../match"
+import type { LeadMatch, MatchableVehicle } from "../types"
 
 /** Match % in the lead-status palette; "No pref." when the lead has none. */
 export function MatchScorePill({ match, className }: { match: LeadMatch | null; className?: string }) {
@@ -40,7 +40,7 @@ export function MatchBreakdownChips({
   vehicle,
 }: {
   match: LeadMatch
-  lead: LeadReadModel
+  lead: MatchLead
   vehicle: MatchableVehicle
 }) {
   if (match.breakdown.length === 0) return null

@@ -10,6 +10,7 @@ import type {
   LeadStatusHistoryItem,
   LeadVehicleMatches,
   VehicleLeadMatches,
+  VehicleSuggestions,
 } from "./types"
 import type {
   ChangeLeadStatusInput,
@@ -17,6 +18,7 @@ import type {
   CreateLeadInput,
   LeadPreferenceInput,
   ScheduleFollowUpInput,
+  SuggestVehiclesInput,
 } from "./schemas"
 
 export interface LeadsListParams extends PaginationParams {
@@ -159,4 +161,11 @@ export async function getLeadVehicleMatches(
   return serverApiClient.get<LeadVehicleMatches>(
     `/leads/${leadId}/vehicle-matches${qs ? `?${qs}` : ""}`
   )
+}
+
+/** Cars scored against preferences alone, for the new-lead form. */
+export async function suggestVehicles(
+  body: SuggestVehiclesInput & { showroomId: string | null; minScore?: number; limit?: number }
+): Promise<VehicleSuggestions> {
+  return serverApiClient.post<VehicleSuggestions>("/leads/vehicle-suggestions", body)
 }

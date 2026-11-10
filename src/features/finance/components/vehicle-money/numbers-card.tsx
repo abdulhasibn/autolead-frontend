@@ -13,14 +13,17 @@ function Row({ label, children, hint }: { label: string; children: React.ReactNo
   )
 }
 
-function owedHint(value: number | null, who: "seller" | "buyer"): string | undefined {
+function owedHint(value: number | null, who: "seller" | "owner" | "buyer"): string | undefined {
   if (value == null || value >= 0) return undefined
-  return who === "seller" ? "Negative: you paid the seller more than the purchase rate" : "Negative: the buyer paid more than the sale price"
+  if (who === "seller") return "Negative: you paid the seller more than the purchase rate"
+  if (who === "owner") return "Negative: you paid the owner more than their share"
+  return "Negative: the buyer paid more than the sale price"
 }
 
 function profitHint(money: CarMoney): string {
+  const commission = money.vehicle.saleModel === "commission"
   const missing = [
-    money.flags.purchaseRateMissing && "the purchase rate",
+    money.flags.purchaseRateMissing && (commission ? "the commission %" : "the purchase rate"),
     !money.flags.saleRecorded && "the sale",
   ].filter(Boolean)
   return `Profit shows once ${missing.join(" and ")} ${missing.length > 1 ? "are" : "is"} recorded`
@@ -28,6 +31,7 @@ function profitHint(money: CarMoney): string {
 
 /** Landing cost, profit and dues for one car. */
 export function NumbersCard({ money }: { money: CarMoney }) {
+  if (money.vehicle.saleModel === "commission") return <CommissionNumbers money={money} />
   return (
     <section aria-label="Numbers" className="rounded-xl border border-border p-4">
       <div className="grid gap-4 sm:grid-cols-2">
@@ -71,6 +75,73 @@ export function NumbersCard({ money }: { money: CarMoney }) {
           </Row>
           <Row label="Owed to seller" hint={owedHint(money.owedToSeller, "seller")}>
             <Money value={money.owedToSeller} tone nullHint="Needs a purchase rate" />
+          </Row>
+        </div>
+        <div>
+          <Row label="Received from buyer">
+            <Money value={money.receivedFromBuyer} />
+          </Row>
+          <Row label="Owed by buyer" hint={owedHint(money.owedByBuyer, "buyer")}>
+            <Money value={money.owedByBuyer} tone nullHint="Needs the sale" />
+          </Row>
+        </div>
+      </dl>
+    </section>
+  )
+}
+
+/**
+ * A car sold for the owner: we keep the commission; costs we paid come out of
+ * the owner's payout.
+ */
+function CommissionNumbers({ money }: { money: CarMoney }) {
+  const percent = money.deal?.commissionPercent ?? null
+  return (
+    <section aria-label="Numbers" className="rounded-xl border border-border p-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-lg bg-muted/60 p-3">
+          <p className="text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">Our commission</p>
+          <p className="mt-1 text-2xl font-bold">
+            <Money value={money.commission} tone nullHint={profitHint(money)} />
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {money.commission == null
+              ? profitHint(money)
+              : `${percent}% of the sale price · this is the profit on this car`}
+          </p>
+        </div>
+        <div className="rounded-lg bg-muted/60 p-3">
+          <p className="text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">Spent on the car</p>
+          <p className="mt-1 text-2xl font-bold">
+            <Money value={money.costs} />
+          </p>
+          <p className="text-xs text-muted-foreground">Taken from the owner’s payout</p>
+        </div>
+      </div>
+
+      {money.costBreakdown.length > 0 && (
+        <div className="mt-4">
+          <h4 className="text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">Costs by tag</h4>
+          <dl className="mt-1 divide-y divide-muted">
+            {money.costBreakdown.map((g) => (
+              <Row key={g.tag?.id ?? "untagged"} label={`${g.tag?.name ?? "Untagged"}${g.count > 1 ? ` ×${g.count}` : ""}`}>
+                <Money value={g.amount} />
+              </Row>
+            ))}
+          </dl>
+        </div>
+      )}
+
+      <dl className="mt-4 grid gap-x-6 border-t border-muted pt-3 sm:grid-cols-2">
+        <div>
+          <Row label="Paid to owner">
+            <Money value={money.paidToSeller} />
+          </Row>
+          <Row
+            label="Owed to owner"
+            hint={owedHint(money.owedToSeller, "owner") ?? (money.owedToSeller != null ? "Sale price − commission − costs − paid" : undefined)}
+          >
+            <Money value={money.owedToSeller} tone nullHint="Needs the sale and commission %" />
           </Row>
         </div>
         <div>

@@ -21,6 +21,13 @@ import { Textarea } from "@/components/ui/textarea"
 import type { MakeReadModel, ModelReadModel, VariantReadModel } from "@/features/catalog/types"
 import { FormField } from "@/features/leads/components/form-field"
 import { OptionSelect } from "@/features/leads/components/option-select"
+import { recordAcquisitionAction } from "@/features/finance/actions"
+import {
+  buildAcquisition,
+  emptyAcquisitionForm,
+  type AcquisitionForm,
+} from "@/features/finance/logic/acquisition"
+import { todayIST } from "@/features/finance/logic/dates"
 import type { OwnerDto } from "@/features/owners/types"
 import { useApiError } from "@/hooks/use-api-error"
 import { cn } from "@/lib/utils"
@@ -33,6 +40,7 @@ import {
 } from "../actions"
 import {
   ACQUISITION_TYPES,
+  ACQUISITION_TYPE_HINTS,
   ACQUISITION_TYPE_LABELS,
   FUEL_TYPES,
   FUEL_TYPE_LABELS,
@@ -54,10 +62,17 @@ import {
 } from "../schemas"
 import type { VehicleDto } from "../types"
 import { formatPlate, formatVehicleTitle } from "../utils"
+import { AcquisitionMoneyFields, AcquisitionMoneyLocked } from "./acquisition-money-fields"
 import { PhotoManager } from "./photo-manager"
 
 type Props =
-  | { mode: "create"; makes: MakeReadModel[]; owners: OwnerDto[] }
+  | {
+      mode: "create"
+      makes: MakeReadModel[]
+      owners: OwnerDto[]
+      /** Deal fields: admins with finance unlocked can fill them; locked admins see a note. */
+      money?: "unlocked" | "locked" | "hidden"
+    }
   | { mode: "edit"; vehicle: VehicleDto }
 
 const STEPS = {
@@ -175,6 +190,9 @@ export function VehicleFormSheet(props: Props) {
   const [ownerQuery, setOwnerQuery] = useState("")
   const [newOwner, setNewOwner] = useState<{ fullName: string; phone: string; city: string } | null>(null)
   const [savingOwner, setSavingOwner] = useState(false)
+  const money = isCreate ? (props.money ?? "hidden") : "hidden"
+  const [acquisition, setAcquisition] = useState<AcquisitionForm>(() => emptyAcquisitionForm(todayIST()))
+  const [acquisitionErrors, setAcquisitionErrors] = useState<Partial<Record<keyof AcquisitionForm, string>>>({})
 
   const defaults = props.mode === "edit" ? fromVehicle(props.vehicle) : EMPTY
   const {
@@ -202,6 +220,8 @@ export function VehicleFormSheet(props: Props) {
     setPrefilled(false)
     setOwnerQuery("")
     setNewOwner(null)
+    setAcquisition(emptyAcquisitionForm(todayIST()))
+    setAcquisitionErrors({})
   }
 
   function finish(vehicle: VehicleDto | null) {
@@ -257,7 +277,7 @@ export function VehicleFormSheet(props: Props) {
     const result = await createOwnerQuickAction(newOwner)
     setSavingOwner(false)
     if (!result.ok) {
-      handleError(result.error, "Could not add the owner. Check the name and phone (+91…).")
+      handleError(result.error, "Could not add the owner. Check the name and the 10-digit phone number.")
       return
     }
     setOwners((list) => [result.data, ...list])
@@ -286,6 +306,13 @@ export function VehicleFormSheet(props: Props) {
         router.refresh()
         return
       }
+      const saleModel = values.acquisitionType === "consignment" ? "commission" : "purchase"
+      const deal = money === "unlocked" ? buildAcquisition(acquisition, saleModel) : null
+      if (deal && !deal.ok) {
+        setAcquisitionErrors(deal.errors)
+        return
+      }
+      setAcquisitionErrors({})
       const result = await createVehicleAction({
         ...details,
         variantId: values.variantId,
@@ -300,6 +327,16 @@ export function VehicleFormSheet(props: Props) {
           handleError(result.error, "Could not add the vehicle.")
         }
         return
+      }
+      if (deal?.ok && deal.payload) {
+        const owner = owners.find((o) => o.id === values.ownerId)
+        const saved = await recordAcquisitionAction(result.data.id, {
+          ...deal.payload,
+          party: owner?.fullName ?? null,
+        })
+        if (!saved.ok) {
+          toast.error("Vehicle added, but the deal wasn’t saved. Add it on the car’s Finance tab.")
+        }
       }
       toast.success("Vehicle added. Now add its photos.")
       setCreated(result.data)
@@ -560,7 +597,7 @@ export function VehicleFormSheet(props: Props) {
                     <div className="grid gap-3 sm:grid-cols-2">
                       <Input aria-label="Owner full name" placeholder="Full name" value={newOwner.fullName}
                         onChange={(e) => setNewOwner({ ...newOwner, fullName: e.target.value })} />
-                      <Input aria-label="Owner phone" type="tel" placeholder="+919876543210" value={newOwner.phone}
+                      <Input aria-label="Owner phone" type="tel" placeholder="9876543210" maxLength={16} value={newOwner.phone}
                         onChange={(e) => setNewOwner({ ...newOwner, phone: e.target.value.replace(/\s/g, "") })} />
                       <Input aria-label="Owner city" placeholder="City (optional)" value={newOwner.city}
                         onChange={(e) => setNewOwner({ ...newOwner, city: e.target.value })} className="sm:col-span-2" />
@@ -624,7 +661,20 @@ export function VehicleFormSheet(props: Props) {
                   <Segmented ariaLabel="Acquisition type" value={field.value} onChange={field.onChange}
                     options={labelled(ACQUISITION_TYPES, ACQUISITION_TYPE_LABELS)} />
                 )} />
+                {values.acquisitionType && (
+                  <p className="mt-1.5 text-xs text-muted-foreground">{ACQUISITION_TYPE_HINTS[values.acquisitionType]}</p>
+                )}
               </FormField>
+
+              {values.acquisitionType && money === "unlocked" && (
+                <AcquisitionMoneyFields
+                  saleModel={values.acquisitionType === "consignment" ? "commission" : "purchase"}
+                  form={acquisition}
+                  errors={acquisitionErrors}
+                  onChange={setAcquisition}
+                />
+              )}
+              {values.acquisitionType && money === "locked" && <AcquisitionMoneyLocked />}
             </>
           )}
 

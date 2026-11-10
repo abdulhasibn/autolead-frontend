@@ -90,7 +90,7 @@ export function PositionTiles({ summary }: { summary: FinanceSummary }) {
       <Tile label="Money in stock" href="/finance/reports?tab=stock" footer="Landing cost of unsold cars">
         <Money value={summary.moneyInStock} />
       </Tile>
-      <Tile label="Owed to sellers" href="/finance/reports?tab=dues" footer="Purchase rate still to pay">
+      <Tile label="Owed to sellers" href="/finance/reports?tab=dues" footer="Still to pay sellers and owners">
         <Money value={summary.owedToSellers} />
       </Tile>
       <Tile label="Owed by buyers" href="/finance/reports?tab=dues" footer="Sale price still to collect">

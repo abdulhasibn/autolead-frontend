@@ -32,10 +32,11 @@ export function OwnerFormFields({ register, control, errors }: OwnerFormFieldsPr
       </FormField>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <FormField id="phone" label="Phone (E.164)" error={errors.phone?.message}>
+        <FormField id="phone" label="Phone" error={errors.phone?.message}>
           <Input
             id="phone"
-            placeholder="+971501234567"
+            placeholder="9876543210"
+            maxLength={16}
             type="tel"
             autoComplete="tel"
             {...register("phone")}
@@ -45,7 +46,8 @@ export function OwnerFormFields({ register, control, errors }: OwnerFormFieldsPr
         <FormField id="altPhone" label="Alt phone" error={errors.altPhone?.message}>
           <Input
             id="altPhone"
-            placeholder="+971501234568"
+            placeholder="Optional"
+            maxLength={16}
             type="tel"
             {...register("altPhone")}
           />

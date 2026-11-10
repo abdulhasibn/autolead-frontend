@@ -96,8 +96,14 @@ export interface EntryBody {
 
 export type EntryPatch = Partial<Omit<EntryBody, "kind">>
 
+/** How we make money on a car: bought outright, or sold for a commission. */
+export type SaleModel = "purchase" | "commission"
+
 export interface DealTerms {
-  purchaseRate: number
+  /** Purchase cars. */
+  purchaseRate: number | null
+  /** Commission cars: our % of the finalised price (e.g. 3.5). */
+  commissionPercent: number | null
   purchasedOn: string | null
   ownerExpectedPrice: number | null
   minimumSellingPrice: number | null
@@ -136,7 +142,7 @@ export interface CostGroup {
 }
 
 export interface CarMoney extends VehicleDealState {
-  vehicle: FinanceVehicleRef
+  vehicle: FinanceVehicleRef & { saleModel: SaleModel }
   quotes: VehicleQuote[]
   currentQuote: VehicleQuote | null
   landingCost: number
@@ -144,15 +150,20 @@ export interface CarMoney extends VehicleDealState {
   costBreakdown: CostGroup[]
   paidToSeller: number
   receivedFromBuyer: number
+  /** Commission cars: our cut once sold. */
+  commission: number | null
   profit: number | null
   owedToSeller: number | null
   owedByBuyer: number | null
+  /** `purchaseRateMissing`: the purchase rate or commission % isn't entered. */
   flags: { purchaseRateMissing: boolean; saleRecorded: boolean }
 }
 
 export interface VehicleMoneySummary {
   vehicleId: string
+  saleModel: SaleModel
   purchaseRate: number | null
+  commissionPercent: number | null
   landingCost: number
   currentQuote: number | null
   finalisedPrice: number | null
@@ -178,6 +189,8 @@ export interface ReportBucket {
 export interface PnlLine {
   sales: number
   costOfSales: number
+  /** Commission earned on commission cars sold. */
+  commissions: number
   grossProfit: number
   laterCarCosts: number
   otherIncome: number
@@ -222,7 +235,10 @@ export type VehicleProfitSort = "profit" | "-profit" | "date" | "-date"
 export interface VehicleProfitRow {
   vehicle: FinanceVehicleRef
   soldOn: string
+  saleModel: SaleModel
   purchaseRate: number | null
+  commissionPercent: number | null
+  commission: number | null
   costs: number
   landingCost: number
   finalisedPrice: number
@@ -237,6 +253,7 @@ export interface VehicleProfitReport {
     cars: number
     sales: number
     landingCost: number
+    commissions: number
     profit: number
     carsMissingPurchaseRate: number
     uncountedSales: number
@@ -246,7 +263,11 @@ export interface VehicleProfitReport {
 
 export interface DuesRow {
   vehicle: FinanceVehicleRef
+  saleModel: SaleModel
   purchaseRate: number | null
+  commissionPercent: number | null
+  commission: number | null
+  costs: number
   paidToSeller: number
   owedToSeller: number | null
   finalisedPrice: number | null
@@ -263,7 +284,9 @@ export interface DuesReport {
 export interface StockRow {
   vehicle: FinanceVehicleRef
   status: string
+  saleModel: SaleModel
   purchaseRate: number | null
+  commissionPercent: number | null
   costs: number
   landingCost: number
   currentQuote: number | null

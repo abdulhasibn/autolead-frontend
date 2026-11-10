@@ -11,10 +11,9 @@ import {
   PREFERRED_YEAR_MAX,
   PREFERRED_YEAR_MIN,
 } from "./constants"
+import { E164_REGEX, indianPhoneFormSchema } from "@/lib/phone"
 
-// Matches the backend Phone value object: "+" then 7–15 digits.
-const e164Regex = /^\+[1-9]\d{6,14}$/
-const phoneMessage = "Enter a valid E.164 phone number (e.g. +919876543210)"
+const phoneMessage = "Enter a valid phone number"
 
 const yearMessage = `Enter a year between ${PREFERRED_YEAR_MIN} and ${PREFERRED_YEAR_MAX}`
 const yearOrderMessage = "Must be the same as or after the 'from' year"
@@ -60,7 +59,7 @@ export type LeadPreferenceInput = z.infer<typeof leadPreferenceSchema>
 export const createLeadSchema = z.object({
   showroomId: z.guid().nullable().optional(),
   fullName: z.string().trim().min(1, "Full name is required"),
-  phone: z.string().trim().regex(e164Regex, phoneMessage),
+  phone: z.string().trim().regex(E164_REGEX, phoneMessage),
   email: z.email().nullable().optional(),
   source: z.enum(LEAD_SOURCES),
   vehicleId: z.guid().nullable().optional(),
@@ -75,6 +74,16 @@ export const createLeadSchema = z.object({
 }).refine(yearsInOrder, { message: yearOrderMessage, path: ["preferredYearMax"] })
 
 export type CreateLeadInput = z.infer<typeof createLeadSchema>
+
+/** POST /leads/vehicle-suggestions: score stock against preferences before a lead exists. */
+export const suggestVehiclesSchema = z
+  .object({
+    budget: z.number().nonnegative().nullable(),
+    ...preferenceFields,
+  })
+  .refine(yearsInOrder, { message: yearOrderMessage, path: ["preferredYearMax"] })
+
+export type SuggestVehiclesInput = z.infer<typeof suggestVehiclesSchema>
 
 export const changeLeadStatusSchema = z.object({
   status: z.enum(LEAD_STATUSES),
@@ -174,7 +183,7 @@ export type LeadPreferenceFormInput = z.input<typeof leadPreferenceFormSchema>
 
 export const createLeadFormSchema = z.object({
   fullName: z.string().trim().min(1, "Full name is required"),
-  phone: z.string().trim().regex(e164Regex, phoneMessage),
+  phone: indianPhoneFormSchema,
   email: z
     .string()
     .trim()
