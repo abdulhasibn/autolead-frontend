@@ -43,7 +43,7 @@ function wantedVsHas(
             vehicle.listedPrice == null ? "car not priced yet" : `car ${formatCurrency(vehicle.listedPrice)}`
           }`
     case "year": {
-      const wanted = formatYearWindow(lead.preferredYearMin, lead.preferredYearMax)
+      const wanted = formatYearWindow(lead.preferredYearMin)
       return wanted ? `Wants ${wanted} · car is ${vehicle.year}` : null
     }
     case "km":

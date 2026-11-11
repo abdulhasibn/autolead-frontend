@@ -11,7 +11,6 @@ export const EMPTY_PREFERENCE_FORM: LeadPreferenceFormInput = {
   preferredTransmissions: [],
   preferredBodyTypes: [],
   preferredYearMin: "",
-  preferredYearMax: "",
   preferredKmMax: "",
   preferredMaxOwners: "",
 }
@@ -31,7 +30,6 @@ export function preferenceToFormValues(pref: LeadPreference): LeadPreferenceForm
     preferredTransmissions: [...pref.preferredTransmissions],
     preferredBodyTypes: [...pref.preferredBodyTypes],
     preferredYearMin: toText(pref.preferredYearMin),
-    preferredYearMax: toText(pref.preferredYearMax),
     preferredKmMax: toText(pref.preferredKmMax),
     preferredMaxOwners: toText(pref.preferredMaxOwners),
   }
@@ -48,7 +46,6 @@ export function hasPreference(pref: LeadPreference): boolean {
       pref.preferredTransmissions.length ||
       pref.preferredBodyTypes.length ||
       pref.preferredYearMin != null ||
-      pref.preferredYearMax != null ||
       pref.preferredKmMax != null ||
       pref.preferredMaxOwners != null
   )
@@ -69,11 +66,8 @@ export function formatPreferredCatalog(
 }
 
 /** "2018 – 2022", "2018 or newer", "2022 or older", or null for any year. */
-export function formatYearWindow(min: number | null, max: number | null): string | null {
-  if (min != null && max != null) return min === max ? String(min) : `${min} – ${max}`
-  if (min != null) return `${min} or newer`
-  if (max != null) return `${max} or older`
-  return null
+export function formatYearWindow(min: number | null): string | null {
+  return min != null ? `${min} or newer` : null
 }
 
 /** 0 → "First owner only", 1 → "Up to 1 previous owner". */

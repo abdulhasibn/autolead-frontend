@@ -32,7 +32,6 @@ export interface LeadPreference {
   preferredTransmissions: Transmission[]
   preferredBodyTypes: BodyType[]
   preferredYearMin: number | null
-  preferredYearMax: number | null
   preferredKmMax: number | null
   preferredMaxOwners: number | null
 }

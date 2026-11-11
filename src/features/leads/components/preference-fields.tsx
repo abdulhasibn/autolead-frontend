@@ -190,22 +190,13 @@ export function PreferenceFields({
       </PreferenceGroup>
 
       <PreferenceGroup title="Limits">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <NumberField
             id={id("year-min")}
             label="Year from"
             value={values.preferredYearMin}
             onChange={(v) => onChange("preferredYearMin", v)}
             error={errors.preferredYearMin}
-            min={PREFERRED_YEAR_MIN}
-            max={PREFERRED_YEAR_MAX}
-          />
-          <NumberField
-            id={id("year-max")}
-            label="Year to"
-            value={values.preferredYearMax}
-            onChange={(v) => onChange("preferredYearMax", v)}
-            error={errors.preferredYearMax}
             min={PREFERRED_YEAR_MIN}
             max={PREFERRED_YEAR_MAX}
           />
@@ -296,7 +287,6 @@ function NumberField({
 const ERROR_FIELDS: PreferenceFieldName[] = [
   "preferredColours",
   "preferredYearMin",
-  "preferredYearMax",
   "preferredKmMax",
   "preferredMaxOwners",
 ]

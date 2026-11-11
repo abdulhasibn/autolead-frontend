@@ -35,7 +35,6 @@ export const baseLead: LeadReadModel = {
   preferredTransmissions: [],
   preferredBodyTypes: [],
   preferredYearMin: null,
-  preferredYearMax: null,
   preferredKmMax: null,
   preferredMaxOwners: null,
   createdBy: "66666666-6666-4666-8666-666666666666",

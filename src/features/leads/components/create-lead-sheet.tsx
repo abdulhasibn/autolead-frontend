@@ -55,7 +55,6 @@ const STEP_FIELDS: Array<Array<keyof CreateLeadFormInput>> = [
     "purchaseTimeline",
     "preferredColours",
     "preferredYearMin",
-    "preferredYearMax",
     "preferredKmMax",
     "preferredMaxOwners",
   ],

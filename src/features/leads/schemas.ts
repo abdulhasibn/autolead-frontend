@@ -17,18 +17,6 @@ import { E164_REGEX, indianPhoneFormSchema } from "@/lib/phone"
 const phoneMessage = "Enter a valid phone number"
 
 const yearMessage = `Enter a year between ${PREFERRED_YEAR_MIN} and ${PREFERRED_YEAR_MAX}`
-const yearOrderMessage = "Must be the same as or after the 'from' year"
-
-function yearsInOrder(value: {
-  preferredYearMin?: number | null
-  preferredYearMax?: number | null
-}): boolean {
-  return (
-    value.preferredYearMin == null ||
-    value.preferredYearMax == null ||
-    value.preferredYearMin <= value.preferredYearMax
-  )
-}
 
 // ---------------------------------------------------------------------------
 // API payloads — validated again inside Server Actions before hitting the API
@@ -45,7 +33,6 @@ const preferenceFields = {
   preferredTransmissions: z.array(z.enum(TRANSMISSIONS)),
   preferredBodyTypes: z.array(z.enum(BODY_TYPES)),
   preferredYearMin: z.int().min(PREFERRED_YEAR_MIN).max(PREFERRED_YEAR_MAX).nullable(),
-  preferredYearMax: z.int().min(PREFERRED_YEAR_MIN).max(PREFERRED_YEAR_MAX).nullable(),
   preferredKmMax: z.int().nonnegative().nullable(),
   preferredMaxOwners: z.int().nonnegative().nullable(),
 }
@@ -53,7 +40,6 @@ const preferenceFields = {
 /** PUT /leads/:id/preference is a full replace, so every field is required. */
 export const leadPreferenceSchema = z
   .object(preferenceFields)
-  .refine(yearsInOrder, { message: yearOrderMessage, path: ["preferredYearMax"] })
 
 export type LeadPreferenceInput = z.infer<typeof leadPreferenceSchema>
 
@@ -72,7 +58,7 @@ export const createLeadSchema = z.object({
   tradeInRequired: z.boolean().nullable().optional(),
   notes: z.string().nullable().optional(),
   ...z.object(preferenceFields).partial().shape,
-}).refine(yearsInOrder, { message: yearOrderMessage, path: ["preferredYearMax"] })
+})
 
 export type CreateLeadInput = z.infer<typeof createLeadSchema>
 
@@ -82,7 +68,6 @@ export const suggestVehiclesSchema = z
     budget: z.number().nonnegative().nullable(),
     ...preferenceFields,
   })
-  .refine(yearsInOrder, { message: yearOrderMessage, path: ["preferredYearMax"] })
 
 export type SuggestVehiclesInput = z.infer<typeof suggestVehiclesSchema>
 
@@ -152,7 +137,6 @@ const preferenceFormFields = {
   preferredTransmissions: z.array(z.enum(TRANSMISSIONS)),
   preferredBodyTypes: z.array(z.enum(BODY_TYPES)),
   preferredYearMin: optionalInt(yearMessage, PREFERRED_YEAR_MIN, PREFERRED_YEAR_MAX),
-  preferredYearMax: optionalInt(yearMessage, PREFERRED_YEAR_MIN, PREFERRED_YEAR_MAX),
   preferredKmMax: optionalInt("Enter a whole number of km"),
   preferredMaxOwners: optionalInt("Enter a whole number (0 = first owner only)"),
 }
@@ -177,7 +161,6 @@ function narrowestCatalogPick<
 
 export const leadPreferenceFormSchema = z
   .object(preferenceFormFields)
-  .refine(yearsInOrder, { message: yearOrderMessage, path: ["preferredYearMax"] })
   .transform(narrowestCatalogPick)
 
 export type LeadPreferenceFormInput = z.input<typeof leadPreferenceFormSchema>
@@ -208,7 +191,6 @@ export const createLeadFormSchema = z.object({
   notes: optionalText,
   ...preferenceFormFields,
 })
-  .refine(yearsInOrder, { message: yearOrderMessage, path: ["preferredYearMax"] })
   .transform(narrowestCatalogPick)
 
 export type CreateLeadFormInput = z.input<typeof createLeadFormSchema>

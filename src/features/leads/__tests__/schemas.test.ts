@@ -22,7 +22,6 @@ const NO_PREFERENCE = {
   preferredTransmissions: [],
   preferredBodyTypes: [],
   preferredYearMin: null,
-  preferredYearMax: null,
   preferredKmMax: null,
   preferredMaxOwners: null,
 }
@@ -132,7 +131,6 @@ describe("leadPreferenceFormSchema", () => {
       preferredFuelTypes: ["petrol", "cng"],
       preferredBodyTypes: ["hatchback"],
       preferredYearMin: 2018,
-      preferredYearMax: null,
       preferredKmMax: 60000,
       preferredMaxOwners: 0,
     })
@@ -153,14 +151,13 @@ describe("leadPreferenceFormSchema", () => {
     ).toMatchObject({ preferredMakeId: MAKE_ID })
   })
 
-  it("rejects a year window that runs backwards", () => {
+  it("rejects a minimum year out of range", () => {
     const result = leadPreferenceFormSchema.safeParse({
       ...EMPTY_PREFERENCE_FORM,
-      preferredYearMin: "2022",
-      preferredYearMax: "2018",
+      preferredYearMin: "1900",
     })
     expect(result.success).toBe(false)
-    expect(result.error!.issues[0]!.path).toEqual(["preferredYearMax"])
+    expect(result.error!.issues[0]!.path).toEqual(["preferredYearMin"])
   })
 
   it("rejects out-of-range and non-whole numbers", () => {

@@ -33,7 +33,6 @@ function toDraft(values: Partial<CreateLeadFormInput>): Draft {
     preferredTransmissions: values.preferredTransmissions ?? [],
     preferredBodyTypes: values.preferredBodyTypes ?? [],
     preferredYearMin: values.preferredYearMin ?? "",
-    preferredYearMax: values.preferredYearMax ?? "",
     preferredKmMax: values.preferredKmMax ?? "",
     preferredMaxOwners: values.preferredMaxOwners ?? "",
   })

@@ -43,7 +43,6 @@ function preferenceOf(lead: LeadReadModel): LeadPreference {
     preferredTransmissions: lead.preferredTransmissions ?? [],
     preferredBodyTypes: lead.preferredBodyTypes ?? [],
     preferredYearMin: lead.preferredYearMin ?? null,
-    preferredYearMax: lead.preferredYearMax ?? null,
     preferredKmMax: lead.preferredKmMax ?? null,
     preferredMaxOwners: lead.preferredMaxOwners ?? null,
   }
@@ -64,7 +63,7 @@ export function LeadPreferenceCard({
   const preference = preferenceOf(lead)
   const empty = !hasPreference(preference)
   const catalog = formatPreferredCatalog(lead)
-  const years = formatYearWindow(preference.preferredYearMin, preference.preferredYearMax)
+  const years = formatYearWindow(preference.preferredYearMin)
   const owners = formatMaxOwners(preference.preferredMaxOwners)
 
   return (
