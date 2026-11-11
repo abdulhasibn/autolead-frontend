@@ -63,6 +63,7 @@ import {
 import type { VehicleDto } from "../types"
 import { formatPlate, formatVehicleTitle, variantLabel } from "../utils"
 import { AcquisitionMoneyFields, AcquisitionMoneyLocked } from "./acquisition-money-fields"
+import { ColourPicker } from "./colour-picker"
 import { PhotoManager } from "./photo-manager"
 
 type Props =
@@ -540,7 +541,9 @@ export function VehicleFormSheet(props: Props) {
                   <Input id="numPreviousOwners" inputMode="numeric" enterKeyHint="next" className="font-mono-data" aria-invalid={!!errors.numPreviousOwners} {...register("numPreviousOwners")} />
                 </FormField>
                 <FormField id="colour" label="Colour *" error={errors.colour?.message} className="sm:col-span-2">
-                  <Input id="colour" placeholder="e.g. Polar White" aria-invalid={!!errors.colour} {...register("colour")} />
+                  <Controller control={control} name="colour" render={({ field }) => (
+                    <ColourPicker id="colour" value={field.value ?? ""} onValueChange={field.onChange} onBlur={field.onBlur} invalid={!!errors.colour} />
+                  )} />
                 </FormField>
               </div>
             </>
