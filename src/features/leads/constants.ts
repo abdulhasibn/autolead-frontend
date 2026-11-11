@@ -33,6 +33,19 @@ export const LEAD_SOURCES = [
   "other",
 ] as const
 
+/** Sources staff can pick when creating a lead. Marketplace / mobile app
+ *  stay in LEAD_SOURCES so older leads still render their label. */
+export const SELECTABLE_LEAD_SOURCES = [
+  "website",
+  "phone",
+  "walkin",
+  "whatsapp",
+  "instagram",
+  "facebook",
+  "referral",
+  "other",
+] as const satisfies readonly (typeof LEAD_SOURCES)[number][]
+
 export const FOLLOW_UP_TASK_TYPES = [
   "call",
   "whatsapp",

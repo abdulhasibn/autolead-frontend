@@ -5,6 +5,7 @@ import {
   FOLLOW_UP_OUTCOMES,
   FOLLOW_UP_TASK_TYPES,
   LEAD_SOURCES,
+  SELECTABLE_LEAD_SOURCES,
   LEAD_STATUSES,
   PREFERRED_COLOUR_MAX_LENGTH,
   PREFERRED_COLOURS_MAX,
@@ -189,7 +190,7 @@ export const createLeadFormSchema = z.object({
     .trim()
     .pipe(z.union([z.literal(""), z.email("Enter a valid email address")]))
     .transform((value) => (value === "" ? null : value)),
-  source: z.enum(LEAD_SOURCES, { error: "Select a source" }),
+  source: z.enum(SELECTABLE_LEAD_SOURCES, { error: "Select a source" }),
   vehicleId: optionalText,
   budget: z
     .string()

@@ -21,7 +21,7 @@ import type { MakeReadModel } from "@/features/catalog/types"
 import { useApiError } from "@/hooks/use-api-error"
 import { cn } from "@/lib/utils"
 import { createLeadAction } from "../actions"
-import { LEAD_SOURCES, LEAD_SOURCE_LABELS } from "../constants"
+import { LEAD_SOURCE_LABELS, SELECTABLE_LEAD_SOURCES } from "../constants"
 import { EMPTY_PREFERENCE_FORM } from "../preference"
 import {
   createLeadFormSchema,
@@ -35,7 +35,7 @@ import { SegmentedChoice } from "./segmented-choice"
 import { SuggestedVehiclesPicker } from "./suggested-vehicles-picker"
 import type { VehicleOption } from "./types"
 
-const SOURCE_OPTIONS = LEAD_SOURCES.map((s) => ({
+const SOURCE_OPTIONS = SELECTABLE_LEAD_SOURCES.map((s) => ({
   value: s,
   label: LEAD_SOURCE_LABELS[s],
 }))
