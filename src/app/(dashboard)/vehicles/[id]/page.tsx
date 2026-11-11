@@ -199,14 +199,16 @@ export default async function VehicleDetailPage({
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+      {/* lg: gallery + tabs in the left column, panels on the right. The 1fr
+          second row soaks up the tall aside so the gallery keeps its 16:9. */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-[auto_1fr] lg:gap-x-5">
         <VehicleGallery
           media={media}
           title={title}
           photosHref={`/vehicles/${vehicle.id}?tab=photos#vehicle-tabs`}
           dimmed={vehicle.status === "dropped"}
         />
-        <aside className="space-y-4">
+        <aside className="space-y-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
           <GlancePanel vehicle={vehicle} />
           <ListedPricePanel
             vehicleId={vehicle.id}
@@ -221,71 +223,73 @@ export default async function VehicleDetailPage({
             <OwnerCard vehicle={vehicle} owner={owner} />
           </div>
         </aside>
-      </div>
 
-      <VehicleTabs
-        tabs={[
-          {
-            id: "overview",
-            label: "Overview",
-            content: (
-              <div className="grid gap-6 lg:grid-cols-3">
-                <div className="space-y-2 lg:col-span-2">
-                  <h3 className="text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">Description</h3>
-                  {vehicle.description ? (
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
-                      {vehicle.description}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-subtle-foreground">No description yet. Use Edit details to add one.</p>
-                  )}
-                </div>
-                <dl className="grid grid-cols-2 gap-4">
-                  <Detail label="Acquisition">
-                    {ACQUISITION_TYPE_LABELS[vehicle.acquisitionType] ?? vehicle.acquisitionType}
-                  </Detail>
-                  <Detail label="Insurance until">
-                    {vehicle.insuranceValidUntil ? formatDate(vehicle.insuranceValidUntil) : EMPTY}
-                  </Detail>
-                  <Detail label="Added">{formatDate(vehicle.createdAt)}</Detail>
-                  <Detail label="Last updated">
-                    <span className="text-muted-foreground">{formatDateTime(vehicle.updatedAt)}</span>
-                  </Detail>
-                </dl>
-              </div>
-            ),
-          },
-          {
-            id: "photos",
-            label: "Photos",
-            count: media.length,
-            content: <PhotoManager vehicleId={vehicle.id} media={media} canDelete={isAdmin} />,
-          },
-          {
-            id: "documents",
-            label: "Documents",
-            count: documents.length,
-            content: <DocumentsPanel vehicleId={vehicle.id} documents={documents} canDelete={isAdmin} />,
-          },
-          {
-            id: "leads",
-            label: "Leads",
-            count: matches ? matches.linked.length : leads.length,
-            highlight: true,
-            content: matches ? (
-              <VehicleMatchesPanel matches={matches} canLink={isVehicleLinkable(vehicle)} />
-            ) : (
-              <VehicleLeadsList leads={leads} />
-            ),
-          },
-          ...moneyTab,
-          {
-            id: "history",
-            label: "History",
-            content: <VehicleHistory items={history} createdAt={vehicle.createdAt} />,
-          },
-        ]}
-      />
+        <div className="min-w-0 lg:col-start-1 lg:row-start-2">
+          <VehicleTabs
+            tabs={[
+              {
+                id: "overview",
+                label: "Overview",
+                content: (
+                  <div className="grid gap-6 lg:grid-cols-3">
+                    <div className="space-y-2 lg:col-span-2">
+                      <h3 className="text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">Description</h3>
+                      {vehicle.description ? (
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
+                          {vehicle.description}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-subtle-foreground">No description yet. Use Edit details to add one.</p>
+                      )}
+                    </div>
+                    <dl className="grid grid-cols-2 gap-4">
+                      <Detail label="Acquisition">
+                        {ACQUISITION_TYPE_LABELS[vehicle.acquisitionType] ?? vehicle.acquisitionType}
+                      </Detail>
+                      <Detail label="Insurance until">
+                        {vehicle.insuranceValidUntil ? formatDate(vehicle.insuranceValidUntil) : EMPTY}
+                      </Detail>
+                      <Detail label="Added">{formatDate(vehicle.createdAt)}</Detail>
+                      <Detail label="Last updated">
+                        <span className="text-muted-foreground">{formatDateTime(vehicle.updatedAt)}</span>
+                      </Detail>
+                    </dl>
+                  </div>
+                ),
+              },
+              {
+                id: "photos",
+                label: "Photos",
+                count: media.length,
+                content: <PhotoManager vehicleId={vehicle.id} media={media} canDelete={isAdmin} />,
+              },
+              {
+                id: "documents",
+                label: "Documents",
+                count: documents.length,
+                content: <DocumentsPanel vehicleId={vehicle.id} documents={documents} canDelete={isAdmin} />,
+              },
+              {
+                id: "leads",
+                label: "Leads",
+                count: matches ? matches.linked.length : leads.length,
+                highlight: true,
+                content: matches ? (
+                  <VehicleMatchesPanel matches={matches} canLink={isVehicleLinkable(vehicle)} />
+                ) : (
+                  <VehicleLeadsList leads={leads} />
+                ),
+              },
+              ...moneyTab,
+              {
+                id: "history",
+                label: "History",
+                content: <VehicleHistory items={history} createdAt={vehicle.createdAt} />,
+              },
+            ]}
+          />
+        </div>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:hidden">
         <OwnerCard vehicle={vehicle} owner={owner} />

@@ -12,6 +12,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { fetchNotificationsAction, markNotificationReadAction } from "../actions"
 import type { NotificationReadModel, NotificationPageDto } from "../types"
 
@@ -239,8 +240,16 @@ export function NotificationDrawer({
 
         <div className="flex-1 overflow-y-auto">
           {isRefreshing && notifications.length === 0 ? (
-            <div className="flex items-center justify-center h-32 text-sm text-muted-foreground">
-              Loading…
+            <div className="divide-y divide-border" aria-busy="true" aria-label="Loading notifications">
+              {Array.from({ length: 5 }, (_, i) => (
+                <div key={i} className="flex items-start gap-3 px-4 py-3">
+                  <Skeleton className="mt-1.5 size-2 shrink-0 rounded-full bg-accent" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <Skeleton className="h-4 w-3/4 rounded bg-border" />
+                    <Skeleton className="h-3 w-1/2 rounded bg-muted" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-40 gap-2 text-center px-6">

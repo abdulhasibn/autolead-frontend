@@ -14,6 +14,8 @@ import { AgedStockList } from "./_components/aged-stock-list"
 import { PipelineCard } from "./_components/pipeline-card"
 import { InventoryCard } from "./_components/inventory-card"
 import { DashboardMoneyRow } from "@/features/finance/components/dashboard-money-row"
+import { hasFinanceSession } from "@/features/finance/session"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export const metadata: Metadata = { title: "Dashboard" }
 
@@ -35,7 +37,7 @@ export default async function DashboardPage({
   const { period: rawPeriod } = await searchParams
   const period: DashboardPeriodKey = isPeriodKey(rawPeriod) ? rawPeriod : "month"
 
-  const data = await getDashboard({ period })
+  const [data, financeOpen] = await Promise.all([getDashboard({ period }), hasFinanceSession()])
 
   const firstName = session?.user?.name?.split(" ")[0] ?? "there"
 
@@ -63,7 +65,8 @@ export default async function DashboardPage({
 
       {/* Money row: only when finance is unlocked */}
       <div className="max-lg:order-2">
-        <Suspense>
+        {/* Tiles only when a finance cookie exists; otherwise the row is a one-line unlock link. */}
+        <Suspense fallback={financeOpen ? <MoneyRowSkeleton /> : null}>
           <DashboardMoneyRow />
         </Suspense>
       </div>
@@ -168,6 +171,20 @@ export default async function DashboardPage({
           hour12: true,
         })}
       </p>
+    </div>
+  )
+}
+
+function MoneyRowSkeleton() {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" aria-busy="true" aria-label="Loading money summary">
+      {Array.from({ length: 4 }, (_, i) => (
+        <div key={i} className="space-y-3 rounded-xl border border-border bg-card p-4">
+          <Skeleton className="h-3 w-24 rounded bg-muted" />
+          <Skeleton className="h-7 w-20 rounded bg-border" />
+          <Skeleton className="h-3 w-28 rounded bg-muted" />
+        </div>
+      ))}
     </div>
   )
 }

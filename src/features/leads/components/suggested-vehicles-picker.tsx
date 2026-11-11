@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Car, Check, ChevronDown, ChevronUp, Loader2, Sparkles } from "lucide-react"
+import { Car, Check, ChevronDown, ChevronUp, Sparkles } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { NumberPlate } from "@/features/vehicles/components/number-plate"
 import { FUEL_TYPE_LABELS, TRANSMISSION_LABELS } from "@/features/vehicles/constants"
 import { formatKm, variantLabel } from "@/features/vehicles/utils"
@@ -123,10 +124,22 @@ export function SuggestedVehiclesPicker({
     body = <Hint action={editLink}>Fix the requirements to see matching cars.</Hint>
   } else if (!result || result.key !== draft.key) {
     body = (
-      <div className="flex items-center justify-center gap-2 rounded-lg border border-border/50 py-6 text-xs text-subtle-foreground">
-        <Loader2 className="size-3.5 animate-spin" />
-        Finding matching cars…
-      </div>
+      <ul
+        className="divide-y divide-border rounded-lg border border-border/50"
+        aria-busy="true"
+        aria-label="Finding matching cars"
+      >
+        {Array.from({ length: 3 }, (_, i) => (
+          <li key={i} className="flex items-start gap-3 px-3 py-3">
+            <Skeleton className="h-6 w-14 shrink-0 rounded-full bg-accent" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-4 w-48 max-w-full rounded bg-border" />
+              <Skeleton className="h-3 w-56 max-w-full rounded bg-muted" />
+            </div>
+            <Skeleton className="h-7 w-16 shrink-0 rounded-md bg-muted max-sm:hidden" />
+          </li>
+        ))}
+      </ul>
     )
   } else if (!result.ok) {
     body = <Hint>Could not load suggestions. You can still pick a car below.</Hint>

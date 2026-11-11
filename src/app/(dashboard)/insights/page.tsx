@@ -23,6 +23,7 @@ import { BudgetBandsChart } from "./_components/budget-bands-chart"
 import { CampaignTable } from "./_components/campaign-table"
 import { ChannelTable } from "./_components/channel-table"
 import { DemandGapTable } from "./_components/demand-gap-table"
+import { InsightsTabSkeleton } from "./_components/insights-tab-skeleton"
 import { InsightsTabs } from "./_components/insights-tabs"
 import { VehicleSignalTable } from "./_components/vehicle-signal-table"
 
@@ -52,9 +53,12 @@ export default async function InsightsPage({
       <Suspense>
         <InsightsHeader tab={tab} period={period} />
       </Suspense>
-      {tab === "traffic" && <TrafficTab period={period} />}
-      {tab === "cars" && <CarsTab period={period} />}
-      {tab === "demand" && <DemandTab period={period} />}
+      {/* Keyed so switching tab or period shows the skeleton instead of stale data. */}
+      <Suspense key={`${tab}-${period}`} fallback={<InsightsTabSkeleton />}>
+        {tab === "traffic" && <TrafficTab period={period} />}
+        {tab === "cars" && <CarsTab period={period} />}
+        {tab === "demand" && <DemandTab period={period} />}
+      </Suspense>
     </div>
   )
 }

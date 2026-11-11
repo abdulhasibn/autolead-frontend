@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Check, ChevronsUpDown, Loader2, Search, X } from "lucide-react"
+import { Check, ChevronsUpDown, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import type { ActionResult } from "@/lib/action-result"
 import { cn } from "@/lib/utils"
@@ -97,12 +98,13 @@ export function SearchPicker({
               aria-label="Search"
             />
           </div>
-          <ul role="listbox" className="mt-2 max-h-64 overflow-y-auto">
-            {loading && (
-              <li className="flex items-center gap-2 px-2 py-3 text-xs text-subtle-foreground">
-                <Loader2 className="size-3.5 animate-spin" /> Searching…
-              </li>
-            )}
+          <ul role="listbox" aria-busy={loading} className="mt-2 max-h-64 overflow-y-auto">
+            {loading &&
+              Array.from({ length: 4 }, (_, i) => (
+                <li key={i} aria-hidden className="flex items-center gap-2 px-2 py-2.5">
+                  <Skeleton className="h-4 flex-1 rounded bg-muted" style={{ maxWidth: `${85 - i * 12}%` }} />
+                </li>
+              ))}
             {!loading && error && <li className="px-2 py-3 text-xs text-destructive">{error}</li>}
             {!loading && !error && options.length === 0 && (
               <li className="px-2 py-3 text-xs text-subtle-foreground">{emptyLabel}</li>

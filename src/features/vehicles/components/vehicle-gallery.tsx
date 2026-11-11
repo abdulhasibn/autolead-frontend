@@ -17,8 +17,8 @@ interface VehicleGalleryProps {
 }
 
 /**
- * Bento hero: the cover large, two supporting shots and a "+N" tile that opens
- * the lightbox. Phones get a swipeable full-width carousel instead.
+ * Hero: a 16:9 cover, two supporting shots and a "+N" tile that opens the
+ * lightbox. Phones get a swipeable full-width 16:9 carousel instead.
  */
 export function VehicleGallery({
   media,
@@ -37,7 +37,7 @@ export function VehicleGallery({
 
   if (photos.length === 0) {
     return (
-      <div className="flex h-[260px] flex-col items-center justify-center gap-3 rounded-xl bg-gradient-to-br from-[#134E4A] via-[#0F766E] to-[#0D9488] text-white sm:h-[400px] lg:h-full lg:min-h-[400px]">
+      <div className="flex aspect-video min-h-[220px] flex-col items-center justify-center gap-3 rounded-xl bg-gradient-to-br from-[#134E4A] via-[#0F766E] to-[#0D9488] text-white">
         <span className="flex size-12 items-center justify-center rounded-full bg-card/15">
           <Camera className="size-6" />
         </span>
@@ -61,7 +61,7 @@ export function VehicleGallery({
   const side = photos.slice(1, 3);
   const extra = photos.length - 3;
   const imgClass = cn(
-    "size-full object-cover transition duration-300",
+    "absolute inset-0 size-full object-cover transition duration-300",
     dimmed && "grayscale",
   );
 
@@ -70,7 +70,7 @@ export function VehicleGallery({
       {/* Phones: swipe through every photo; tap opens the lightbox. */}
       <div className="relative -mx-4 sm:hidden">
         <div
-          className="flex aspect-[4/3] snap-x snap-mandatory overflow-x-auto scrollbar-none"
+          className="flex aspect-video snap-x snap-mandatory overflow-x-auto scrollbar-none"
           onScroll={(e) => {
             const el = e.currentTarget;
             setSlide(Math.round(el.scrollLeft / el.clientWidth));
@@ -105,74 +105,68 @@ export function VehicleGallery({
         )}
       </div>
 
-      {/* On desktop the wrapper stretches to the summary column's height; the grid fills it absolutely so photos don't drive the size. */}
-      <div className="relative hidden h-[400px] sm:block lg:h-auto lg:min-h-[400px]">
-        <div
-          className={cn(
-            "grid h-full gap-2 overflow-hidden rounded-xl lg:absolute lg:inset-0",
-            side.length > 0
-              ? "grid-cols-1 sm:grid-cols-4 sm:grid-rows-2"
-              : "grid-cols-1",
-          )}
+      {/* Tablet/desktop: the cover is always 16:9; supporting shots stack beside it at the same height. */}
+      <div
+        className={cn(
+          "hidden gap-2 overflow-hidden rounded-xl sm:grid",
+          side.length > 0 ? "grid-cols-[minmax(0,3fr)_minmax(0,1fr)]" : "grid-cols-1",
+        )}
+      >
+        <button
+          type="button"
+          onClick={() => setIndex(0)}
+          className="group relative aspect-video overflow-hidden bg-[#0F172A]"
+          aria-label={`Open photos of ${title}`}
         >
-          <button
-            type="button"
-            onClick={() => setIndex(0)}
-            className={cn(
-              "group relative overflow-hidden bg-[#0F172A]",
-              side.length > 0 && "sm:col-span-3 sm:row-span-2",
-            )}
-            aria-label={`Open photos of ${title}`}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={cover.url}
-              alt={title}
-              className={cn(imgClass, "group-hover:scale-[1.02]")}
-            />
-            <span className="absolute top-3 left-3 rounded-md bg-black/55 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur">
-              {cover.caption}
-            </span>
-          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={cover.url}
+            alt={title}
+            className={cn(imgClass, "group-hover:scale-[1.02]")}
+          />
+          <span className="absolute top-3 left-3 rounded-md bg-black/55 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur">
+            {cover.caption}
+          </span>
+        </button>
 
-          {side.map((photo, i) => {
-            const isLast = i === side.length - 1;
-            const showMore = isLast && extra > 0;
-            return (
-              <button
-                key={photo.id}
-                type="button"
-                onClick={() => setIndex(i + 1)}
-                className={cn(
-                  "group relative hidden overflow-hidden bg-[#0F172A] sm:block",
-                  side.length === 1 && "sm:row-span-2",
-                )}
-                aria-label={
-                  showMore
-                    ? `View all ${photos.length} photos`
-                    : `Open ${photo.caption}`
-                }
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={photo.url}
-                  alt=""
-                  className={cn(imgClass, "group-hover:scale-105")}
-                />
-                {showMore ? (
-                  <span className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white">
-                    <span className="text-lg font-bold">+{extra}</span>
-                    <span className="text-[11px]">View all photos</span>
-                  </span>
-                ) : (
-                  <span className="absolute bottom-2 left-2 rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
-                    {photo.caption}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {side.length > 0 && (
+          <div className={cn("grid min-h-0 gap-2", side.length === 2 ? "grid-rows-2" : "grid-rows-1")}>
+            {side.map((photo, i) => {
+              const isLast = i === side.length - 1;
+              const showMore = isLast && extra > 0;
+              return (
+                <button
+                  key={photo.id}
+                  type="button"
+                  onClick={() => setIndex(i + 1)}
+                  className="group relative min-h-0 overflow-hidden bg-[#0F172A]"
+                  aria-label={
+                    showMore
+                      ? `View all ${photos.length} photos`
+                      : `Open ${photo.caption}`
+                  }
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photo.url}
+                    alt=""
+                    className={cn(imgClass, "group-hover:scale-105")}
+                  />
+                  {showMore ? (
+                    <span className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white">
+                      <span className="text-lg font-bold">+{extra}</span>
+                      <span className="text-[11px]">View all photos</span>
+                    </span>
+                  ) : (
+                    <span className="absolute bottom-2 left-2 rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
+                      {photo.caption}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <PhotoLightbox photos={photos} index={index} onIndexChange={setIndex} />
