@@ -29,6 +29,10 @@ export function financeErrorMessage(error: Pick<ActionError, "code" | "message" 
       return "Use up to 10 tags."
     case "TEXT_TOO_LONG":
       return "Party is limited to 120 characters and note to 1000."
+    case "SALE_NEEDS_BOOKED_LEAD":
+      return "Pick the buyer’s lead. A sale is recorded against a lead whose booking is confirmed."
+    case "SALE_LEAD_NOT_BOOKED":
+      return "That lead’s booking isn’t confirmed on this car any more. Refresh and pick again."
     case "NOT_FOUND":
       return "That record no longer exists."
     case "FORBIDDEN":

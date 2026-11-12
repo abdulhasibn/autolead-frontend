@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Loader2, Pencil } from "lucide-react"
+import { CircleCheck, Loader2, Pencil } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,7 +9,7 @@ import { DatePicker, pastDateYears } from "@/components/ui/date-picker"
 import { Textarea } from "@/components/ui/textarea"
 import { FormField } from "@/features/leads/components/form-field"
 import { SegmentedChoice } from "@/features/leads/components/segmented-choice"
-import { setDealAction } from "../../actions"
+import { payOwnerAction, setDealAction } from "../../actions"
 import { DEFAULT_COMMISSION_PERCENT, parsePercent } from "../../logic/acquisition"
 import { formatYmd, todayIST } from "../../logic/dates"
 import { financeErrorMessage } from "../../logic/errors"
@@ -32,12 +32,18 @@ export function DealCard({
   deal,
   saleModel,
   paidToSeller,
+  owedToSeller,
+  owedByBuyer,
 }: {
   vehicleId: string
   deal: DealTerms | null
   saleModel: SaleModel
   /** Sum of the car's payments to the seller so far. */
   paidToSeller: number
+  /** Commission cars: what we still owe the owner; null until sold. */
+  owedToSeller: number | null
+  /** What the buyer still owes; null until the sale is recorded. */
+  owedByBuyer: number | null
 }) {
   const commission = saleModel === "commission"
   const termsSet = commission ? deal?.commissionPercent != null : deal?.purchaseRate != null
@@ -147,6 +153,9 @@ export function DealCard({
               : "No purchase rate yet. Profit can’t be worked out without it."}
           </p>
         )}
+        {commission && termsSet && owedToSeller !== null && (
+          <OwnerPayout vehicleId={vehicleId} owed={owedToSeller} paid={paidToSeller} owedByBuyer={owedByBuyer} />
+        )}
       </section>
     )
   }
@@ -253,6 +262,122 @@ function SellerPayment<F extends PaymentForm>({
               ? `${formatMoney(due - partAmount)} will still be owed to the seller.`
               : "Later payments go in Entries as “Payment to seller”."}
       </p>
+    </div>
+  )
+}
+
+const PAYOUT_OPTIONS = PAID_OPTIONS.filter((o) => o.value !== "none")
+
+/**
+ * Commission cars once sold: what we owe the owner (sale − commission − costs −
+ * paid so far) and a way to record paying it, saved as a "payment to seller" entry.
+ */
+function OwnerPayout({
+  vehicleId,
+  owed,
+  paid,
+  owedByBuyer,
+}: {
+  vehicleId: string
+  owed: number
+  paid: number
+  owedByBuyer: number | null
+}) {
+  const [open, setOpen] = useState(false)
+  const [form, setForm] = useState({ paid: "full" as PaidChoice, paidAmount: "", paidOn: todayIST() })
+  const [errors, setErrors] = useState<PaymentErrors>({})
+  const { isPending, run: startTransition, refresh } = useSaveTransition()
+
+  function submit(event: React.FormEvent) {
+    event.preventDefault()
+    const next: PaymentErrors = {}
+    const payment = buildPayment(form, owed, next, {
+      amountLabel: "amount paid",
+      alreadyFull: "The owner has already been paid in full",
+    })
+    setErrors(next)
+    if (Object.keys(next).length || !payment) return
+    startTransition(async () => {
+      const result = await payOwnerAction(vehicleId, payment)
+      if (!result.ok) return void toast.error(financeErrorMessage(result.error))
+      toast.success(form.paid === "full" ? "Owner marked as paid in full." : "Payment to the owner recorded.")
+      refresh(() => setOpen(false))
+    })
+  }
+
+  if (owed <= 0) {
+    return (
+      <div className="mt-3 flex items-center gap-2 border-t border-muted pt-3 text-sm">
+        <CircleCheck className="size-4 text-primary" />
+        <span>
+          {paid === 0
+            ? "Nothing owed to the owner."
+            : owed < 0
+              ? `Owner paid ${formatMoney(paid)} (${formatMoney(-owed)} more than owed).`
+              : `Owner paid in full (${formatMoney(paid)}).`}
+        </span>
+      </div>
+    )
+  }
+
+  const partAmount = parseMoneyInput(form.paidAmount)
+  return (
+    <div className="mt-3 space-y-3 border-t border-muted pt-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="text-sm">
+          <p className="text-xs text-muted-foreground">Owed to the owner</p>
+          <p className="font-semibold"><Money value={owed} /></p>
+        </div>
+        {!open && (
+          <Button size="sm" onClick={() => { setForm({ paid: "full", paidAmount: "", paidOn: todayIST() }); setErrors({}); setOpen(true) }}>
+            Mark as paid
+          </Button>
+        )}
+      </div>
+      {!open ? (
+        <p className="text-xs text-muted-foreground">
+          {paid > 0 && `${formatMoney(paid)} already paid. `}
+          {owedByBuyer !== null && owedByBuyer > 0 && `The buyer still owes ${formatMoney(owedByBuyer)}.`}
+        </p>
+      ) : (
+        <form onSubmit={submit} aria-label="Pay the owner" className="space-y-3">
+          <FormField id="owner-paid" label="Paid to the owner" error={errors.paid}>
+            <SegmentedChoice
+              id="owner-paid"
+              aria-label="Paid to the owner"
+              value={form.paid}
+              onValueChange={(v) => setForm({ ...form, paid: v as PaidChoice })}
+              options={PAYOUT_OPTIONS}
+            />
+          </FormField>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {form.paid === "part" && (
+              <FormField id="owner-paid-amount" label="Amount paid" error={errors.paidAmount}>
+                <MoneyInput
+                  id="owner-paid-amount"
+                  value={form.paidAmount}
+                  onValueChange={(v) => setForm({ ...form, paidAmount: v })}
+                  aria-invalid={errors.paidAmount ? true : undefined}
+                />
+              </FormField>
+            )}
+            <FormField id="owner-paid-on" label="Paid on" error={errors.paidOn}>
+              <DatePicker {...pastDateYears()} id="owner-paid-on" value={form.paidOn} onChange={(v) => setForm({ ...form, paidOn: v })} invalid={!!errors.paidOn} />
+            </FormField>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {form.paid === "full"
+              ? `${formatMoney(owed)} will be recorded as paid to the owner.`
+              : partAmount !== null && partAmount > 0 && partAmount < owed
+                ? `${formatMoney(owed - partAmount)} will still be owed to the owner.`
+                : "Saved in Entries as “Payment to seller”."}
+          </p>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)} disabled={isPending}>Cancel</Button>
+            <Button type="submit" size="sm" disabled={isPending}>{isPending && <Loader2 className="animate-spin" />}Save payment</Button>
+          </div>
+        </form>
+      )}
     </div>
   )
 }
