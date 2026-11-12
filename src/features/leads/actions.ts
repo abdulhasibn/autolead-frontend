@@ -15,6 +15,7 @@ import {
   associateVehicle,
   cancelFollowUp,
   changeLeadStatus,
+  reopenLead,
   completeFollowUp,
   createLead,
   getLead,
@@ -106,6 +107,21 @@ export async function changeLeadStatusAction(
     const lead = await changeLeadStatus(id.data, parsed.data)
     revalidateLeads()
     return actionOk(lead)
+  } catch (err) {
+    return actionError(err)
+  }
+}
+
+/** Admin: undo a mistaken conversion. The car goes back to linked. */
+export async function reopenLeadAction(leadId: string): Promise<ActionResult<{ status: string }>> {
+  try {
+    await requireSession()
+    const id = leadIdSchema.safeParse(leadId)
+    if (!id.success) return validationError()
+
+    const result = await reopenLead(id.data)
+    revalidateLeads()
+    return actionOk(result)
   } catch (err) {
     return actionError(err)
   }

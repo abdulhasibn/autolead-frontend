@@ -125,6 +125,7 @@ function fromVehicle(v: VehicleDto): VehicleFormInput {
     accidentHistory: v.accidentHistory ? "yes" : "no",
     location: v.location ?? "",
     description: v.description ?? "",
+    acquisitionType: v.acquisitionType,
   }
 }
 
@@ -497,8 +498,22 @@ export function VehicleFormSheet(props: Props) {
                   {[props.vehicle.makeName, props.vehicle.modelName, variantLabel(props.vehicle.variantName)]
                     .filter(Boolean)
                     .join(" · ")}{" "}
-                  — the model, owner and acquisition type can&apos;t be changed after adding.
+                  — the model and owner can&apos;t be changed after adding.
                 </p>
+              )}
+
+              {!isCreate && props.vehicle.status !== "sold" && (
+                <FormField id="acquisitionType" label="How was it acquired?">
+                  <Controller control={control} name="acquisitionType" render={({ field }) => (
+                    <OptionSelect id="acquisitionType" value={field.value ?? ""} onValueChange={field.onChange}
+                      options={labelled(ACQUISITION_TYPES, ACQUISITION_TYPE_LABELS)} />
+                  )} />
+                  {values.acquisitionType && values.acquisitionType !== props.vehicle.acquisitionType && (
+                    <p className="mt-1.5 text-xs text-warning">
+                      Changing this means entering the purchase rate or commission again on the car’s Finance tab.
+                    </p>
+                  )}
+                </FormField>
               )}
 
               <div className="grid gap-4 sm:grid-cols-2">

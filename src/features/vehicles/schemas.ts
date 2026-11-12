@@ -34,7 +34,10 @@ const vehicleDetailsSchema = z.object({
   description: z.string().nullable(),
 })
 
-export const updateVehicleSchema = vehicleDetailsSchema
+export const updateVehicleSchema = vehicleDetailsSchema.extend({
+  /** Purchase vs commission; the API refuses a change once the car is sold. */
+  acquisitionType: z.enum(ACQUISITION_TYPES).optional(),
+})
 export type UpdateVehicleInput = z.infer<typeof updateVehicleSchema>
 
 export const createVehicleSchema = vehicleDetailsSchema.extend({
@@ -175,5 +178,6 @@ export function toVehicleDetails(values: VehicleFormOutput): UpdateVehicleInput 
     accidentHistory: values.accidentHistory,
     location: values.location,
     description: values.description,
+    ...(values.acquisitionType ? { acquisitionType: values.acquisitionType } : {}),
   }
 }

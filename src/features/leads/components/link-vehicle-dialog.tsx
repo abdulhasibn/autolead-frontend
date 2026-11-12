@@ -24,6 +24,8 @@ interface LinkVehicleDialogProps {
   currentVehicleId: string | null
   vehicles: VehicleOption[]
   disabled?: boolean
+  /** The lead's booking is confirmed: changing the car moves the booking. */
+  booked?: boolean
 }
 
 export function LinkVehicleDialog({
@@ -31,7 +33,9 @@ export function LinkVehicleDialog({
   currentVehicleId,
   vehicles,
   disabled,
+  booked = false,
 }: LinkVehicleDialogProps) {
+  const movesBooking = booked && currentVehicleId !== null
   const { handleError } = useApiError()
   const [open, setOpen] = useState(false)
   const [vehicleId, setVehicleId] = useState("")
@@ -50,7 +54,7 @@ export function LinkVehicleDialog({
         handleError(result.error, "Could not link the vehicle.")
         return
       }
-      toast.success("Vehicle linked.")
+      toast.success(movesBooking ? "Booking moved to the new vehicle." : "Vehicle linked.")
       setVehicleId("")
       setOpen(false)
     })
@@ -77,7 +81,9 @@ export function LinkVehicleDialog({
             {currentVehicleId ? "Change vehicle" : "Link vehicle"}
           </DialogTitle>
           <DialogDescription>
-            Only open or linked vehicles can be linked to a lead.
+            {movesBooking
+              ? "This lead’s booking is confirmed. Changing the vehicle moves the booking to the car you pick, and the current car is freed if no other lead holds it."
+              : "Only open or linked vehicles can be linked to a lead."}
           </DialogDescription>
         </DialogHeader>
         <form id="link-vehicle-form" onSubmit={onSubmit} noValidate>
@@ -98,7 +104,7 @@ export function LinkVehicleDialog({
             form="link-vehicle-form"
             disabled={isPending || !vehicleId}
           >
-            {isPending ? "Linking…" : "Link vehicle"}
+            {isPending ? "Linking…" : movesBooking ? "Move booking" : "Link vehicle"}
           </Button>
         </DialogFooter>
       </DialogContent>

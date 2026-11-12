@@ -112,7 +112,10 @@ export function ChangeVehicleStatusDialog({
               <p className="font-semibold">
                 {leads} active {leads === 1 ? "lead" : "leads"} will be unlinked
               </p>
-              <p className="mt-0.5 text-xs">They keep their status but lose this vehicle.</p>
+              <p className="mt-0.5 text-xs">
+                They lose this vehicle. A lead whose booking is confirmed becomes “Vehicle unavailable”; the others
+                keep their status. Their salespeople are notified.
+              </p>
             </div>
           </div>
         )}

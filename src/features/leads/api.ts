@@ -104,6 +104,11 @@ export async function cancelFollowUp(
   )
 }
 
+/** Admin undo of a mistaken conversion: back to booking confirmed, the car back to linked. */
+export async function reopenLead(id: string): Promise<{ status: string }> {
+  return serverApiClient.post<{ status: string }>(`/leads/${id}/reopen`, {})
+}
+
 export async function associateVehicle(
   id: string,
   vehicleId: string
