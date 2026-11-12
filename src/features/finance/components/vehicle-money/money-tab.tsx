@@ -41,12 +41,17 @@ export function MoneyTab({
     <div className="space-y-4">
       <NumbersCard money={money} />
       <div className="grid gap-4 lg:grid-cols-2">
-        <DealCard vehicleId={money.vehicleId} deal={money.deal} saleModel={money.vehicle.saleModel} paidToSeller={money.paidToSeller} />
+        <DealCard vehicleId={money.vehicleId} deal={money.deal} saleModel={money.vehicle.saleModel} paidToSeller={money.paidToSeller}
+          owedToSeller={money.owedToSeller}
+          owedByBuyer={money.owedByBuyer}
+        />
         <SaleCard
           vehicleId={money.vehicleId}
           sale={money.sale}
           suggestedPrice={money.currentQuote?.amount ?? money.listedPrice}
           receivedFromBuyer={money.receivedFromBuyer}
+          carSold={money.vehicle.status === "sold"}
+          bookedLeads={money.bookedLeads}
         />
       </div>
       <QuotesCard vehicleId={money.vehicleId} quotes={money.quotes} />

@@ -246,7 +246,8 @@ export async function setDeal(vehicleId: string, body: DealTerms): Promise<Vehic
 
 export async function recordSale(
   vehicleId: string,
-  body: { finalisedPrice: number; soldOn: string }
+  /** `leadId`: the buyer's booked lead, converted by the sale; null once the car is sold. */
+  body: { finalisedPrice: number; soldOn: string; leadId: string | null }
 ): Promise<VehicleDealState> {
   return financeRequest("POST", `/finance/vehicles/${vehicleId}/sale`, { body })
 }

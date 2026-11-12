@@ -19,6 +19,7 @@ import {
   acquisitionSchema,
   dealSchema,
   entrySchema,
+  ownerPayoutSchema,
   quoteSchema,
   recoverySchema,
   saleSchema,
@@ -69,6 +70,13 @@ function revalidateFinance() {
 
 function revalidateVehicle(vehicleId: string | null | undefined) {
   if (vehicleId) revalidatePath(`/vehicles/${vehicleId}`)
+}
+
+/** A sale that converted a lead changed lead and car statuses too. */
+function revalidateLeadsAndCars() {
+  revalidatePath("/leads", "layout")
+  revalidatePath("/vehicles", "layout")
+  revalidatePath("/dashboard")
 }
 
 // ---------------------------------------------------------------------------
@@ -240,6 +248,29 @@ export async function setDealAction(vehicleId: string, input: unknown): Promise<
   })
 }
 
+/** Records a payout to the owner of a sold commission car as a "payment to seller" entry. */
+export async function payOwnerAction(vehicleId: string, input: unknown): Promise<ActionResult> {
+  return financeAction(async () => {
+    const id = idSchema.safeParse(vehicleId)
+    const parsed = ownerPayoutSchema.safeParse(input)
+    if (!id.success || !parsed.success) return validationError(parsed.error?.issues[0]?.message)
+    await api.createEntry({
+      kind: "expense",
+      amount: parsed.data.amount,
+      entryDate: parsed.data.paidOn,
+      tagIds: [],
+      vehicleId: id.data,
+      purpose: "purchase",
+      party: null,
+      note: "Paid to the owner from the sale",
+      showroomId: null,
+    })
+    revalidateVehicle(id.data)
+    revalidateFinance()
+    return actionOk(undefined)
+  })
+}
+
 /**
  * Saves the money side of a car just added: its deal (purchase rate or
  * commission %) and any payment already made to the seller, as a `purchase`
@@ -286,22 +317,28 @@ export async function recordSaleAction(vehicleId: string, input: unknown): Promi
     const parsed = saleSchema.safeParse(input)
     if (!id.success || !parsed.success) return validationError(parsed.error?.issues[0]?.message)
     const { payment, ...sale } = parsed.data
-    await api.recordSale(id.data, sale)
-    if (payment) {
-      await api.createEntry({
-        kind: "income",
-        amount: payment.amount,
-        entryDate: payment.paidOn,
-        tagIds: [],
-        vehicleId: id.data,
-        purpose: "sale",
-        party: null,
-        note: "Received from the buyer when the sale was recorded",
-        showroomId: null,
-      })
+    try {
+      // With a lead, this also converts it: the car becomes sold and its other leads are freed.
+      await api.recordSale(id.data, sale)
+      if (payment) {
+        await api.createEntry({
+          kind: "income",
+          amount: payment.amount,
+          entryDate: payment.paidOn,
+          tagIds: [],
+          vehicleId: id.data,
+          purpose: "sale",
+          party: null,
+          note: "Received from the buyer when the sale was recorded",
+          showroomId: null,
+        })
+      }
+    } finally {
+      // The sale (and the lead's conversion) may have landed even if the payment failed.
+      revalidateVehicle(id.data)
+      revalidateFinance()
+      if (sale.leadId) revalidateLeadsAndCars()
     }
-    revalidateVehicle(id.data)
-    revalidateFinance()
     return actionOk(undefined)
   })
 }
@@ -310,6 +347,16 @@ export async function removeSaleAction(vehicleId: string): Promise<ActionResult>
   return financeAction(async () => {
     const id = idSchema.safeParse(vehicleId)
     if (!id.success) return validationError()
+    // The buyer's payments were recorded against this sale, so they go with it —
+    // otherwise Entries and cash flow keep showing money from a sale that no longer exists.
+    // Payments first, sale last: if a delete fails, the sale (and its Remove button) is
+    // still there, so trying again finishes the job.
+    for (;;) {
+      const page = await api.getEntries({ vehicleId: id.data, kind: "income", purpose: "sale", limit: 100 })
+      if (page.items.length === 0) break
+      for (const entry of page.items) await api.deleteEntry(entry.id)
+      if (page.items.length >= page.total) break
+    }
     await api.removeSale(id.data)
     revalidateVehicle(id.data)
     revalidateFinance()

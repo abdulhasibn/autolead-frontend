@@ -110,6 +110,9 @@ export const dealSchema = z
     message: "Payments to the owner of a commission car are recorded in Entries",
   })
 
+/** A payout to the owner of a commission car, saved as a `purchase` expense entry. */
+export const ownerPayoutSchema = z.object({ amount, paidOn: ymd })
+
 /** Money recorded while adding a car: the deal and a payment already made to the seller. */
 export const acquisitionSchema = z
   .object({
@@ -126,6 +129,8 @@ export const acquisitionSchema = z
 export const saleSchema = z.object({
   finalisedPrice: amount,
   soldOn: ymd,
+  /** The buyer's booked lead; recording the sale converts it. Null once the car is sold. */
+  leadId: id.nullable().default(null),
   /** Money already received from the buyer, saved as a `sale` income entry. */
   payment: z.object({ amount, paidOn: ymd }).nullable().default(null),
 })

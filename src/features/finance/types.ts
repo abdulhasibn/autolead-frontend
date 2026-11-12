@@ -141,8 +141,18 @@ export interface CostGroup {
   count: number
 }
 
+/** A booking-confirmed lead a sale can be recorded against. */
+export interface BookedLead {
+  id: string
+  name: string | null
+  phone: string | null
+}
+
 export interface CarMoney extends VehicleDealState {
-  vehicle: FinanceVehicleRef & { saleModel: SaleModel }
+  /** `status`: the car's CRM status (`open`, `linked`, `dropped`, `sold`). */
+  vehicle: FinanceVehicleRef & { saleModel: SaleModel; status: string }
+  /** Booking-confirmed leads while the car isn't sold; recording the sale converts one. */
+  bookedLeads: BookedLead[]
   quotes: VehicleQuote[]
   currentQuote: VehicleQuote | null
   landingCost: number

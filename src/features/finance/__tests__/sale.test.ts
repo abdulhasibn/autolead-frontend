@@ -8,12 +8,29 @@ const form = (over: Partial<SaleForm> = {}): SaleForm => ({
   paid: "none",
   paidAmount: "",
   paidOn: TODAY,
+  leadId: "",
   ...over,
 })
 
+const LEAD = "11111111-1111-4111-8111-111111111111"
+
 describe("buildSale", () => {
+  it("needs the buyer's lead while the car isn't sold", () => {
+    expect(buildSale(form(), 0, true)).toEqual({ ok: false, errors: { leadId: "Pick the buyer’s lead" } })
+    const result = buildSale(form({ leadId: LEAD }), 0, true)
+    expect(result.ok && result.payload.leadId).toBe(LEAD)
+  })
+
+  it("sends no lead once the car is sold, even if one was picked", () => {
+    const result = buildSale(form({ leadId: LEAD }))
+    expect(result.ok && result.payload.leadId).toBeNull()
+  })
+
   it("saves the sale with nothing received", () => {
-    expect(buildSale(form())).toEqual({ ok: true, payload: { finalisedPrice: 600000, soldOn: TODAY, payment: null } })
+    expect(buildSale(form())).toEqual({
+      ok: true,
+      payload: { finalisedPrice: 600000, soldOn: TODAY, leadId: null, payment: null },
+    })
   })
 
   it("records the full price as received", () => {
