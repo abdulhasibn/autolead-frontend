@@ -121,6 +121,8 @@ export const acquisitionSchema = z
 export const saleSchema = z.object({
   finalisedPrice: amount,
   soldOn: ymd,
+  /** Money already received from the buyer, saved as a `sale` income entry. */
+  payment: z.object({ amount, paidOn: ymd }).nullable().default(null),
 })
 
 export const quoteSchema = z.object({
