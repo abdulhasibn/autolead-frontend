@@ -191,7 +191,10 @@ export function VehicleFormSheet(props: Props) {
   const [ownerQuery, setOwnerQuery] = useState("")
   const [newOwner, setNewOwner] = useState<{ fullName: string; phone: string; city: string } | null>(null)
   const [savingOwner, setSavingOwner] = useState(false)
-  const money = isCreate ? (props.money ?? "hidden") : "hidden"
+  // Unlocking from inside the form flips this without a reload, so nothing typed is lost.
+  const [unlockedHere, setUnlockedHere] = useState(false)
+  const passedMoney = isCreate ? (props.money ?? "hidden") : "hidden"
+  const money = passedMoney === "locked" && unlockedHere ? "unlocked" : passedMoney
   const [acquisition, setAcquisition] = useState<AcquisitionForm>(() => emptyAcquisitionForm(todayIST()))
   const [acquisitionErrors, setAcquisitionErrors] = useState<Partial<Record<keyof AcquisitionForm, string>>>({})
 
@@ -692,7 +695,7 @@ export function VehicleFormSheet(props: Props) {
                   onChange={setAcquisition}
                 />
               )}
-              {values.acquisitionType && money === "locked" && <AcquisitionMoneyLocked />}
+              {values.acquisitionType && money === "locked" && <AcquisitionMoneyLocked onUnlocked={() => setUnlockedHere(true)} />}
             </>
           )}
 

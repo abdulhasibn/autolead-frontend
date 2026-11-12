@@ -1,9 +1,15 @@
 "use client"
 
-import { Lock } from "lucide-react"
+import { useState, useTransition } from "react"
+import { Loader2, Lock, LockOpen } from "lucide-react"
+import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
 import { DatePicker, pastDateYears } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
+import { unlockAction } from "@/features/finance/actions"
+import { KeyInput } from "@/features/finance/components/key-input"
 import { MoneyInput } from "@/features/finance/components/money-input"
+import { keyErrorMessage, VAULT_STATE_CODES } from "@/features/finance/logic/errors"
 import type { AcquisitionForm, SellerPaid } from "@/features/finance/logic/acquisition"
 import { formatMoney, parseMoneyInput } from "@/features/finance/logic/money"
 import type { SaleModel } from "@/features/finance/types"
@@ -16,13 +22,122 @@ const PAID_OPTIONS: Array<{ value: SellerPaid; label: string }> = [
   { value: "full", label: "Fully paid" },
 ]
 
-/** Shown to admins while finance is locked: the money can be added later. */
-export function AcquisitionMoneyLocked() {
+/**
+ * Shown to admins while finance is locked: unlock right here so the deal can be
+ * recorded without leaving the form. Not a nested <form> — the sheet is one —
+ * so Enter is handled by hand. The key only ever lives in component state.
+ */
+export function AcquisitionMoneyLocked({ onUnlocked }: { onUnlocked: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [key, setKey] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [blocked, setBlocked] = useState<string | null>(null)
+  const [needsSetup, setNeedsSetup] = useState(false)
+  const [isPending, startTransition] = useTransition()
+
+  function unlock() {
+    const typed = key
+    if (typed.trim() === "" || isPending) return
+    setKey("")
+    setError(null)
+    startTransition(async () => {
+      const result = await unlockAction({ financeKey: typed })
+      if (result.ok) {
+        toast.success("Finance unlocked.")
+        onUnlocked()
+        return
+      }
+      if (result.error.code === "FINANCE_UNLOCK_BLOCKED") setBlocked(result.error.message)
+      else if (VAULT_STATE_CODES.has(result.error.code)) setNeedsSetup(true)
+      else setError(keyErrorMessage(result.error, "finance"))
+    })
+  }
+
+  if (needsSetup) {
+    return (
+      <Note>
+        Finance isn’t set up yet, so the price and payments can’t be recorded here.{" "}
+        <a href="/finance/setup" target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline">
+          Set up finance
+        </a>{" "}
+        and add them later on the car’s Finance tab.
+      </Note>
+    )
+  }
+
+  if (!open) {
+    return (
+      <Note>
+        <span className="flex-1">Finance is locked. Unlock it to record the price and payments now, or add them later on the car’s Finance tab.</span>
+        <button type="button" onClick={() => setOpen(true)} className="shrink-0 font-medium text-primary hover:underline">
+          Unlock
+        </button>
+      </Note>
+    )
+  }
+
   return (
-    <p className="flex items-start gap-2 rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
+    <section aria-label="Unlock finance" className="space-y-2 rounded-lg border border-border/60 p-3">
+      <p className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+        <LockOpen aria-hidden className="size-3.5 text-primary" />
+        Unlock finance to record the deal
+      </p>
+      {blocked ? (
+        <p role="alert" className="text-xs text-destructive">{blocked}</p>
+      ) : (
+        <>
+          <div className="flex gap-2">
+            <KeyInput
+              id="acq-finance-key"
+              aria-label="Finance key"
+              autoFocus
+              value={key}
+              disabled={isPending}
+              placeholder="FK-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? "acq-finance-key-error" : undefined}
+              onChange={(e) => {
+                setKey(e.target.value)
+                setError(null)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  unlock()
+                }
+              }}
+            />
+            <Button type="button" onClick={unlock} disabled={isPending || key.trim() === ""}>
+              {isPending && <Loader2 className="animate-spin" />}
+              Unlock
+            </Button>
+          </div>
+          {error && (
+            <p id="acq-finance-key-error" role="alert" className="text-xs text-destructive">{error}</p>
+          )}
+        </>
+      )}
+      <button
+        type="button"
+        onClick={() => {
+          setOpen(false)
+          setKey("")
+          setError(null)
+        }}
+        className="text-xs text-muted-foreground hover:underline"
+      >
+        Skip — add it later on the Finance tab
+      </button>
+    </section>
+  )
+}
+
+function Note({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-2 rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
       <Lock aria-hidden className="mt-0.5 size-3.5 shrink-0" />
-      Finance is locked, so the price and payments can’t be recorded here. Add them later on the car’s Finance tab.
-    </p>
+      {children}
+    </div>
   )
 }
 
