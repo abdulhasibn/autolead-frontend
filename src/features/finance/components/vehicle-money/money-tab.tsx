@@ -46,6 +46,7 @@ export function MoneyTab({
           vehicleId={money.vehicleId}
           sale={money.sale}
           suggestedPrice={money.currentQuote?.amount ?? money.listedPrice}
+          receivedFromBuyer={money.receivedFromBuyer}
         />
       </div>
       <QuotesCard vehicleId={money.vehicleId} quotes={money.quotes} />

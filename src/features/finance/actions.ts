@@ -271,7 +271,21 @@ export async function recordSaleAction(vehicleId: string, input: unknown): Promi
     const id = idSchema.safeParse(vehicleId)
     const parsed = saleSchema.safeParse(input)
     if (!id.success || !parsed.success) return validationError(parsed.error?.issues[0]?.message)
-    await api.recordSale(id.data, parsed.data)
+    const { payment, ...sale } = parsed.data
+    await api.recordSale(id.data, sale)
+    if (payment) {
+      await api.createEntry({
+        kind: "income",
+        amount: payment.amount,
+        entryDate: payment.paidOn,
+        tagIds: [],
+        vehicleId: id.data,
+        purpose: "sale",
+        party: null,
+        note: "Received from the buyer when the sale was recorded",
+        showroomId: null,
+      })
+    }
     revalidateVehicle(id.data)
     revalidateFinance()
     return actionOk(undefined)
