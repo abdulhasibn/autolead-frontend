@@ -100,9 +100,14 @@ export const dealSchema = z
     ownerExpectedPrice: amount.nullable(),
     minimumSellingPrice: amount.nullable(),
     note: optionalText(1000),
+    /** A payment made to the seller, saved as a `purchase` expense entry. */
+    payment: z.object({ amount, paidOn: ymd }).nullable().default(null),
   })
   .refine((v) => (v.purchaseRate === null) !== (v.commissionPercent === null), {
     message: "Enter the purchase rate or the commission %",
+  })
+  .refine((v) => v.payment === null || v.purchaseRate !== null, {
+    message: "Payments to the owner of a commission car are recorded in Entries",
   })
 
 /** Money recorded while adding a car: the deal and a payment already made to the seller. */
