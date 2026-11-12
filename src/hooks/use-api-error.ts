@@ -20,6 +20,9 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
     "Link a vehicle to this lead before moving it to this status.",
   LEAD_STATUS_SYSTEM_MANAGED: "This status is set automatically.",
   LEAD_CLOSED: "This lead is closed and can no longer be changed.",
+  SALE_PRICE_RECORDED:
+    "Finance has a sale price for this car. Remove the sale in Finance first, then undo it here.",
+  VEHICLE_SOLD: "A sold car keeps how it was acquired.",
   PREFERRED_CATALOG_MISMATCH:
     "The preferred make, model and variant don't belong together.",
   VEHICLE_NOT_LINKABLE: "Only open or linked vehicles can be linked to a lead.",

@@ -34,6 +34,8 @@ import { LeadStatusBadge } from "@/features/leads/components/lead-status-badge"
 import { LinkVehicleDialog } from "@/features/leads/components/link-vehicle-dialog"
 import { MatchScorePill } from "@/features/leads/components/match-score-pill"
 import { ScheduleFollowUpDialog } from "@/features/leads/components/schedule-follow-up-dialog"
+import { UndoSaleDialog } from "@/features/leads/components/undo-sale-dialog"
+import { auth } from "@/lib/auth"
 import type { LeadReadModel } from "@/features/leads/types"
 import { ApiError } from "@/lib/api-error"
 import {
@@ -64,7 +66,7 @@ export default async function LeadDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const [lead, vehicles, makes, openFollowUps, closedFollowUps, statusHistory, vehicleMatches, journey] =
+  const [lead, vehicles, makes, openFollowUps, closedFollowUps, statusHistory, vehicleMatches, journey, session] =
     await Promise.all([
       loadLead(id),
       getVehicleOptions(),
@@ -78,9 +80,11 @@ export default async function LeadDetailPage({
       getLeadVehicleMatches(id).catch(() => null),
       // Website journey is secondary, and absent for leads the website never saw.
       getLeadJourney(id).catch(() => null),
+      auth(),
     ])
 
   const closed = isLeadClosed(lead.status)
+  const isAdmin = session?.user.roles?.includes("admin") ?? false
   const canLink = !closed && !lead.vehicleId
   const vehicleLabel = lead.vehicleId
     ? (vehicles.find((v) => v.id === lead.vehicleId)?.label ?? "Linked vehicle")
@@ -131,7 +135,9 @@ export default async function LeadDetailPage({
             currentVehicleId={lead.vehicleId}
             vehicles={vehicles}
             disabled={closed}
+            booked={lead.status === "booking_confirmed"}
           />
+          {isAdmin && lead.status === "converted" && lead.vehicleId && <UndoSaleDialog leadId={lead.id} />}
           <ChangeStatusDialog
             lead={{ id: lead.id, status: lead.status, vehicleId: lead.vehicleId }}
           />

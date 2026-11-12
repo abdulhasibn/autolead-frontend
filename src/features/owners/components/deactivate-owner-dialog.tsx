@@ -52,8 +52,8 @@ export function DeactivateOwnerDialog({
         <DialogHeader>
           <DialogTitle>Deactivate owner?</DialogTitle>
           <DialogDescription>
-            This will deactivate <strong>{ownerName}</strong>. Their vehicles will
-            remain in the system. This action cannot be undone.
+            This will deactivate <strong>{ownerName}</strong>. It’s only allowed once all of their cars are
+            sold; drop or sell any others first. This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

@@ -231,8 +231,8 @@ export function SaleCard({
         title="Remove this sale?"
         description={
           receivedFromBuyer > 0
-            ? `Use this only for a sale recorded by mistake. The ${formatMoney(receivedFromBuyer)} received from the buyer will also be deleted from Entries. Profit goes back to “—” until a sale is recorded again.`
-            : "Use this only for a sale recorded by mistake. Profit goes back to “—” until a sale is recorded again."
+            ? `Use this only for a price recorded by mistake. The car stays sold; to undo the sale itself, use Undo sale on the buyer’s lead. The ${formatMoney(receivedFromBuyer)} received from the buyer will also be deleted from Entries. Profit goes back to “—” until a sale is recorded again.`
+            : "Use this only for a price recorded by mistake. The car stays sold; to undo the sale itself, use Undo sale on the buyer’s lead. Profit goes back to “—” until a sale is recorded again."
         }
         confirmLabel="Remove sale"
         pendingLabel="Removing…"
