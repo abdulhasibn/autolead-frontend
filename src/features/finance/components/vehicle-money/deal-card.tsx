@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { Loader2, Pencil } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -20,6 +19,7 @@ import { commissionPercent as commissionPercentSchema } from "../../schemas"
 import type { DealTerms, SaleModel } from "../../types"
 import { Money } from "../money"
 import { MoneyInput } from "../money-input"
+import { useSaveTransition } from "@/hooks/use-save-transition"
 
 /**
  * Terms agreed with the owner: a purchase rate for a car we buy outright, or
@@ -41,9 +41,8 @@ export function DealCard({
 }) {
   const commission = saleModel === "commission"
   const termsSet = commission ? deal?.commissionPercent != null : deal?.purchaseRate != null
-  const router = useRouter()
   const [editing, setEditing] = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run: startTransition, refresh } = useSaveTransition()
   const [form, setForm] = useState(() => toForm(deal))
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -101,8 +100,7 @@ export function DealCard({
         return
       }
       toast.success(payment ? "Deal and payment to the seller saved." : "Deal saved.")
-      setEditing(false)
-      router.refresh()
+      refresh(() => setEditing(false))
     })
   }
 

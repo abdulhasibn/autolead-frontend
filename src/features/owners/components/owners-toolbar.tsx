@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { Search } from "lucide-react"
+import { Loader2, Search } from "lucide-react"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { buildOwnersHref, type OwnersSearchParams } from "../search-params"
 
@@ -12,7 +12,7 @@ interface OwnersToolbarProps {
 
 export function OwnersToolbar({ params }: OwnersToolbarProps) {
   const router = useRouter()
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
   const [search, setSearch] = useState(params.q ?? "")
 
   function navigate(next: Partial<OwnersSearchParams>) {
@@ -44,6 +44,7 @@ export function OwnersToolbar({ params }: OwnersToolbarProps) {
           onChange={(e) => setSearch(e.target.value)}
         />
       </InputGroup>
+      {isPending && <Loader2 className="size-4 animate-spin text-primary" aria-label="Loading" />}
     </div>
   )
 }

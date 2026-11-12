@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { PendingLink } from "@/components/pending-link"
 import {
   Pagination,
   PaginationContent,
@@ -39,7 +39,7 @@ export function OwnersPagination({
         <PaginationContent className="gap-2">
           <PaginationItem>
             <PaginationPrevious
-              render={<Link href={buildOwnersHref({ ...params, page: page - 1 })} />}
+              render={<PendingLink href={buildOwnersHref({ ...params, page: page - 1 })} />}
               aria-disabled={atStart}
               tabIndex={atStart ? -1 : undefined}
               className={cn(LINK_CLASS, "h-7 border", atStart && "pointer-events-none opacity-50")}
@@ -52,7 +52,7 @@ export function OwnersPagination({
           </PaginationItem>
           <PaginationItem>
             <PaginationNext
-              render={<Link href={buildOwnersHref({ ...params, page: page + 1 })} />}
+              render={<PendingLink href={buildOwnersHref({ ...params, page: page + 1 })} />}
               aria-disabled={atEnd}
               tabIndex={atEnd ? -1 : undefined}
               className={cn(LINK_CLASS, "h-7 border", atEnd && "pointer-events-none opacity-50")}

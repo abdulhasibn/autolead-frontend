@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { BadgeCheck } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -23,6 +22,7 @@ import { isLeadClosed, LEAD_STATUS_LABELS } from "@/features/leads/constants"
 import { FormField } from "@/features/leads/components/form-field"
 import { LeadStatusBadge } from "@/features/leads/components/lead-status-badge"
 import type { LeadReadModel } from "@/features/leads/types"
+import { useSaveTransition } from "@/hooks/use-save-transition"
 
 type Buyer = Pick<LeadReadModel, "id" | "contactFullName" | "contactPhone" | "status" | "vehicleId">
 
@@ -60,7 +60,6 @@ export function MarkVehicleSoldDialog({
   title: string
   linkedLeads: Buyer[]
 }) {
-  const router = useRouter()
   const { handleError } = useApiError()
   const linked = linkedLeads.filter((l) => !isLeadClosed(l.status))
 
@@ -70,7 +69,7 @@ export function MarkVehicleSoldDialog({
   const [notes, setNotes] = useState("")
   const [candidates, setCandidates] = useState<Buyer[] | null>(null)
   const [loadingCandidates, startLoading] = useTransition()
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run: startTransition, refresh } = useSaveTransition()
 
   function loadCandidates() {
     if (candidates) return
@@ -123,13 +122,14 @@ export function MarkVehicleSoldDialog({
       })
       if (!result.ok) {
         handleError(result.error, "Could not mark the car sold. Check the lead and try again.")
-        router.refresh()
+        refresh()
         return
       }
       toast.success(`Sold to ${buyer.contactFullName}.`)
-      setOpen(false)
-      reset()
-      router.refresh()
+      refresh(() => {
+        setOpen(false)
+        reset()
+      })
     })
   }
 

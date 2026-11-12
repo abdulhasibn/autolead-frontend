@@ -1,7 +1,6 @@
 "use client"
 
-import { useRef, useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useRef, useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2 } from "lucide-react"
@@ -33,6 +32,7 @@ import { MoneyInput } from "./money-input"
 import { VehiclePicker } from "./pickers"
 import type { PickerOption } from "./search-picker"
 import { TagMultiSelect } from "./tag-multi-select"
+import { useSaveTransition } from "@/hooks/use-save-transition"
 
 export interface EntrySheetProps {
   open: boolean
@@ -96,8 +96,7 @@ export function EntrySheet(props: EntrySheetProps) {
 
 function EntryForm(props: EntrySheetProps) {
   const { entry, tags, showrooms, onOpenChange, lockVehicle, defaultVehicle } = props
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run: startTransition, refresh } = useSaveTransition()
   const [vehicle, setVehicle] = useState<PickerOption | null>(
     entry?.vehicle ?? (defaultVehicle ? { id: defaultVehicle.id, label: defaultVehicle.label } : null)
   )
@@ -182,13 +181,12 @@ function EntryForm(props: EntrySheetProps) {
       if (!result.ok) {
         toast.error(financeErrorMessage(result.error))
         if (result.error.code === "FINANCE_TAG_ARCHIVED" || result.error.code === "FINANCE_TAG_NOT_FOUND") {
-          router.refresh()
+          refresh()
         }
         return
       }
       toast.success(entry ? "Entry updated." : values.kind === "income" ? "Income added." : "Expense added.")
-      onOpenChange(false)
-      router.refresh()
+      refresh(() => onOpenChange(false))
     })
   }
 

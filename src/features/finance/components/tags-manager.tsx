@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { Archive, ArchiveRestore, Check, Loader2, Pencil, Plus, X } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -13,6 +12,7 @@ import { financeErrorMessage } from "../logic/errors"
 import { tagNameSchema } from "../schemas"
 import type { FinanceTag } from "../types"
 import { TagChip } from "./tag-chip"
+import { useSaveTransition } from "@/hooks/use-save-transition"
 
 const DEFAULT_COLOR = "#1D9E75"
 
@@ -31,12 +31,11 @@ function ColorField({ id, value, onChange }: { id: string; value: string; onChan
 
 /** Tags are archived, never deleted. Names are 1–40 characters, unique ignoring case. */
 export function TagsManager({ tags }: { tags: FinanceTag[] }) {
-  const router = useRouter()
   const [showArchived, setShowArchived] = useState(false)
   const [name, setName] = useState("")
   const [color, setColor] = useState(DEFAULT_COLOR)
   const [nameError, setNameError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run: startTransition, refresh } = useSaveTransition()
 
   const visible = tags.filter((t) => showArchived || !t.archived)
   const archivedCount = tags.filter((t) => t.archived).length
@@ -56,8 +55,7 @@ export function TagsManager({ tags }: { tags: FinanceTag[] }) {
         return
       }
       toast.success(`Tag “${result.data.name}” added.`)
-      setName("")
-      router.refresh()
+      refresh(() => setName(""))
     })
   }
 
@@ -106,12 +104,11 @@ export function TagsManager({ tags }: { tags: FinanceTag[] }) {
 }
 
 function TagRow({ tag }: { tag: FinanceTag }) {
-  const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(tag.name)
   const [color, setColor] = useState(tag.color ?? DEFAULT_COLOR)
   const [error, setError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run: startTransition, refresh } = useSaveTransition()
 
   function save(patch: { name?: string; color?: string | null; archived?: boolean }, done?: string) {
     startTransition(async () => {
@@ -122,8 +119,7 @@ function TagRow({ tag }: { tag: FinanceTag }) {
         return
       }
       if (done) toast.success(done)
-      setEditing(false)
-      router.refresh()
+      refresh(() => setEditing(false))
     })
   }
 

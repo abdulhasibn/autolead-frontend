@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { ArchiveRestore, ArchiveX, TriangleAlert } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -19,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useApiError } from "@/hooks/use-api-error"
 import { changeVehicleStatusAction } from "../actions"
 import type { VehicleStatus } from "../types"
+import { useSaveTransition } from "@/hooks/use-save-transition"
 
 interface ChangeVehicleStatusDialogProps {
   vehicleId: string
@@ -38,11 +38,10 @@ export function ChangeVehicleStatusDialog({
   status,
   linkedLeadCount,
 }: ChangeVehicleStatusDialogProps) {
-  const router = useRouter()
   const { handleError } = useApiError()
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState("")
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run: startTransition, refresh } = useSaveTransition()
 
   if (status === "sold") return null
   const next = status === "dropped" ? "open" : "dropped"
@@ -60,7 +59,7 @@ export function ChangeVehicleStatusDialog({
         if (result.error.code === "VEHICLE_HAS_LINKED_LEADS") {
           // A lead was linked after the page loaded.
           toast.error("New leads were linked to this vehicle. Review them and try again.")
-          router.refresh()
+          refresh()
         } else {
           handleError(result.error, "Could not change the vehicle status.")
         }
@@ -72,9 +71,10 @@ export function ChangeVehicleStatusDialog({
           ? `Vehicle dropped${unlinked ? ` and ${unlinked} ${unlinked === 1 ? "lead" : "leads"} unlinked` : ""}.`
           : "Vehicle re-listed."
       )
-      setOpen(false)
-      setReason("")
-      router.refresh()
+      refresh(() => {
+        setOpen(false)
+        setReason("")
+      })
     })
   }
 

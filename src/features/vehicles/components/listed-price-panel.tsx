@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { Globe, Pencil } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -21,6 +20,7 @@ import { formatCurrency } from "@/lib/format"
 import { setListedPriceAction } from "../actions"
 import { listedPriceFormSchema } from "../schemas"
 import type { VehicleStatus } from "../types"
+import { useSaveTransition } from "@/hooks/use-save-transition"
 
 interface ListedPricePanelProps {
   vehicleId: string
@@ -58,12 +58,11 @@ export function ListedPricePanel({ vehicleId, listedPrice, status, canEdit }: Li
 }
 
 function ListedPriceDialog({ vehicleId, listedPrice }: { vehicleId: string; listedPrice: number | null }) {
-  const router = useRouter()
   const { handleError } = useApiError()
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState("")
   const [error, setError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run: startTransition, refresh } = useSaveTransition()
 
   function onOpenChange(next: boolean) {
     setOpen(next)
@@ -87,8 +86,7 @@ function ListedPriceDialog({ vehicleId, listedPrice }: { vehicleId: string; list
         return
       }
       toast.success(parsed.data == null ? "Listed price cleared." : "Listed price saved.")
-      setOpen(false)
-      router.refresh()
+      refresh(() => setOpen(false))
     })
   }
 

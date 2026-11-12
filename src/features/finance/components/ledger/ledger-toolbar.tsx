@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowUpDown, Search, SlidersHorizontal, X } from "lucide-react"
+import { ArrowUpDown, Loader2, Search, SlidersHorizontal, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -38,7 +38,7 @@ export function LedgerToolbar({
   tags: FinanceTag[]
   showrooms: ShowroomOption[]
 }) {
-  const { update } = useQueryState()
+  const { update, isPending } = useQueryState()
   const [q, setQ] = useState(filters.q ?? "")
   const [open, setOpen] = useState(false)
   const active = countActiveEntryFilters(filters)
@@ -117,6 +117,7 @@ export function LedgerToolbar({
             error={filters.rangeError}
           />
         )}
+        {isPending && <Loader2 className="size-4 self-center animate-spin text-primary" aria-label="Loading" />}
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <form

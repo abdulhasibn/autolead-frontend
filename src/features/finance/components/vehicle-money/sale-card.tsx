@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { Loader2, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { ConfirmDialog } from "@/components/confirm-dialog"
@@ -18,6 +17,7 @@ import { buildSale, type BuyerPaid, type SaleForm } from "../../logic/sale"
 import type { VehicleSale } from "../../types"
 import { Money } from "../money"
 import { MoneyInput } from "../money-input"
+import { useSaveTransition } from "@/hooks/use-save-transition"
 
 const EMPTY_FORM: SaleForm = { price: "", soldOn: "", paid: "none", paidAmount: "", paidOn: "" }
 
@@ -38,12 +38,11 @@ export function SaleCard({
   /** Sum of the car's payments from the buyer so far. */
   receivedFromBuyer: number
 }) {
-  const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState<SaleForm>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof SaleForm, string>>>({})
   const [confirmRemove, setConfirmRemove] = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run: startTransition, refresh } = useSaveTransition()
 
   const set = <K extends keyof SaleForm>(key: K, value: SaleForm[K]) => {
     setForm((f) => ({ ...f, [key]: value }))
@@ -71,8 +70,7 @@ export function SaleCard({
       const saved = await recordSaleAction(vehicleId, result.payload)
       if (!saved.ok) return void toast.error(financeErrorMessage(saved.error))
       toast.success(result.payload.payment ? "Sale and buyer payment recorded." : "Sale recorded.")
-      setEditing(false)
-      router.refresh()
+      refresh(() => setEditing(false))
     })
   }
 
@@ -81,8 +79,7 @@ export function SaleCard({
       const result = await removeSaleAction(vehicleId)
       if (!result.ok) return void toast.error(financeErrorMessage(result.error))
       toast.success("Sale removed.")
-      setConfirmRemove(false)
-      router.refresh()
+      refresh(() => setConfirmRemove(false))
     })
   }
 

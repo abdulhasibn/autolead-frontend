@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { ConfirmDialog } from "@/components/confirm-dialog"
@@ -21,13 +20,13 @@ import { Money } from "../money"
 import { MoneyInput } from "../money-input"
 import { LeadPicker } from "../pickers"
 import type { PickerOption } from "../search-picker"
+import { useSaveTransition } from "@/hooks/use-save-transition"
 
 /** Prices offered to leads; the newest is the current quote. */
 export function QuotesCard({ vehicleId, quotes }: { vehicleId: string; quotes: VehicleQuote[] }) {
-  const router = useRouter()
   const [adding, setAdding] = useState(false)
   const [deleting, setDeleting] = useState<VehicleQuote | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run: startTransition, refresh } = useSaveTransition()
 
   function remove() {
     if (!deleting) return
@@ -35,8 +34,7 @@ export function QuotesCard({ vehicleId, quotes }: { vehicleId: string; quotes: V
       const result = await deleteQuoteAction(vehicleId, deleting.id)
       if (!result.ok) return void toast.error(financeErrorMessage(result.error))
       toast.success("Quote deleted.")
-      setDeleting(null)
-      router.refresh()
+      refresh(() => setDeleting(null))
     })
   }
 
@@ -94,14 +92,13 @@ export function QuotesCard({ vehicleId, quotes }: { vehicleId: string; quotes: V
 }
 
 function AddQuoteDialog({ vehicleId, open, onOpenChange }: { vehicleId: string; open: boolean; onOpenChange: (o: boolean) => void }) {
-  const router = useRouter()
   const [amount, setAmount] = useState("")
   const [quotedOn, setQuotedOn] = useState(todayIST())
   const [lead, setLead] = useState<PickerOption | null>(null)
   const [quotedTo, setQuotedTo] = useState("")
   const [note, setNote] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run: startTransition, refresh } = useSaveTransition()
 
   function reset() {
     setAmount("")
@@ -139,9 +136,10 @@ function AddQuoteDialog({ vehicleId, open, onOpenChange }: { vehicleId: string; 
         return
       }
       toast.success("Quote added.")
-      reset()
-      onOpenChange(false)
-      router.refresh()
+      refresh(() => {
+        reset()
+        onOpenChange(false)
+      })
     })
   }
 
