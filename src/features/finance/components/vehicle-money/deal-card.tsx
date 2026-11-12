@@ -9,11 +9,13 @@ import { Input } from "@/components/ui/input"
 import { DatePicker, pastDateYears } from "@/components/ui/date-picker"
 import { Textarea } from "@/components/ui/textarea"
 import { FormField } from "@/features/leads/components/form-field"
+import { SegmentedChoice } from "@/features/leads/components/segmented-choice"
 import { setDealAction } from "../../actions"
 import { DEFAULT_COMMISSION_PERCENT, parsePercent } from "../../logic/acquisition"
-import { formatYmd } from "../../logic/dates"
+import { formatYmd, todayIST } from "../../logic/dates"
 import { financeErrorMessage } from "../../logic/errors"
-import { formatMoneyInput, parseMoneyInput } from "../../logic/money"
+import { formatMoney, formatMoneyInput, parseMoneyInput } from "../../logic/money"
+import { buildPayment, PAID_OPTIONS, type PaidChoice, type PaymentErrors } from "../../logic/payment"
 import { commissionPercent as commissionPercentSchema } from "../../schemas"
 import type { DealTerms, SaleModel } from "../../types"
 import { Money } from "../money"
@@ -22,16 +24,20 @@ import { MoneyInput } from "../money-input"
 /**
  * Terms agreed with the owner: a purchase rate for a car we buy outright, or
  * a commission % for a car we sell for them. PUT replaces these fields; the
- * listed price is edited in its own panel.
+ * listed price is edited in its own panel. For a purchase car the form also
+ * takes a payment to the seller, saved as a "payment to seller" entry.
  */
 export function DealCard({
   vehicleId,
   deal,
   saleModel,
+  paidToSeller,
 }: {
   vehicleId: string
   deal: DealTerms | null
   saleModel: SaleModel
+  /** Sum of the car's payments to the seller so far. */
+  paidToSeller: number
 }) {
   const commission = saleModel === "commission"
   const termsSet = commission ? deal?.commissionPercent != null : deal?.purchaseRate != null
@@ -49,6 +55,9 @@ export function DealCard({
       ownerExpectedPrice: formatMoneyInput(d?.ownerExpectedPrice),
       minimumSellingPrice: formatMoneyInput(d?.minimumSellingPrice),
       note: d?.note ?? "",
+      paid: "none" as PaidChoice,
+      paidAmount: "",
+      paidOn: todayIST(),
     }
   }
 
@@ -67,6 +76,14 @@ export function DealCard({
     } else if (purchaseRate === null || purchaseRate <= 0) next.purchaseRate = "Enter the purchase rate"
     if (form.ownerExpectedPrice.trim() && (ownerExpectedPrice === null || ownerExpectedPrice <= 0)) next.ownerExpectedPrice = "Enter an amount or leave blank"
     if (form.minimumSellingPrice.trim() && (minimumSellingPrice === null || minimumSellingPrice <= 0)) next.minimumSellingPrice = "Enter an amount or leave blank"
+    const paymentErrors: PaymentErrors = {}
+    const payment = commission
+      ? null
+      : buildPayment(form, purchaseRate === null || purchaseRate <= 0 ? null : purchaseRate - paidToSeller, paymentErrors, {
+          amountLabel: "amount paid",
+          alreadyFull: "The seller has already been paid the full rate",
+        })
+    Object.assign(next, paymentErrors)
     setErrors(next)
     if (Object.keys(next).length) return
     startTransition(async () => {
@@ -77,12 +94,13 @@ export function DealCard({
         ownerExpectedPrice,
         minimumSellingPrice,
         note: form.note.trim() || null,
+        payment,
       })
       if (!result.ok) {
         toast.error(financeErrorMessage(result.error))
         return
       }
-      toast.success("Deal saved.")
+      toast.success(payment ? "Deal and payment to the seller saved." : "Deal saved.")
       setEditing(false)
       router.refresh()
     })
@@ -169,6 +187,7 @@ export function DealCard({
           <MoneyInput id="deal-min" value={form.minimumSellingPrice} onValueChange={(v) => setForm({ ...form, minimumSellingPrice: v })} />
         </FormField>
       </div>
+      {!commission && <SellerPayment form={form} setForm={setForm} errors={errors} paidToSeller={paidToSeller} />}
       <FormField id="deal-note" label="Note (optional)">
         <Textarea id="deal-note" rows={2} maxLength={1000} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
       </FormField>
@@ -177,5 +196,65 @@ export function DealCard({
         <Button type="submit" disabled={isPending}>{isPending && <Loader2 className="animate-spin" />}Save deal</Button>
       </div>
     </form>
+  )
+}
+
+type PaymentForm = { purchaseRate: string; paid: PaidChoice; paidAmount: string; paidOn: string }
+
+/** "Paid to the seller" on the deal form: records a payment entry against the purchase rate. */
+function SellerPayment<F extends PaymentForm>({
+  form,
+  setForm,
+  errors,
+  paidToSeller,
+}: {
+  form: F
+  setForm: (next: F) => void
+  errors: Record<string, string>
+  paidToSeller: number
+}) {
+  const rate = parseMoneyInput(form.purchaseRate)
+  const due = rate === null || rate <= 0 ? null : rate - paidToSeller
+  const partAmount = parseMoneyInput(form.paidAmount)
+  const settled = due !== null && due <= 0 && paidToSeller > 0
+  return (
+    <div className="space-y-3">
+      <FormField id="deal-paid" label={paidToSeller > 0 ? "Paid to the seller now" : "Paid to the seller"} error={errors.paid}>
+        <SegmentedChoice
+          id="deal-paid"
+          aria-label="Paid to the seller"
+          value={form.paid}
+          onValueChange={(v) => setForm({ ...form, paid: v as PaidChoice })}
+          options={PAID_OPTIONS}
+        />
+      </FormField>
+      {form.paid !== "none" && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {form.paid === "part" && (
+            <FormField id="deal-paid-amount" label="Amount paid" error={errors.paidAmount}>
+              <MoneyInput
+                id="deal-paid-amount"
+                value={form.paidAmount}
+                onValueChange={(v) => setForm({ ...form, paidAmount: v })}
+                aria-invalid={errors.paidAmount ? true : undefined}
+              />
+            </FormField>
+          )}
+          <FormField id="deal-paid-on" label="Paid on" error={errors.paidOn}>
+            <DatePicker {...pastDateYears()} id="deal-paid-on" value={form.paidOn} onChange={(v) => setForm({ ...form, paidOn: v })} invalid={!!errors.paidOn} />
+          </FormField>
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">
+        {paidToSeller > 0 && `${formatMoney(paidToSeller)} already paid. `}
+        {settled
+          ? "The seller is fully paid."
+          : form.paid === "full" && due !== null && due > 0
+            ? `${formatMoney(due)} will be recorded as paid to the seller.`
+            : form.paid === "part" && due !== null && partAmount !== null && partAmount > 0 && partAmount < due
+              ? `${formatMoney(due - partAmount)} will still be owed to the seller.`
+              : "Later payments go in Entries as “Payment to seller”."}
+      </p>
+    </div>
   )
 }

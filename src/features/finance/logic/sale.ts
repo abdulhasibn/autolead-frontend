@@ -1,6 +1,7 @@
 import { parseMoneyInput } from "./money"
+import { buildPayment, type PaidChoice } from "./payment"
 
-export type BuyerPaid = "none" | "part" | "full"
+export type BuyerPaid = PaidChoice
 
 /** The sale form, as typed. */
 export interface SaleForm {
@@ -34,18 +35,11 @@ export function buildSale(form: SaleForm, alreadyReceived = 0): SaleResult {
   if (price === null || price <= 0) errors.price = "Enter the finalised price"
   if (!form.soldOn) errors.soldOn = "Pick the sale date"
 
-  const due = price === null ? null : price - alreadyReceived
-  let payment: SalePayload["payment"] = null
-  if (form.paid !== "none" && !form.paidOn) errors.paidOn = "Pick the payment date"
-  if (form.paid === "full") {
-    if (due !== null && due <= 0) errors.paid = "The buyer has already paid the full price"
-    else if (due !== null) payment = { amount: due, paidOn: form.paidOn }
-  } else if (form.paid === "part") {
-    const amount = parseMoneyInput(form.paidAmount)
-    if (amount === null || amount <= 0) errors.paidAmount = "Enter the amount received"
-    else if (due !== null && amount >= due) errors.paidAmount = "That’s the full amount or more. Choose “Fully paid”."
-    else payment = { amount, paidOn: form.paidOn }
-  }
+  const due = price === null || price <= 0 ? null : price - alreadyReceived
+  const payment = buildPayment(form, due, errors, {
+    amountLabel: "amount received",
+    alreadyFull: "The buyer has already paid the full price",
+  })
 
   if (Object.keys(errors).length || price === null) return { ok: false, errors }
   return { ok: true, payload: { finalisedPrice: price, soldOn: form.soldOn, payment } }

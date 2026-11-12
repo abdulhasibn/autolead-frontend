@@ -219,7 +219,21 @@ export async function setDealAction(vehicleId: string, input: unknown): Promise<
     const id = idSchema.safeParse(vehicleId)
     const parsed = dealSchema.safeParse(input)
     if (!id.success || !parsed.success) return validationError(parsed.error?.issues[0]?.message)
-    await api.setDeal(id.data, parsed.data)
+    const { payment, ...terms } = parsed.data
+    await api.setDeal(id.data, terms)
+    if (payment) {
+      await api.createEntry({
+        kind: "expense",
+        amount: payment.amount,
+        entryDate: payment.paidOn,
+        tagIds: [],
+        vehicleId: id.data,
+        purpose: "purchase",
+        party: null,
+        note: "Paid to the seller, recorded with the deal",
+        showroomId: null,
+      })
+    }
     revalidateVehicle(id.data)
     revalidateFinance()
     return actionOk(undefined)

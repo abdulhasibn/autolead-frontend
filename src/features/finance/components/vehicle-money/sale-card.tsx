@@ -13,16 +13,11 @@ import { recordSaleAction, removeSaleAction } from "../../actions"
 import { formatYmd, todayIST } from "../../logic/dates"
 import { financeErrorMessage } from "../../logic/errors"
 import { formatMoney, formatMoneyInput, parseMoneyInput } from "../../logic/money"
+import { PAID_OPTIONS } from "../../logic/payment"
 import { buildSale, type BuyerPaid, type SaleForm } from "../../logic/sale"
 import type { VehicleSale } from "../../types"
 import { Money } from "../money"
 import { MoneyInput } from "../money-input"
-
-const PAID_OPTIONS: Array<{ value: BuyerPaid; label: string }> = [
-  { value: "none", label: "Not paid yet" },
-  { value: "part", label: "Part paid" },
-  { value: "full", label: "Fully paid" },
-]
 
 const EMPTY_FORM: SaleForm = { price: "", soldOn: "", paid: "none", paidAmount: "", paidOn: "" }
 

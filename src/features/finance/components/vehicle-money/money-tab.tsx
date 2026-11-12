@@ -41,7 +41,7 @@ export function MoneyTab({
     <div className="space-y-4">
       <NumbersCard money={money} />
       <div className="grid gap-4 lg:grid-cols-2">
-        <DealCard vehicleId={money.vehicleId} deal={money.deal} saleModel={money.vehicle.saleModel} />
+        <DealCard vehicleId={money.vehicleId} deal={money.deal} saleModel={money.vehicle.saleModel} paidToSeller={money.paidToSeller} />
         <SaleCard
           vehicleId={money.vehicleId}
           sale={money.sale}
