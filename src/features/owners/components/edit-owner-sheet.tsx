@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Pencil } from "lucide-react"
@@ -20,6 +19,7 @@ import { updateOwnerAction } from "../actions"
 import { createOwnerSchema, type CreateOwnerInput } from "../schemas"
 import type { OwnerDto } from "../types"
 import { OwnerFormFields } from "./owner-form-fields"
+import { useSaveTransition } from "@/hooks/use-save-transition"
 
 function toFormValues(owner: OwnerDto): CreateOwnerInput {
   return {
@@ -37,9 +37,8 @@ function toFormValues(owner: OwnerDto): CreateOwnerInput {
 
 export function EditOwnerSheet({ owner }: { owner: OwnerDto }) {
   const { handleError } = useApiError()
-  const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run: startTransition, refresh } = useSaveTransition()
 
   const {
     register,
@@ -64,8 +63,7 @@ export function EditOwnerSheet({ owner }: { owner: OwnerDto }) {
         return
       }
       toast.success("Owner updated")
-      setOpen(false)
-      router.refresh()
+      refresh(() => setOpen(false))
     })
   }
 

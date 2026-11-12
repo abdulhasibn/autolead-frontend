@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Controller, useForm, useWatch, type Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -65,6 +65,7 @@ import { formatPlate, formatVehicleTitle, variantLabel } from "../utils"
 import { AcquisitionMoneyFields, AcquisitionMoneyLocked } from "./acquisition-money-fields"
 import { ColourPicker } from "./colour-picker"
 import { PhotoManager } from "./photo-manager"
+import { useSaveTransition } from "@/hooks/use-save-transition"
 
 type Props =
   | {
@@ -179,7 +180,7 @@ export function VehicleFormSheet(props: Props) {
 
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState(0)
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run: startTransition, refresh } = useSaveTransition()
   const [created, setCreated] = useState<VehicleDto | null>(null)
 
   const [models, setModels] = useState<ModelReadModel[]>([])
@@ -311,9 +312,10 @@ export function VehicleFormSheet(props: Props) {
           return
         }
         toast.success("Vehicle updated.")
-        setOpen(false)
-        setStep(0)
-        router.refresh()
+        refresh(() => {
+          setOpen(false)
+          setStep(0)
+        })
         return
       }
       const saleModel = values.acquisitionType === "consignment" ? "commission" : "purchase"

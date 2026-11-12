@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { Loader2 } from "lucide-react"
 import { usePathname, useSearchParams } from "next/navigation"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { OptionSelect } from "@/components/option-select"
@@ -29,7 +30,7 @@ const PERIOD_OPTIONS: Array<{ value: ReportPeriod; label: string }> = [
 export function ReportControls({ filters, showrooms }: { filters: ReportFilters; showrooms: ShowroomOption[] }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const { update } = useQueryState()
+  const { update, isPending } = useQueryState()
 
   function tabHref(tab: ReportTab) {
     const params = new URLSearchParams(searchParams.toString())
@@ -86,6 +87,7 @@ export function ReportControls({ filters, showrooms }: { filters: ReportFilters;
             options={[{ value: "", label: "All showrooms" }, ...showrooms.map((s) => ({ value: s.id, label: s.name }))]}
           />
         )}
+        {isPending && <Loader2 className="size-4 self-center animate-spin text-primary" aria-label="Loading" />}
       </div>
     </div>
   )

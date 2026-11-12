@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Plus } from "lucide-react"
@@ -19,6 +18,7 @@ import { useApiError } from "@/hooks/use-api-error"
 import { createOwnerAction } from "../actions"
 import { createOwnerSchema, type CreateOwnerInput } from "../schemas"
 import { OwnerFormFields } from "./owner-form-fields"
+import { useSaveTransition } from "@/hooks/use-save-transition"
 
 const DEFAULT_VALUES: CreateOwnerInput = {
   fullName: "",
@@ -34,9 +34,8 @@ const DEFAULT_VALUES: CreateOwnerInput = {
 
 export function CreateOwnerSheet() {
   const { handleError } = useApiError()
-  const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run: startTransition, refresh } = useSaveTransition()
 
   const {
     register,
@@ -57,9 +56,10 @@ export function CreateOwnerSheet() {
         return
       }
       toast.success("Owner created")
-      setOpen(false)
-      reset(DEFAULT_VALUES)
-      router.refresh()
+      refresh(() => {
+        setOpen(false)
+        reset(DEFAULT_VALUES)
+      })
     })
   }
 

@@ -1,7 +1,6 @@
 "use client"
 
-import { useRef, useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useRef, useState } from "react"
 import { FileImage, FileText, FileUp, Loader2, Lock, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -23,6 +22,7 @@ import {
 import type { DocumentType, VehicleDocumentDto } from "../types"
 import { checkFile, putToSignedUrl } from "../upload"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { useSaveTransition } from "@/hooks/use-save-transition"
 
 /** Missing ones of these are offered as one-click rows. */
 const EXPECTED: DocumentType[] = ["rc", "insurance"]
@@ -36,13 +36,13 @@ interface DocumentsPanelProps {
 }
 
 export function DocumentsPanel({ vehicleId, documents, canDelete }: DocumentsPanelProps) {
-  const router = useRouter()
   const { handleError } = useApiError()
   const inputRef = useRef<HTMLInputElement>(null)
   const [docType, setDocType] = useState<DocumentType>("rc")
   const [uploading, setUploading] = useState<{ name: string; progress: number } | null>(null)
   const [toDelete, setToDelete] = useState<VehicleDocumentDto | null>(null)
-  const [deleting, startDelete] = useTransition()
+  // One flag for "deleting, or re-fetching the list after a change".
+  const { isPending: deleting, run: startDelete, refresh } = useSaveTransition()
 
   const present = new Set(documents.map((d) => d.docType))
   const missing = EXPECTED.filter((t) => !present.has(t))
@@ -59,6 +59,7 @@ export function DocumentsPanel({ vehicleId, documents, canDelete }: DocumentsPan
       return
     }
     setUploading({ name: file.name, progress: 0 })
+    let saved = false
     try {
       const ticket = await requestDocumentUploadAction(vehicleId, { docType: type, contentType: file.type })
       if (!ticket.ok) {
@@ -78,11 +79,13 @@ export function DocumentsPanel({ vehicleId, documents, canDelete }: DocumentsPan
         return
       }
       toast.success(`${DOCUMENT_TYPE_LABELS[type]} uploaded.`)
-      router.refresh()
+      saved = true
+      // Keep the upload row until the refreshed list shows the new document.
+      refresh(() => setUploading(null))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed.")
     } finally {
-      setUploading(null)
+      if (!saved) setUploading(null)
     }
   }
 
@@ -95,9 +98,8 @@ export function DocumentsPanel({ vehicleId, documents, canDelete }: DocumentsPan
         handleError(result.error, "Could not delete the document.")
         return
       }
-      setToDelete(null)
       toast.success("Document deleted.")
-      router.refresh()
+      refresh(() => setToDelete(null))
     })
   }
 

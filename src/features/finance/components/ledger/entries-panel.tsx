@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { Minus, Plus } from "lucide-react"
 import { toast } from "sonner"
 import { ConfirmDialog } from "@/components/confirm-dialog"
@@ -12,6 +11,7 @@ import { formatMoney } from "../../logic/money"
 import type { EntryKind, FinanceEntry, FinanceTag, FinanceVehicleRef, ShowroomOption } from "../../types"
 import { EntrySheet } from "../entry-sheet"
 import { EntryList } from "./entry-list"
+import { useSaveTransition } from "@/hooks/use-save-transition"
 
 interface EntriesPanelProps {
   entries: FinanceEntry[]
@@ -27,14 +27,13 @@ interface EntriesPanelProps {
 
 /** Entries list plus the add/edit sheet and delete confirmation. */
 export function EntriesPanel({ entries, tags, showrooms, vehicle, showAddButtons, emptyMessage, footer }: EntriesPanelProps) {
-  const router = useRouter()
   const [sheet, setSheet] = useState<{ open: boolean; entry: FinanceEntry | null; kind: EntryKind }>({
     open: false,
     entry: null,
     kind: "expense",
   })
   const [deleting, setDeleting] = useState<FinanceEntry | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run: startTransition, refresh } = useSaveTransition()
 
   function confirmDelete() {
     if (!deleting) return
@@ -46,8 +45,7 @@ export function EntriesPanel({ entries, tags, showrooms, vehicle, showAddButtons
         return
       }
       toast.success(`Deleted ${target.kind} of ${formatMoney(target.amount)}.`)
-      setDeleting(null)
-      router.refresh()
+      refresh(() => setDeleting(null))
     })
   }
 
