@@ -1,22 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname, useSearchParams } from "next/navigation"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { DashboardPeriodKey } from "@/features/dashboard/types"
 import { PERIOD_LABELS } from "@/features/dashboard/format"
+import { useParamHref } from "@/hooks/use-param-href"
 
 const PERIODS: DashboardPeriodKey[] = ["today", "week", "month", "quarter"]
 
 export function PeriodTabs({ activePeriod }: { activePeriod: DashboardPeriodKey }) {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-
-  function buildHref(period: DashboardPeriodKey) {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("period", period)
-    return `${pathname}?${params.toString()}`
-  }
+  const buildHref = useParamHref("period")
 
   return (
     <Tabs value={activePeriod} className="max-sm:w-full">

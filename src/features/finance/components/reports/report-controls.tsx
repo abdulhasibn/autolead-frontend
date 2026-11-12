@@ -2,9 +2,9 @@
 
 import Link from "next/link"
 import { Loader2 } from "lucide-react"
-import { usePathname, useSearchParams } from "next/navigation"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { OptionSelect } from "@/components/option-select"
+import { useParamHref } from "@/hooks/use-param-href"
 import { SegmentedChoice } from "@/features/leads/components/segmented-choice"
 import type { ReportFilters, ReportTab } from "../../search-params"
 import { REPORT_TABS } from "../../search-params"
@@ -28,15 +28,8 @@ const PERIOD_OPTIONS: Array<{ value: ReportPeriod; label: string }> = [
 ]
 
 export function ReportControls({ filters, showrooms }: { filters: ReportFilters; showrooms: ShowroomOption[] }) {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const tabHref = useParamHref("tab")
   const { update, isPending } = useQueryState()
-
-  function tabHref(tab: ReportTab) {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("tab", tab)
-    return `${pathname}?${params.toString()}`
-  }
 
   const ranged = filters.tab === "pnl" || filters.tab === "cash-flow" || filters.tab === "vehicle-profit"
   const bucketed = filters.tab === "pnl" || filters.tab === "cash-flow"

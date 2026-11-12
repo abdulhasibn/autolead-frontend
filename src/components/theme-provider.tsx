@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useSyncExternalStore } from "react"
 
 export type ThemeMode = "light" | "dark"
 export type ThemePreference = ThemeMode | "system"
@@ -26,6 +26,37 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
+const DARK_QUERY = "(prefers-color-scheme: dark)"
+const preferenceListeners = new Set<() => void>()
+
+function notifyPreferenceListeners() {
+  preferenceListeners.forEach((listener) => listener())
+}
+
+function subscribeStoredPreference(listener: () => void) {
+  preferenceListeners.add(listener)
+  // Other tabs changing the theme fire "storage" here.
+  window.addEventListener("storage", listener)
+  return () => {
+    preferenceListeners.delete(listener)
+    window.removeEventListener("storage", listener)
+  }
+}
+
+function readStoredPreference() {
+  return localStorage.getItem(THEME_PREFERENCE_KEY)
+}
+
+function subscribeSystemDark(listener: () => void) {
+  const mql = window.matchMedia(DARK_QUERY)
+  mql.addEventListener("change", listener)
+  return () => mql.removeEventListener("change", listener)
+}
+
+function readSystemDark() {
+  return window.matchMedia(DARK_QUERY).matches
+}
+
 export function ThemeProvider({
   children,
   defaultPreference = "light",
@@ -33,19 +64,11 @@ export function ThemeProvider({
   children: React.ReactNode
   defaultPreference?: ThemePreference
 }) {
-  const [preference, setPreferenceState] = useState<ThemePreference>(defaultPreference)
-  const [systemDark, setSystemDark] = useState(false)
-
-  useEffect(() => {
-    const stored = localStorage.getItem(THEME_PREFERENCE_KEY)
-    if (stored && isThemePreference(stored)) setPreferenceState(stored)
-
-    const mql = window.matchMedia("(prefers-color-scheme: dark)")
-    setSystemDark(mql.matches)
-    const handler = (e: MediaQueryListEvent) => setSystemDark(e.matches)
-    mql.addEventListener("change", handler)
-    return () => mql.removeEventListener("change", handler)
-  }, [])
+  // Server snapshots match the first client render (default preference, light
+  // system), so hydration is unchanged; the stored values apply right after.
+  const stored = useSyncExternalStore(subscribeStoredPreference, readStoredPreference, () => null)
+  const preference = stored && isThemePreference(stored) ? stored : defaultPreference
+  const systemDark = useSyncExternalStore(subscribeSystemDark, readSystemDark, () => false)
 
   const mode = resolveThemeMode(preference, systemDark)
 
@@ -56,8 +79,8 @@ export function ThemeProvider({
   }, [mode])
 
   const setPreference = (next: ThemePreference) => {
-    setPreferenceState(next)
     localStorage.setItem(THEME_PREFERENCE_KEY, next)
+    notifyPreferenceListeners()
   }
 
   return (
