@@ -1,20 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname, useSearchParams } from "next/navigation"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { INSIGHTS_TAB_LABELS, INSIGHTS_TABS, type InsightsTab } from "@/features/insights/format"
+import { useParamHref } from "@/hooks/use-param-href"
 
 /** Traffic / Cars / Demand as links, keeping the selected period. */
 export function InsightsTabs({ activeTab }: { activeTab: InsightsTab }) {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-
-  function buildHref(tab: InsightsTab) {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("tab", tab)
-    return `${pathname}?${params.toString()}`
-  }
+  const buildHref = useParamHref("tab")
 
   return (
     <Tabs value={activeTab} className="max-sm:w-full">
