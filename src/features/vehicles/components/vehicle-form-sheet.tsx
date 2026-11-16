@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { Controller, useForm, useWatch, type Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Check, Loader2, Pencil, Plus, Search, Sparkles, UserPlus } from "lucide-react"
@@ -62,6 +63,7 @@ import {
 } from "../schemas"
 import type { VehicleDto } from "../types"
 import { formatPlate, formatVehicleTitle, variantLabel } from "../utils"
+import { AcquisitionTypeEditField } from "./acquisition-type-edit-field"
 import { AcquisitionMoneyFields, AcquisitionMoneyLocked } from "./acquisition-money-fields"
 import { ColourPicker } from "./colour-picker"
 import { PhotoManager } from "./photo-manager"
@@ -176,6 +178,8 @@ function labelled<T extends string>(values: readonly T[], labels: Record<T, stri
 export function VehicleFormSheet(props: Props) {
   const router = useRouter()
   const { handleError } = useApiError()
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.roles?.includes("admin") ?? false
   const isCreate = props.mode === "create"
   const steps = STEPS[props.mode]
 
@@ -503,17 +507,10 @@ export function VehicleFormSheet(props: Props) {
               )}
 
               {!isCreate && props.vehicle.status !== "sold" && (
-                <FormField id="acquisitionType" label="How was it acquired?">
-                  <Controller control={control} name="acquisitionType" render={({ field }) => (
-                    <OptionSelect id="acquisitionType" value={field.value ?? ""} onValueChange={field.onChange}
-                      options={labelled(ACQUISITION_TYPES, ACQUISITION_TYPE_LABELS)} />
-                  )} />
-                  {values.acquisitionType && values.acquisitionType !== props.vehicle.acquisitionType && (
-                    <p className="mt-1.5 text-xs text-warning">
-                      Changing this means entering the purchase rate or commission again on the car’s Finance tab.
-                    </p>
-                  )}
-                </FormField>
+                <Controller control={control} name="acquisitionType" render={({ field }) => (
+                  <AcquisitionTypeEditField value={field.value ?? ""} onValueChange={field.onChange}
+                    savedType={props.vehicle.acquisitionType} canChange={isAdmin} />
+                )} />
               )}
 
               <div className="grid gap-4 sm:grid-cols-2">
