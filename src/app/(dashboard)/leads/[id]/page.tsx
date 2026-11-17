@@ -25,7 +25,9 @@ import {
 } from "@/features/leads/api"
 import { isLeadClosed, LEAD_SOURCE_LABELS } from "@/features/leads/constants"
 import { getVehicleOptions } from "@/features/leads/vehicle-options"
+import { AssignLeadDialog } from "@/features/leads/components/assign-lead-dialog"
 import { ChangeStatusDialog } from "@/features/leads/components/change-status-dialog"
+import { EditLeadSheet } from "@/features/leads/components/edit-lead-sheet"
 import { FollowUpActionItems } from "@/features/leads/components/follow-up-action-items"
 import { LeadHistoryTimeline } from "@/features/leads/components/lead-history-timeline"
 import { LeadMatchesPanel } from "@/features/leads/components/lead-matches-panel"
@@ -118,7 +120,8 @@ export default async function LeadDetailPage({
             </div>
             <p className="text-sm text-muted-foreground">
               {LEAD_SOURCE_LABELS[lead.source] ?? lead.source} lead · created{" "}
-              {formatDate(lead.createdAt)}
+              {formatDate(lead.createdAt)} ·{" "}
+              {lead.assignedToName ? `assigned to ${lead.assignedToName}` : "unassigned"}
             </p>
           </div>
         </div>
@@ -129,6 +132,15 @@ export default async function LeadDetailPage({
           className="w-full md:hidden"
         />
         <MobileActionBar>
+          <EditLeadSheet lead={lead} disabled={closed} />
+          {isAdmin && (
+            <AssignLeadDialog
+              leadId={lead.id}
+              assignedTo={lead.assignedTo}
+              assignedToName={lead.assignedToName}
+              disabled={closed}
+            />
+          )}
           <ScheduleFollowUpDialog leadId={lead.id} disabled={closed} />
           <LinkVehicleDialog
             leadId={lead.id}
