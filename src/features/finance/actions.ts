@@ -320,12 +320,19 @@ export async function recordSaleAction(vehicleId: string, input: unknown): Promi
     const { payment, buyerPayments, ...sale } = parsed.data
     try {
       // "adjust": the buyer's payments were entered wrong, so cut them down to the new price
-      // before saving it. Trim first, price second: if the save then fails, pressing Save again
-      // finishes the job (the payments already match the price, so the API accepts it).
-      const trimmed = buyerPayments === "adjust" ? await trimBuyerPayments(id.data, sale.finalisedPrice) : false
+      // before saving it, leaving room for the payment sent with the sale (the API counts it
+      // too). Trim first, price second: if the save then fails, pressing Save again finishes
+      // the job (the payments already fit the price, so the API accepts it).
+      const room = Math.max(0, sale.finalisedPrice - (payment?.amount ?? 0))
+      const trimmed = buyerPayments === "adjust" ? await trimBuyerPayments(id.data, room) : false
       try {
         // With a lead, this also converts it: the car becomes sold and its other leads are freed.
-        await api.recordSale(id.data, { ...sale, keepOverpayment: buyerPayments === "keep" })
+        // The buyer's payment travels in the same request, so it lands with the sale or not at all.
+        await api.recordSale(id.data, {
+          ...sale,
+          keepOverpayment: buyerPayments === "keep",
+          buyerPayment: payment ? { amount: payment.amount, paidOn: payment.paidOn } : null,
+        })
       } catch (err) {
         unstable_rethrow(err)
         if (!trimmed) throw err
@@ -338,21 +345,8 @@ export async function recordSaleAction(vehicleId: string, input: unknown): Promi
           },
         }
       }
-      if (payment) {
-        await api.createEntry({
-          kind: "income",
-          amount: payment.amount,
-          entryDate: payment.paidOn,
-          tagIds: [],
-          vehicleId: id.data,
-          purpose: "sale",
-          party: null,
-          note: "Received from the buyer when the sale was recorded",
-          showroomId: null,
-        })
-      }
     } finally {
-      // The sale (and the lead's conversion) may have landed even if the payment failed.
+      // A trimmed payment may have landed even if the sale then failed.
       revalidateVehicle(id.data)
       revalidateFinance()
       if (sale.leadId) revalidateLeadsAndCars()

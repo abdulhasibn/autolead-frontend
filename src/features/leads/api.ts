@@ -125,6 +125,18 @@ export async function reopenLead(id: string): Promise<{ status: string }> {
   return serverApiClient.post<{ status: string }>(`/leads/${id}/reopen`, {})
 }
 
+/**
+ * "Mark as sold" in one request: links the car, confirms the booking and
+ * converts the lead. The API checks everything first and puts the lead back if
+ * a later step fails, so a sale never lands half-done.
+ */
+export async function sellVehicleToLead(
+  id: string,
+  body: { vehicleId: string; notes: string | null }
+): Promise<{ status: string; vehicleSold: boolean }> {
+  return serverApiClient.post<{ status: string; vehicleSold: boolean }>(`/leads/${id}/sell`, body)
+}
+
 export async function associateVehicle(
   id: string,
   vehicleId: string
