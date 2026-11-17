@@ -12,6 +12,7 @@ import {
   type ActionResult,
 } from "@/lib/action-result"
 import {
+  assignLead,
   associateVehicle,
   cancelFollowUp,
   changeLeadStatus,
@@ -22,9 +23,11 @@ import {
   getLeads,
   scheduleFollowUp,
   suggestVehicles,
+  updateLead,
   updateLeadPreference,
 } from "./api"
 import {
+  assignLeadSchema,
   associateVehicleSchema,
   changeLeadStatusSchema,
   completeFollowUpSchema,
@@ -32,7 +35,9 @@ import {
   leadPreferenceSchema,
   scheduleFollowUpSchema,
   suggestVehiclesSchema,
+  updateLeadSchema,
 } from "./schemas"
+import { getUsers } from "@/features/users/api"
 import { isLeadClosed } from "./constants"
 import type {
   CompleteFollowUpResult,
@@ -107,6 +112,63 @@ export async function changeLeadStatusAction(
     const lead = await changeLeadStatus(id.data, parsed.data)
     revalidateLeads()
     return actionOk(lead)
+  } catch (err) {
+    return actionError(err)
+  }
+}
+
+/** Edits the CRM fields. PATCH is a full replace, so the form sends every field. */
+export async function updateLeadAction(leadId: string, input: unknown): Promise<ActionResult> {
+  try {
+    await requireSession()
+    const id = leadIdSchema.safeParse(leadId)
+    const parsed = updateLeadSchema.safeParse(input)
+    if (!id.success || !parsed.success) return validationError(parsed.error?.issues[0]?.message)
+
+    await updateLead(id.data, parsed.data)
+    revalidateLeads()
+    return actionOk(undefined)
+  } catch (err) {
+    return actionError(err)
+  }
+}
+
+async function requireAdmin() {
+  const session = await auth()
+  if (!session?.user) throw new ApiError(401, "AUTHENTICATION_FAILED", "Not signed in")
+  if (!session.user.roles?.includes("admin")) {
+    throw new ApiError(403, "FORBIDDEN", "Only an admin can assign leads")
+  }
+}
+
+/** Admin: staff a lead can be given to (any active admin or salesperson). */
+export async function getAssignableStaffAction(): Promise<
+  ActionResult<{ id: string; fullName: string; roles: string[] }[]>
+> {
+  try {
+    await requireAdmin()
+    const page = await getUsers({ limit: 100 })
+    return actionOk(
+      page.items
+        .map((u) => ({ id: u.id, fullName: u.fullName, roles: u.roles }))
+        .sort((a, b) => a.fullName.localeCompare(b.fullName))
+    )
+  } catch (err) {
+    return actionError(err)
+  }
+}
+
+/** Admin: give the lead to a staff member, or unassign it with null. */
+export async function assignLeadAction(leadId: string, input: unknown): Promise<ActionResult> {
+  try {
+    await requireAdmin()
+    const id = leadIdSchema.safeParse(leadId)
+    const parsed = assignLeadSchema.safeParse(input)
+    if (!id.success || !parsed.success) return validationError()
+
+    await assignLead(id.data, parsed.data.assignedTo)
+    revalidateLeads()
+    return actionOk(undefined)
   } catch (err) {
     return actionError(err)
   }

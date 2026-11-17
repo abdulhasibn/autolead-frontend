@@ -48,6 +48,8 @@ export interface LeadReadModel extends LeadPreference {
   showroomId: string
   vehicleId: string | null
   assignedTo: string | null
+  /** The assignee's full name; null when unassigned. */
+  assignedToName: string | null
   contactId: string
   contactFullName: string
   contactPhone: string

@@ -5,6 +5,7 @@ export const baseLead: LeadReadModel = {
   showroomId: "22222222-2222-4222-8222-222222222222",
   vehicleId: "33333333-3333-4333-8333-333333333333",
   assignedTo: null,
+  assignedToName: null,
   contactId: "44444444-4444-4444-8444-444444444444",
   contactFullName: "Asha Menon",
   contactPhone: "+919876543210",
