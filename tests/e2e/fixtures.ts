@@ -91,6 +91,20 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     { scope: "worker" },
   ],
   db: [async ({}, provide) => provide(db), { scope: "worker" }],
+  page: async ({ page }, provide) => {
+    // `next dev` floats its dev-tools badge over the bottom-right corner,
+    // where dialogs keep their primary button. Hide it (test-side only).
+    await page.addInitScript(() => {
+      const hide = () => {
+        const style = document.createElement("style")
+        style.textContent = "nextjs-portal { display: none !important; }"
+        document.head.appendChild(style)
+      }
+      if (document.head) hide()
+      else document.addEventListener("DOMContentLoaded", hide)
+    })
+    await provide(page)
+  },
   consoleErrors: async ({ page }, provide) => {
     const errors: string[] = []
     page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`))

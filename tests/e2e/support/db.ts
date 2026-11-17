@@ -3,7 +3,7 @@
  * ("the UI says saved; is it in the database?") and run cleanup.
  * Never point this at production: see assertNotProd() in env.ts.
  */
-import { appendFileSync, existsSync, readFileSync } from "node:fs"
+import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs"
 import path from "node:path"
 
 function requireEnv(name: string): string {
@@ -53,10 +53,12 @@ export async function one<T = any>(table: string, filter: string, columns = "*")
 // Registry of rows that cannot be found by creator (e.g. encrypted finance
 // tags, staff users created through the API). Workers append; teardown reads.
 // ---------------------------------------------------------------------------
-const REGISTRY = path.resolve(__dirname, "../../../test-results/.e2e-created.jsonl")
+// Outside test-results/, which Playwright empties at the start of every run.
+const REGISTRY = path.resolve(__dirname, "../../../playwright/.cache/e2e-created.jsonl")
 
 export function register(kind: "finance_tag" | "user", id: string): void {
   try {
+    mkdirSync(path.dirname(REGISTRY), { recursive: true })
     appendFileSync(REGISTRY, JSON.stringify({ kind, id, prefix: process.env.E2E_PREFIX }) + "\n")
   } catch {
     /* test-results may not exist yet in odd setups; cleanup is best effort */
@@ -158,5 +160,26 @@ export async function cleanupRun(prefix: string, baseUserIds: string[]): Promise
   for (const id of staffIds) {
     await attempt(`auth user ${id}`, () => rest("DELETE", `/auth/v1/admin/users/${id}`, undefined, [200, 204, 404]))
   }
+  return problems
+}
+
+/**
+ * Removes runs that never reached teardown (interrupted or crashed), found by
+ * their `e2e-<prefix>-admin|sales@example.com` users older than maxAgeMinutes.
+ */
+export async function sweepStaleRuns(maxAgeMinutes = 60): Promise<string[]> {
+  const cutoff = new Date(Date.now() - maxAgeMinutes * 60_000).toISOString()
+  const users = await select<{ id: string; email: string }>(
+    "users",
+    `email=like.e2e-*@example.com&created_at=lt.${cutoff}`,
+    "id,email"
+  )
+  const byPrefix = new Map<string, string[]>()
+  for (const u of users) {
+    const prefix = u.email.replace(/-(admin|sales)@example\.com$/, "").replace(/@example\.com$/, "")
+    byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), u.id])
+  }
+  const problems: string[] = []
+  for (const [prefix, ids] of byPrefix) problems.push(...(await cleanupRun(prefix, ids)))
   return problems
 }

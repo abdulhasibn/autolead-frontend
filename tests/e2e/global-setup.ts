@@ -1,6 +1,7 @@
 import { mkdirSync } from "node:fs"
 import path from "node:path"
 import { assertNotProd, loadLocalEnv } from "./support/env"
+import { sweepStaleRuns } from "./support/db"
 import { cleanup, provision, type RunData } from "./support/provision"
 
 /**
@@ -12,6 +13,10 @@ export default async function globalSetup() {
   loadLocalEnv()
   assertNotProd()
   mkdirSync(path.resolve(__dirname, "../../test-results"), { recursive: true })
+
+  // Leftovers from interrupted runs (teardown never ran).
+  const swept = await sweepStaleRuns(Number(process.env.E2E_SWEEP_MINUTES ?? 60)).catch((e) => [String(e)])
+  if (swept.length) console.warn(`E2E sweep problems:\n${swept.join("\n")}`)
 
   const data: RunData = await provision()
   const env: Record<string, string> = {

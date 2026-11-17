@@ -86,7 +86,7 @@ export async function provision(): Promise<RunData> {
       contactId: lead.contactId,
       leadName,
       leadPhone,
-      financeKey: await resolveFinanceKey(api),
+      financeKey: await resolveFinanceKey(api, prefix),
     }
   } catch (e) {
     await cleanupRun(prefix, ids)
@@ -94,8 +94,23 @@ export async function provision(): Promise<RunData> {
   }
 }
 
-async function resolveFinanceKey(api: Api): Promise<string> {
-  if (process.env.E2E_FINANCE_KEY) return process.env.E2E_FINANCE_KEY
+/** Test tags are named T<6 hex>[R]; drop ones left by interrupted runs. */
+async function sweepTestTags(api: Api, key: string, prefix: string): Promise<void> {
+  const own = `T${prefix.slice(-6)}`
+  const { sessionToken } = await api.ok("POST", "/finance/unlock", { financeKey: key })
+  const fin = { "X-Finance-Session": sessionToken }
+  const tags = await api.ok<{ id: string; name: string }[]>("GET", "/finance/tags?includeArchived=true", undefined, fin)
+  for (const t of tags.filter((t) => /^T[0-9a-f]{6}R?$/.test(t.name) && !t.name.startsWith(own))) {
+    await rest("DELETE", `/rest/v1/finance_tags?id=eq.${t.id}`).catch(() => undefined)
+  }
+  await api.call("POST", "/finance/lock", undefined, fin)
+}
+
+async function resolveFinanceKey(api: Api, prefix: string): Promise<string> {
+  if (process.env.E2E_FINANCE_KEY) {
+    await sweepTestTags(api, process.env.E2E_FINANCE_KEY, prefix).catch(() => undefined)
+    return process.env.E2E_FINANCE_KEY
+  }
   const vault = await api.ok<{ initialized: boolean; confirmed: boolean }>("GET", "/finance/vault")
   if (vault.initialized) return "" // finance specs skip without a key
   const { financeKey, recoveryKey } = await api.ok<{ financeKey: string; recoveryKey: string }>(
