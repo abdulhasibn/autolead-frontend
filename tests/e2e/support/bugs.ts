@@ -67,10 +67,19 @@ export const BUGS: Record<string, string> = {
   "ENV-4": "https://github.com/abdulhasibn/wheels-experts-web/issues/10",
 }
 
+/**
+ * Bugs found while automating, not filed on GitHub yet. The annotation shows
+ * the description until the issue exists and is added to BUGS above.
+ */
+export const UNFILED: Record<string, string> = {
+  "NEW-1":
+    "Lead budget >= 1e10 returns 503 DB_UNAVAILABLE (numeric field overflow); the UI shows 'Service temporarily unavailable' instead of a field error",
+}
+
 /** Annotate the running test with the issue(s) it is expected to expose. */
 export function bugUrls(...ids: string[]): string[] {
   return ids.map((id) => {
-    const url = BUGS[id]
+    const url = BUGS[id] ?? (UNFILED[id] ? `unfiled ${id}: ${UNFILED[id]}` : undefined)
     if (!url) throw new Error(`E2E: unknown bug id ${id}`)
     return url
   })

@@ -25,9 +25,11 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
-  workers: isCI ? 2 : undefined,
+  // `next dev` struggles with more than two parallel browsers.
+  workers: 2,
   timeout: 60_000,
-  expect: { timeout: 10_000 },
+  // next dev compiles routes on first hit; give assertions room locally.
+  expect: { timeout: isCI ? 10_000 : 15_000 },
   reporter: isCI ? [["blob"], ["list"]] : [["html", { open: "never" }], ["list"]],
   use: {
     baseURL,
