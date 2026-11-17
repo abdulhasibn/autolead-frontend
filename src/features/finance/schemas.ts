@@ -133,6 +133,8 @@ export const saleSchema = z.object({
   leadId: id.nullable().default(null),
   /** Money already received from the buyer, saved as a `sale` income entry. */
   payment: z.object({ amount, paidOn: ymd }).nullable().default(null),
+  /** Price below what the buyer has paid: trim their payments, or keep the overpayment. */
+  buyerPayments: z.enum(["adjust", "keep"]).nullable().default(null),
 })
 
 export const quoteSchema = z.object({

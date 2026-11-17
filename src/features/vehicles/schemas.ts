@@ -9,9 +9,15 @@ import {
   TRANSMISSIONS,
 } from "./constants"
 
-// Matches the backend RegistrationNumber value object once spaces are stripped.
-const registrationRegex = /^[A-Z0-9-]{1,16}$/
-const registrationMessage = "Use letters, digits and dashes only (max 16)"
+// Same rule as the backend RegistrationNumber value object (issue #30): uppercase,
+// spaces, dashes, dots and slashes removed, then letters and digits only. Every
+// spelling of a plate becomes one value, so duplicates can't hide behind a dash.
+const registrationRegex = /^[A-Z0-9]{1,16}$/
+const registrationMessage = "Use letters and digits only, max 16 (spaces and dashes are removed)"
+
+export function normalizeRegistration(value: string): string {
+  return value.toUpperCase().replace(/[\s.\-/]+/g, "")
+}
 const currentYear = new Date().getFullYear()
 
 // ---------------------------------------------------------------------------
@@ -20,7 +26,7 @@ const currentYear = new Date().getFullYear()
 
 const vehicleDetailsSchema = z.object({
   year: z.number().int().min(1900).max(2100),
-  registrationNumber: z.string().regex(registrationRegex, registrationMessage),
+  registrationNumber: z.string().transform(normalizeRegistration).pipe(z.string().regex(registrationRegex, registrationMessage)),
   fuelType: z.enum(FUEL_TYPES),
   transmission: z.enum(TRANSMISSIONS),
   kmDriven: z.number().int().min(0),
@@ -131,7 +137,7 @@ export const vehicleFormSchema = z.object({
   year: intField("Year", 1900, currentYear + 1),
   registrationNumber: z
     .string()
-    .transform((value) => value.toUpperCase().replace(/\s+/g, ""))
+    .transform(normalizeRegistration)
     .refine((value) => value !== "", "Registration number is required")
     .refine((value) => registrationRegex.test(value), registrationMessage),
   fuelType: z.enum(FUEL_TYPES, { error: "Select a fuel type" }),

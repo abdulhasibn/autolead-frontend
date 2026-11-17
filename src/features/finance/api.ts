@@ -246,8 +246,11 @@ export async function setDeal(vehicleId: string, body: DealTerms): Promise<Vehic
 
 export async function recordSale(
   vehicleId: string,
-  /** `leadId`: the buyer's booked lead, converted by the sale; null once the car is sold. */
-  body: { finalisedPrice: number; soldOn: string; leadId: string | null }
+  /**
+   * `leadId`: the buyer's booked lead, converted by the sale; null once the car is sold.
+   * `keepOverpayment`: save a price below what the buyer has paid (else `422 SALE_PRICE_BELOW_RECEIVED`).
+   */
+  body: { finalisedPrice: number; soldOn: string; leadId: string | null; keepOverpayment?: boolean }
 ): Promise<VehicleDealState> {
   return financeRequest("POST", `/finance/vehicles/${vehicleId}/sale`, { body })
 }

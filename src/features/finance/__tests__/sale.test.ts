@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { buildSale, type SaleForm } from "../logic/sale"
+import { buildSale, planBuyerPaymentTrim, type BuyerPaymentEntry, type SaleForm } from "../logic/sale"
 
 const TODAY = "2026-11-12"
 const form = (over: Partial<SaleForm> = {}): SaleForm => ({
@@ -29,7 +29,7 @@ describe("buildSale", () => {
   it("saves the sale with nothing received", () => {
     expect(buildSale(form())).toEqual({
       ok: true,
-      payload: { finalisedPrice: 600000, soldOn: TODAY, leadId: null, payment: null },
+      payload: { finalisedPrice: 600000, soldOn: TODAY, leadId: null, payment: null, buyerPayments: null },
     })
   })
 
@@ -59,5 +59,45 @@ describe("buildSale", () => {
     expect(buildSale(form({ price: "" })).ok).toBe(false)
     expect(buildSale(form({ soldOn: "" })).ok).toBe(false)
     expect(buildSale(form({ paid: "full", paidOn: "" })).ok).toBe(false)
+  })
+})
+
+describe("planBuyerPaymentTrim (#31)", () => {
+  const pay = (id: string, amount: number, entryDate: string, createdAt = `${entryDate}T10:00:00Z`): BuyerPaymentEntry => ({
+    id,
+    amount,
+    entryDate,
+    createdAt,
+  })
+
+  it("lowers the single sale payment to the new price", () => {
+    expect(planBuyerPaymentTrim([pay("a", 500000, "2026-11-01")], 50000)).toEqual({
+      update: [{ id: "a", amount: 450000 }],
+      remove: [],
+    })
+  })
+
+  it("cuts the newest payments first and deletes those it empties", () => {
+    const entries = [pay("token", 50000, "2026-10-01"), pay("balance", 450000, "2026-11-01"), pay("extra", 30000, "2026-11-05")]
+    expect(planBuyerPaymentTrim(entries, 100000)).toEqual({
+      update: [{ id: "balance", amount: 380000 }],
+      remove: ["extra"],
+    })
+  })
+
+  it("breaks a same-day tie by when it was recorded", () => {
+    const entries = [pay("first", 1000, "2026-11-01", "2026-11-01T09:00:00Z"), pay("second", 1000, "2026-11-01", "2026-11-01T11:00:00Z")]
+    expect(planBuyerPaymentTrim(entries, 1000)).toEqual({ update: [], remove: ["second"] })
+  })
+
+  it("removes an entry exactly equal to the excess and keeps paise exact", () => {
+    expect(planBuyerPaymentTrim([pay("a", 1000.1, "2026-11-01"), pay("b", 0.3, "2026-11-02")], 0.4)).toEqual({
+      update: [{ id: "a", amount: 1000 }],
+      remove: ["b"],
+    })
+  })
+
+  it("changes nothing when there is no excess", () => {
+    expect(planBuyerPaymentTrim([pay("a", 1000, "2026-11-01")], 0)).toEqual({ update: [], remove: [] })
   })
 })
