@@ -12,7 +12,7 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
   NOT_FOUND: "The requested resource was not found.",
   UNIQUE_VIOLATION: "A record with these details already exists.",
   CONFLICT: "This action conflicts with existing data.",
-  LAST_ADMIN_PROTECTED: "Cannot remove the last administrator account.",
+  LAST_ADMIN_PROTECTED: "You can’t deactivate your own account or remove the last admin.",
   VALIDATION_ERROR: "Please check your input and try again.",
   INVALID_LEAD_STATUS_TRANSITION:
     "This status transition is not allowed for leads.",
