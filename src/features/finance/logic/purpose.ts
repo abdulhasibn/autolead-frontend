@@ -73,10 +73,11 @@ export function nextPurpose({
 }
 
 /**
- * What to send as `purpose` on save. Sending null lets the server apply its
- * default on create; on a car change the server resets unless we send one,
- * so a hand-picked value is always sent.
+ * What to send as `purpose` on save. On a car change the server resets the
+ * purpose unless we send one, so a hand-picked value is always sent. With no
+ * car the only valid purpose is "general"; it is sent explicitly because the
+ * update endpoint rejects null.
  */
-export function purposeForSave(purpose: EntryPurpose, hasCar: boolean): EntryPurpose | null {
-  return hasCar ? purpose : null
+export function purposeForSave(purpose: EntryPurpose, hasCar: boolean): EntryPurpose {
+  return hasCar ? purpose : "general"
 }
