@@ -71,7 +71,6 @@ jobs:
       AUTH_TRUST_HOST: 'true'
       API_BASE_URL: http://localhost:3000
       NEXT_PUBLIC_API_BASE_URL: http://localhost:3000
-      INSIGHTS_USE_FIXTURES: '1'
     steps:
       - name: Checkout frontend
         uses: actions/checkout@v5
