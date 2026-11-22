@@ -26,6 +26,8 @@ import {
 } from "../schemas"
 import type { LeadPreference } from "../types"
 import { PreferenceFields, preferenceErrors } from "./preference-fields"
+import { DraftBanner } from "@/components/draft-banner"
+import { useDraftKey, useFormDraft } from "@/hooks/use-form-draft"
 
 interface EditPreferenceDialogProps {
   leadId: string
@@ -50,16 +52,18 @@ export function EditPreferenceDialog({
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
+  const form = useForm<LeadPreferenceFormInput, unknown, LeadPreferenceInput>({
+    resolver: zodResolver(leadPreferenceFormSchema),
+    defaultValues: preferenceToFormValues(preference),
+  })
   const {
     handleSubmit,
     reset,
     setValue,
     control,
     formState: { errors, isSubmitted },
-  } = useForm<LeadPreferenceFormInput, unknown, LeadPreferenceInput>({
-    resolver: zodResolver(leadPreferenceFormSchema),
-    defaultValues: preferenceToFormValues(preference),
-  })
+  } = form
+  const draft = useFormDraft(form, { key: useDraftKey("lead:preference", leadId), open })
 
   const values = useWatch({ control })
 
@@ -71,6 +75,7 @@ export function EditPreferenceDialog({
         handleError(result.error, "Could not save the preference.")
         return
       }
+      draft.clear()
       toast.success("Buyer preference saved.")
       setOpen(false)
     })
@@ -107,6 +112,7 @@ export function EditPreferenceDialog({
           </DialogDescription>
         </DialogHeader>
         <form id="edit-preference-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+          <DraftBanner draft={draft} className="mb-3" />
           <PreferenceFields
             idPrefix="edit-pref"
             values={values}

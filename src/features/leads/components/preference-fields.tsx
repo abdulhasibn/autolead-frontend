@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import type { FieldErrors } from "react-hook-form"
 import { Input } from "@/components/ui/input"
+import { NumericInput } from "@/components/ui/numeric-input"
 import type { MakeReadModel, ModelReadModel, VariantReadModel } from "@/features/catalog/types"
 import { getModelsAction, getVariantsAction } from "@/features/vehicles/actions"
 import {
@@ -207,6 +208,7 @@ export function PreferenceFields({
             onChange={(v) => onChange("preferredKmMax", v)}
             error={errors.preferredKmMax}
             step={5000}
+            grouped
           />
           <NumberField
             id={id("max-owners")}
@@ -261,10 +263,14 @@ function NumberField({
   min?: number
   max?: number
   step?: number
+  /** Group digits the Indian way while typing (km, rupees); not for years. */
+  grouped?: boolean
 }) {
+  const { grouped, ...rest } = props
+  const Field = grouped ? NumericInput : Input
   return (
     <FormField id={id} label={label} error={error}>
-      <Input
+      <Field
         id={id}
         inputMode="numeric"
         enterKeyHint="next"
@@ -273,7 +279,7 @@ function NumberField({
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={!!error}
         aria-describedby={hint ? `${id}-hint` : undefined}
-        {...props}
+        {...rest}
       />
       {hint && !error && (
         <p id={`${id}-hint`} className="text-[11px] text-subtle-foreground">

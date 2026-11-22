@@ -19,6 +19,8 @@ import { createOwnerAction } from "../actions"
 import { createOwnerSchema, type CreateOwnerInput } from "../schemas"
 import { OwnerFormFields } from "./owner-form-fields"
 import { useSaveTransition } from "@/hooks/use-save-transition"
+import { DraftBanner } from "@/components/draft-banner"
+import { useDraftKey, useFormDraft } from "@/hooks/use-form-draft"
 
 const DEFAULT_VALUES: CreateOwnerInput = {
   fullName: "",
@@ -37,16 +39,18 @@ export function CreateOwnerSheet() {
   const [open, setOpen] = useState(false)
   const { isPending, run: startTransition, refresh } = useSaveTransition()
 
+  const form = useForm<CreateOwnerInput>({
+    resolver: zodResolver(createOwnerSchema),
+    defaultValues: DEFAULT_VALUES,
+  })
   const {
     register,
     control,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CreateOwnerInput>({
-    resolver: zodResolver(createOwnerSchema),
-    defaultValues: DEFAULT_VALUES,
-  })
+  } = form
+  const draft = useFormDraft(form, { key: useDraftKey("owner:create"), open })
 
   function onSubmit(data: CreateOwnerInput) {
     startTransition(async () => {
@@ -55,6 +59,7 @@ export function CreateOwnerSheet() {
         handleError(result.error)
         return
       }
+      draft.clear()
       toast.success("Owner created")
       refresh(() => {
         setOpen(false)
@@ -81,6 +86,7 @@ export function CreateOwnerSheet() {
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-1 flex-col gap-6 px-4 sm:px-6"
         >
+          <DraftBanner draft={draft} />
           <OwnerFormFields register={register} control={control} errors={errors} />
 
           <div className="sticky bottom-0 -mx-4 mt-auto flex gap-2 border-t border-border/50 bg-popover px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:-mx-6 sm:px-6 sm:pb-6">

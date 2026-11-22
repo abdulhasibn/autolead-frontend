@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { LayoutGrid, List, Loader2, Search, SlidersHorizontal, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { NumericInput } from "@/components/ui/numeric-input"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { FilterSheet } from "@/components/filter-sheet"
 import { Toggle } from "@/components/ui/toggle"
@@ -309,10 +310,10 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
             <div className="space-y-1">
               <span className={fieldLabel}>Km driven</span>
               <div className="flex gap-1">
-                <Input aria-label="Minimum km" inputMode="numeric" placeholder="Min" className="font-mono-data h-9 text-xs"
+                <NumericInput aria-label="Minimum km" placeholder="Min" className="font-mono-data h-9 text-xs"
                   defaultValue={draft.kmMin ?? ""} key={`kmin-${open}`}
                   onChange={(e) => setDraft((d) => ({ ...d, kmMin: parseNumber(e.target.value) }))} />
-                <Input aria-label="Maximum km" inputMode="numeric" placeholder="Max" className="font-mono-data h-9 text-xs"
+                <NumericInput aria-label="Maximum km" placeholder="Max" className="font-mono-data h-9 text-xs"
                   defaultValue={draft.kmMax ?? ""} key={`kmax-${open}`}
                   onChange={(e) => setDraft((d) => ({ ...d, kmMax: parseNumber(e.target.value) }))} />
               </div>

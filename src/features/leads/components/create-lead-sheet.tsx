@@ -8,6 +8,9 @@ import { Check, Loader2, Plus } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { NumericInput } from "@/components/ui/numeric-input"
+import { DraftBanner, DraftDot, SaveDraftButton } from "@/components/draft-banner"
+import { useDraftKey, useFormDraft, useHasDraft } from "@/hooks/use-form-draft"
 import {
   Sheet,
   SheetContent,
@@ -102,6 +105,11 @@ export function CreateLeadSheet({
   const [step, setStep] = useState(0)
   const [isPending, startTransition] = useTransition()
 
+  const form = useForm<CreateLeadFormInput, unknown, CreateLeadInput>({
+    resolver: zodResolver(createLeadFormSchema),
+    defaultValues: DEFAULT_VALUES,
+    mode: "onTouched",
+  })
   const {
     register,
     control,
@@ -110,11 +118,10 @@ export function CreateLeadSheet({
     reset,
     setValue,
     formState: { errors, isSubmitted },
-  } = useForm<CreateLeadFormInput, unknown, CreateLeadInput>({
-    resolver: zodResolver(createLeadFormSchema),
-    defaultValues: DEFAULT_VALUES,
-    mode: "onTouched",
-  })
+  } = form
+  const draftKey = useDraftKey("lead:create")
+  const draft = useFormDraft(form, { key: draftKey, open, step, setStep })
+  const hasDraft = useHasDraft(draftKey)
   const values = useWatch({ control })
 
   const vehicleOptions = vehicles
@@ -140,6 +147,7 @@ export function CreateLeadSheet({
         return
       }
       toast.success(`Lead created for ${result.data.contactFullName}.`)
+      draft.clear()
       close()
       router.push(`/leads/${result.data.id}`)
     })
@@ -164,6 +172,7 @@ export function CreateLeadSheet({
       <SheetTrigger render={<Button />}>
         <Plus />
         New lead
+        <DraftDot show={hasDraft} />
       </SheetTrigger>
 
       <SheetContent className="w-full gap-0 data-[side=right]:sm:max-w-xl">
@@ -216,6 +225,7 @@ export function CreateLeadSheet({
           }}
           className="flex-1 space-y-6 overflow-y-auto overscroll-contain p-4 sm:p-5"
         >
+          <DraftBanner draft={draft} />
           {step === 0 && (
             <>
               <section className="space-y-3">
@@ -260,7 +270,7 @@ export function CreateLeadSheet({
                 <SectionTitle>Budget &amp; timing</SectionTitle>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <FormField id="budget" label="Max budget (₹)" error={errors.budget?.message}>
-                    <Input id="budget" inputMode="numeric" enterKeyHint="next" placeholder="e.g. 650000" aria-invalid={!!errors.budget} {...register("budget")} />
+                    <NumericInput id="budget" prefix="₹" enterKeyHint="next" placeholder="e.g. 6,50,000" aria-invalid={!!errors.budget} {...register("budget")} />
                   </FormField>
                   <FormField id="purchaseTimeline" label="Purchase timeline">
                     <Input id="purchaseTimeline" placeholder="e.g. Within a month" {...register("purchaseTimeline")} />
@@ -360,6 +370,7 @@ export function CreateLeadSheet({
           >
             {step === 0 ? "Cancel" : "Back"}
           </Button>
+          <SaveDraftButton draft={draft} onSaved={close} disabled={isPending} className="mr-auto" />
           <div className="flex gap-2">
             {step < LAST_STEP && (
               <Button
