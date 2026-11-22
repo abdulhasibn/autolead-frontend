@@ -51,7 +51,7 @@ export function VehicleTabs({ tabs }: { tabs: VehicleTab[] }) {
       <TabsList
         variant="line"
         aria-label="Vehicle sections"
-        className="h-auto w-full justify-start gap-5 overflow-x-auto rounded-none border-b border-muted p-0 px-4 scrollbar-none max-md:sticky max-md:top-[calc(3.5rem+env(safe-area-inset-top))] max-md:z-10 max-md:gap-4 max-md:rounded-t-xl max-md:bg-card"
+        className="h-auto w-full justify-start gap-5 overflow-x-auto rounded-none border-b border-muted p-0 px-4 scrollbar-none max-md:sticky max-md:top-[calc(3.5rem+env(safe-area-inset-top)-var(--main-pt,0px))] max-md:z-10 max-md:gap-4 max-md:rounded-t-xl max-md:bg-card"
       >
         {tabs.map((tab) => (
           <TabsTrigger
