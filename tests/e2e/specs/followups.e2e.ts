@@ -19,7 +19,10 @@ function istInstant(daysFromNow: number, hh: number, mm = 0): Date {
 async function pickDateTime(page: Page, scope: Locator, preset: "Tomorrow" | "In 3 days" | "Next week", time: string) {
   await scope.getByLabel("Date and time").click()
   await page.getByRole("button", { name: preset }).click()
-  await pick(page, "Time", time)
+  // exact: a loose "Time" also matches the "Date and time" trigger, and
+  // clicking that closes the picker.
+  await page.getByRole("combobox", { name: "Time", exact: true }).click()
+  await page.getByRole("option", { name: time, exact: true }).click()
   await page.getByRole("button", { name: "Done", exact: true }).click()
 }
 

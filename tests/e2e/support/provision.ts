@@ -9,6 +9,7 @@
  * Needs: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, API_BASE_URL (backend).
  * Optional: E2E_FINANCE_KEY (shared vault, e.g. lms_dev). Without it, an
  * uninitialised vault (fresh CI database) is set up and its key used.
+ * E2E_SKIP_FINANCE=1 skips the finance tests and never touches the vault.
  */
 import { randomBytes } from "node:crypto"
 import { Api, randomPhone, SHOWROOM_ID } from "./api"
@@ -106,10 +107,38 @@ async function sweepTestTags(api: Api, key: string, prefix: string): Promise<voi
   await api.call("POST", "/finance/lock", undefined, fin)
 }
 
+/**
+ * Tries the configured key once before any test uses it. A stale key would
+ * otherwise fail every finance test and, after five tries, lock the shared
+ * vault for everyone using it (UAT included). On a wrong key or an active
+ * lockout, finance tests skip instead.
+ */
+async function checkFinanceKey(api: Api, key: string): Promise<boolean> {
+  const res = await api.call<{ sessionToken?: string; error?: { code?: string; message?: string } }>(
+    "POST",
+    "/finance/unlock",
+    { financeKey: key }
+  )
+  if (res.status === 200 && res.body.sessionToken) {
+    await api.call("POST", "/finance/lock", undefined, { "X-Finance-Session": res.body.sessionToken })
+    return true
+  }
+  const reason = res.body?.error?.message ?? `HTTP ${res.status}`
+  console.warn(
+    `E2E: E2E_FINANCE_KEY was refused (${res.status} ${res.body?.error?.code ?? ""}: ${reason}). ` +
+      "Finance tests will be skipped. Update the key in tests/e2e/.env.e2e.local."
+  )
+  return false
+}
+
 async function resolveFinanceKey(api: Api, prefix: string): Promise<string> {
-  if (process.env.E2E_FINANCE_KEY) {
-    await sweepTestTags(api, process.env.E2E_FINANCE_KEY, prefix).catch(() => undefined)
-    return process.env.E2E_FINANCE_KEY
+  // E2E_SKIP_FINANCE=1: skip finance tests without sending any key to the vault.
+  if (process.env.E2E_SKIP_FINANCE) return ""
+  const configured = process.env.E2E_FINANCE_KEY
+  if (configured) {
+    if (!(await checkFinanceKey(api, configured))) return ""
+    await sweepTestTags(api, configured, prefix).catch(() => undefined)
+    return configured
   }
   const vault = await api.ok<{ initialized: boolean; confirmed: boolean }>("GET", "/finance/vault")
   if (vault.initialized) return "" // finance specs skip without a key

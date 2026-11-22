@@ -29,8 +29,10 @@ function rupees(text: string | null): number {
 }
 
 test.describe("finance", () => {
-  test.beforeEach(({ e2e }) => {
-    test.skip(!e2e.financeKey, "needs E2E_FINANCE_KEY (shared vault) or a fresh vault")
+  // FIN-01 and FIN-18 check the locked state, so they run without a key.
+  test.beforeEach(({ e2e }, testInfo) => {
+    const needsKey = !/\bFIN-(01|18)\b/.test(testInfo.title)
+    test.skip(needsKey && !e2e.financeKey, "needs a working E2E_FINANCE_KEY (shared vault) or a fresh vault")
   })
 
   test("@smoke FIN-01 finance while locked shows the unlock screen", async ({ page }) => {
@@ -128,7 +130,6 @@ test.describe("finance", () => {
   })
 
   test("@regression FIN-08 edit a business (no-car) entry", async ({ page, api, e2e }) => {
-    bug("FN-1")
     const fin = await finSession(api, e2e.financeKey)
     const note = `Note ${e2e.prefix} edit-me`
     await api.ok("POST", "/finance/entries", { kind: "expense", amount: 777, entryDate: today(), vehicleId: null, purpose: null, note }, fin)
@@ -260,7 +261,6 @@ test.describe("finance", () => {
   })
 
   test("@regression FIN-13b editing a fully-paid sale adjusts the buyer payment", async ({ page, api, e2e }) => {
-    bug("DI-2")
     const { v, fin } = await bookedCar(api, e2e)
     await unlock(page, e2e.financeKey)
     await page.goto(`/vehicles/${v.id}?tab=money`)
@@ -296,7 +296,7 @@ test.describe("finance", () => {
   })
 
   test("@regression FIN-15 reports render and 'Sales' agrees across screens", async ({ page, api, e2e }) => {
-    bug("UX-1", "DI-3")
+    bug("UX-1")
     await unlock(page, e2e.financeKey)
     for (const report of ["P&L", "Cash flow", "Profit per car", "Dues", "Stock"]) {
       await page.goto("/finance/reports")

@@ -35,7 +35,9 @@ export function loadLocalEnv(): void {
   ]
   for (const src of sources) {
     for (const [k, v] of Object.entries(src)) {
-      if (!process.env[k] && v) process.env[k] = v
+      // A var that is set, even to "", wins. globalSetup sets E2E_FINANCE_KEY=""
+      // to mean "skip finance"; workers re-run this file and must not refill it.
+      if (process.env[k] === undefined && v) process.env[k] = v
     }
   }
 }

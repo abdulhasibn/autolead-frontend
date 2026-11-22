@@ -314,7 +314,7 @@ test.describe("Indian-comma number inputs", () => {
     await s.getByRole("button", { name: "Continue" }).click()
     await s.getByLabel("Search owners").fill(owner.fullName)
     await s.getByRole("button", { name: new RegExp(owner.fullName) }).or(page.getByRole("option", { name: new RegExp(owner.fullName) })).first().click()
-    await s.getByRole("button", { name: "Commission sale" }).click()
+    await s.getByRole("radio", { name: "Commission sale" }).click()
     await s.getByRole("button", { name: "Add vehicle" }).click()
     await expect(toast(page, "Vehicle added. Now add its photos.")).toBeVisible({ timeout: 30_000 })
     const row = await db.one("vehicles", `registration_number=eq.${reg}`, "km_driven")
