@@ -16,7 +16,11 @@ export interface ApiResponse<T = any> {
 }
 
 export class Api {
-  constructor(public token?: string) {}
+  constructor(
+    public token?: string,
+    /** Kept so a worker-long session can sign in again when its token stops working. */
+    private readonly credentials?: { email: string; password: string }
+  ) {}
 
   static async login(email: string, password: string): Promise<Api> {
     const res = await new Api().call<{ accessToken: string }>("POST", "/auth/login", {
@@ -24,10 +28,29 @@ export class Api {
       password,
     })
     if (res.status !== 200) throw new Error(`E2E login ${email}: ${res.status} ${JSON.stringify(res.body)}`)
-    return new Api(res.body.accessToken)
+    return new Api(res.body.accessToken, { email, password })
   }
 
+  /**
+   * One retry on 401 for a logged-in client: a single token lives for a whole
+   * worker, and a run can outlast it (or lose it to a provider hiccup). The
+   * retry signs in again; a second 401 is returned as is.
+   */
   async call<T = any>(
+    method: string,
+    path: string,
+    body?: unknown,
+    headers: Record<string, string> = {}
+  ): Promise<ApiResponse<T>> {
+    const first = await this.send<T>(method, path, body, headers)
+    if (first.status !== 401 || !this.credentials || path === "/auth/login") return first
+    const login = await new Api().send<{ accessToken: string }>("POST", "/auth/login", this.credentials)
+    if (login.status !== 200) return first
+    this.token = login.body.accessToken
+    return this.send<T>(method, path, body, headers)
+  }
+
+  private async send<T = any>(
     method: string,
     path: string,
     body?: unknown,
