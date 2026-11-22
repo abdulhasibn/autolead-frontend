@@ -45,21 +45,27 @@ export function formatPercent(value: number | null): string {
 }
 
 /** Returns the delta between value and previous as an object with direction and display */
+export type TrendKind = "count" | "rate"
+
+/**
+ * Change between two values for a KPI trend badge. Counts show the absolute
+ * difference ("+3"); rates (0–1 fractions) show percentage points ("+5pp").
+ */
 export function trendDelta(
   value: number | null,
-  previous: number | null
+  previous: number | null,
+  kind: TrendKind = "count"
 ): { direction: "up" | "down" | "neutral"; label: string } {
   if (value === null || previous === null) {
     return { direction: "neutral", label: "—" }
   }
   const diff = value - previous
   if (diff === 0) return { direction: "neutral", label: "—" }
-  const abs = Math.abs(diff)
-  // For percentage values (0–1 range), show pp difference
-  const isRate = value >= 0 && value <= 1 && previous >= 0 && previous <= 1
-  const label = isRate
-    ? `${diff > 0 ? "+" : ""}${Math.round(diff * 100)}pp`
-    : `${diff > 0 ? "+" : ""}${abs}`
+  const sign = diff > 0 ? "+" : "-"
+  const label =
+    kind === "rate"
+      ? `${sign}${Math.abs(Math.round(diff * 100))}pp`
+      : `${sign}${Math.abs(diff)}`
   return {
     direction: diff > 0 ? "up" : "down",
     label,
