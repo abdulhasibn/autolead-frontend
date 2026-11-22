@@ -1,11 +1,17 @@
 /** Small UI helpers for the CRM's base-ui widgets (no app code changes). */
 import { expect, type Locator, type Page } from "@playwright/test"
 
-/** base-ui Select: open the combobox, click the option. */
-export async function pick(scope: Page | Locator, combobox: string | RegExp, option: string | RegExp) {
+/**
+ * base-ui Select or searchable Combobox (lists over 8 items): open it, type
+ * into the search box when there is one, click the option.
+ */
+export async function pick(scope: Page | Locator, field: string | RegExp, option: string | RegExp) {
   const page = "page" in scope ? scope.page() : scope
-  await scope.getByRole("combobox", { name: combobox }).click()
-  await page.getByRole("option", { name: option, exact: typeof option === "string" }).click()
+  const trigger = scope.getByRole("combobox", { name: field }).or(scope.getByRole("button", { name: field })).first()
+  await trigger.click()
+  const search = page.getByPlaceholder("Search…")
+  if (typeof option === "string" && (await search.isVisible().catch(() => false))) await search.fill(option)
+  await page.getByRole("option", { name: option, exact: typeof option === "string" }).first().click()
 }
 
 /** Sonner toast with the given text. */
