@@ -13,7 +13,7 @@ export function ScrollGradient({ children }: { children: React.ReactNode }) {
       <main
         ref={mainRef}
         onScroll={() => setScrolled((mainRef.current?.scrollTop ?? 0) > 0)}
-        className="absolute inset-0 overflow-y-auto overscroll-contain px-4 md:px-6 pt-[calc(4rem+env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] max-md:has-data-[slot=mobile-action-bar]:pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
+        className="absolute inset-0 overflow-y-auto overscroll-contain px-4 md:px-6 [--main-pt:calc(4rem+env(safe-area-inset-top))] pt-(--main-pt) pb-[max(1.5rem,env(safe-area-inset-bottom))] max-md:has-data-[slot=mobile-action-bar]:pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
       >
         {children}
       </main>
