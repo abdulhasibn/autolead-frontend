@@ -111,6 +111,13 @@ export async function deleteMedia(id: string, mediaId: string): Promise<void> {
   return serverApiClient.del(`/vehicles/${id}/media/${mediaId}`)
 }
 
+export async function reorderMedia(
+  id: string,
+  items: { id: string; category: string; sortOrder: number }[]
+): Promise<void> {
+  return serverApiClient.put(`/vehicles/${id}/media/order`, { items })
+}
+
 export async function getVehicleDocuments(
   id: string
 ): Promise<Page<VehicleDocumentDto>> {

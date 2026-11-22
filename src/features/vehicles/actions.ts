@@ -23,6 +23,7 @@ import {
   createVehicle,
   deleteDocument,
   deleteMedia,
+  reorderMedia,
   getVehicle,
   requestDocumentUpload,
   requestMediaUpload,
@@ -36,6 +37,7 @@ import {
   createVehicleSchema,
   documentUploadSchema,
   mediaUploadSchema,
+  reorderMediaSchema,
   setListedPriceSchema,
   updateVehicleSchema,
 } from "./schemas"
@@ -203,6 +205,24 @@ export async function deleteMediaAction(
     if (!id.success || !media.success) return validationError()
 
     await deleteMedia(id.data, media.data)
+    revalidateVehicles()
+    return actionOk(undefined)
+  } catch (err) {
+    return actionError(err)
+  }
+}
+
+export async function reorderMediaAction(
+  vehicleId: string,
+  input: unknown
+): Promise<ActionResult> {
+  try {
+    await requireSession()
+    const id = idSchema.safeParse(vehicleId)
+    const parsed = reorderMediaSchema.safeParse(input)
+    if (!id.success || !parsed.success) return validationError()
+
+    await reorderMedia(id.data, parsed.data.items)
     revalidateVehicles()
     return actionOk(undefined)
   } catch (err) {

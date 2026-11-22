@@ -1,13 +1,18 @@
 "use client"
 
-import { useRef, useState, useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Camera, ImagePlus, Loader2, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { useApiError } from "@/hooks/use-api-error"
 import { cn } from "@/lib/utils"
-import { confirmMediaAction, deleteMediaAction, requestMediaUploadAction } from "../actions"
+import {
+  confirmMediaAction,
+  deleteMediaAction,
+  reorderMediaAction,
+  requestMediaUploadAction,
+} from "../actions"
 import {
   MEDIA_CATEGORY_LABELS,
   MEDIA_CONTENT_TYPES,
@@ -26,6 +31,27 @@ interface PendingUpload {
   previewUrl: string
   progress: number
 }
+
+interface Placement {
+  id: string
+  category: MediaCategory
+  sortOrder: number
+}
+
+interface DragState {
+  id: string
+  pointerId: number
+  pointerType: string
+  startX: number
+  startY: number
+  active: boolean
+  timer?: ReturnType<typeof setTimeout>
+}
+
+/** Hold this long on touch before a drag starts, so a normal swipe still scrolls. */
+const LONG_PRESS_MS = 250
+const MOUSE_SLOP_PX = 6
+const TOUCH_SLOP_PX = 10
 
 interface PhotoManagerProps {
   vehicleId: string
@@ -52,11 +78,39 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
   const inputRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
   const targetCategory = useRef<MediaCategory>("other")
+  const containerRef = useRef<HTMLDivElement>(null)
+  const ghostRef = useRef<HTMLDivElement>(null)
+  const drag = useRef<DragState | null>(null)
+  const suppressClick = useRef(false)
+  const [dragging, setDragging] = useState<VehicleMediaDto | null>(null)
+  const [dropTarget, setDropTarget] = useState<string | null>(null)
+  // Optimistic moves, valid only until the server sends a new media list.
+  const [moves, setMoves] = useState<{ base: VehicleMediaDto[]; map: Map<string, Placement> }>({
+    base: media,
+    map: new Map(),
+  })
+  const moved = moves.base === media ? moves.map : null
+
+  // While a drag is live, stop the page from scrolling under the finger.
+  useEffect(() => {
+    const block = (e: TouchEvent) => {
+      if (drag.current?.active) e.preventDefault()
+    }
+    document.addEventListener("touchmove", block, { passive: false })
+    return () => document.removeEventListener("touchmove", block)
+  }, [])
 
   // Server props win once they include a freshly uploaded photo.
   const byId = new Map<string, VehicleMediaDto>()
   for (const m of [...added, ...media]) byId.set(m.id, m)
-  const all = orderPhotos([...byId.values()].filter((m) => !removed.has(m.id)))
+  const all = orderPhotos(
+    [...byId.values()]
+      .filter((m) => !removed.has(m.id))
+      .map((m) => {
+        const p = moved?.get(m.id)
+        return p ? { ...m, category: p.category, sortOrder: p.sortOrder } : m
+      })
+  )
 
   const primaryByAngle = new Map<MediaCategory, VehicleMediaDto>()
   for (const m of all) {
@@ -149,6 +203,143 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
     }
   }
 
+  const categoryOf = (m: VehicleMediaDto): MediaCategory => m.category ?? "other"
+
+  /** Exchange two photos' slots (angle + position). */
+  function swap(a: VehicleMediaDto, b: VehicleMediaDto): Placement[] {
+    if (categoryOf(a) === categoryOf(b) && a.sortOrder === b.sortOrder) {
+      // Same key, so only upload time orders them: give each a distinct position.
+      const [first, second] = indexOf(a.id) < indexOf(b.id) ? [a, b] : [b, a]
+      return [
+        { id: second.id, category: categoryOf(second), sortOrder: first.sortOrder },
+        { id: first.id, category: categoryOf(first), sortOrder: Math.min(first.sortOrder + 1, 32767) },
+      ]
+    }
+    return [
+      { id: a.id, category: categoryOf(b), sortOrder: b.sortOrder },
+      { id: b.id, category: categoryOf(a), sortOrder: a.sortOrder },
+    ]
+  }
+
+  function planMove(src: VehicleMediaDto, slot: string): Placement[] {
+    if (slot.startsWith("angle:")) {
+      const angle = slot.slice("angle:".length) as MediaCategory
+      const occupant = primaryByAngle.get(angle)
+      if (occupant?.id === src.id) return []
+      return occupant ? swap(src, occupant) : [{ id: src.id, category: angle, sortOrder: src.sortOrder }]
+    }
+    if (slot === "end") {
+      if (more.at(-1)?.id === src.id) return []
+      const last = Math.max(0, ...all.map((m) => m.sortOrder))
+      return [{ id: src.id, category: "other", sortOrder: Math.min(last + 1, 32767) }]
+    }
+    const target = all.find((m) => `photo:${m.id}` === slot)
+    return !target || target.id === src.id ? [] : swap(src, target)
+  }
+
+  function commitMove(src: VehicleMediaDto, slot: string) {
+    const changes = planMove(src, slot)
+    if (changes.length === 0) return
+    const before = moves
+    const map = new Map(moved ?? [])
+    for (const c of changes) map.set(c.id, c)
+    setMoves({ base: media, map })
+    void reorderMediaAction(vehicleId, { items: changes }).then((result) => {
+      if (!result.ok) {
+        setMoves(before)
+        handleError(result.error, "Could not move the photo.")
+        return
+      }
+      router.refresh()
+    })
+  }
+
+  function slotAt(x: number, y: number): string | null {
+    const el = document.elementFromPoint(x, y)?.closest<HTMLElement>("[data-slot]")
+    if (!el || !containerRef.current?.contains(el)) return null
+    return el.dataset.slot ?? null
+  }
+
+  function moveGhost(x: number, y: number) {
+    const g = ghostRef.current
+    if (g) g.style.transform = `translate(${x - 48}px, ${y - 36}px)`
+  }
+
+  function endDrag() {
+    const d = drag.current
+    if (d?.timer) clearTimeout(d.timer)
+    drag.current = null
+    setDragging(null)
+    setDropTarget(null)
+  }
+
+  function startDrag(photo: VehicleMediaDto, x: number, y: number) {
+    const d = drag.current
+    if (!d) return
+    d.active = true
+    suppressClick.current = true
+    setDragging(photo)
+    moveGhost(x, y)
+    if (d.pointerType !== "mouse") navigator.vibrate?.(10)
+  }
+
+  function dragProps(photo: VehicleMediaDto) {
+    return {
+      onContextMenu: (e: React.MouseEvent) => {
+        // Long-press on phones would otherwise open the image menu.
+        if (drag.current) e.preventDefault()
+      },
+      onPointerDown: (e: React.PointerEvent) => {
+        if (e.button !== 0 || (e.target as HTMLElement).closest("[data-no-drag]")) return
+        suppressClick.current = false
+        const x = e.clientX
+        const y = e.clientY
+        drag.current = {
+          id: photo.id,
+          pointerId: e.pointerId,
+          pointerType: e.pointerType,
+          startX: x,
+          startY: y,
+          active: false,
+        }
+        if (e.pointerType !== "mouse") {
+          drag.current.timer = setTimeout(() => startDrag(photo, x, y), LONG_PRESS_MS)
+        }
+      },
+      onPointerMove: (e: React.PointerEvent) => {
+        const d = drag.current
+        if (!d || d.pointerId !== e.pointerId) return
+        if (!d.active) {
+          const dist = Math.hypot(e.clientX - d.startX, e.clientY - d.startY)
+          if (d.pointerType === "mouse") {
+            if (dist > MOUSE_SLOP_PX) {
+              try {
+                e.currentTarget.setPointerCapture(e.pointerId)
+              } catch {
+                // Pointer already gone; the drag still works without capture.
+              }
+              startDrag(photo, e.clientX, e.clientY)
+            }
+          } else if (dist > TOUCH_SLOP_PX) {
+            endDrag() // finger moved before the long-press: it's a scroll
+          }
+          return
+        }
+        moveGhost(e.clientX, e.clientY)
+        const slot = slotAt(e.clientX, e.clientY)
+        setDropTarget(slot === `photo:${photo.id}` ? null : slot)
+      },
+      onPointerUp: (e: React.PointerEvent) => {
+        const d = drag.current
+        if (!d || d.pointerId !== e.pointerId) return
+        const slot = d.active ? slotAt(e.clientX, e.clientY) : null
+        endDrag()
+        if (slot) commitMove(photo, slot)
+      },
+      onPointerCancel: endDrag,
+    }
+  }
+
   function confirmDelete() {
     if (!toDelete) return
     const target = toDelete
@@ -180,17 +371,33 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
     )
   }
 
-  function photoTile(photo: VehicleMediaDto, label: string, className?: string) {
+  function photoTile(photo: VehicleMediaDto, label: string, slot: string, className?: string) {
     return (
-      <div key={photo.id} className={cn("group relative overflow-hidden rounded-lg bg-[#0F172A]", className)}>
+      <div
+        key={photo.id}
+        data-slot={slot}
+        {...dragProps(photo)}
+        className={cn(
+          "group relative cursor-grab touch-manipulation overflow-hidden rounded-lg bg-[#0F172A] select-none [-webkit-touch-callout:none]",
+          dragging?.id === photo.id && "opacity-40",
+          dropTarget === slot && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+          className
+        )}
+      >
         <button
           type="button"
-          onClick={() => setLightbox(indexOf(photo.id))}
+          onClick={() => {
+            if (suppressClick.current) {
+              suppressClick.current = false
+              return
+            }
+            setLightbox(indexOf(photo.id))
+          }}
           className="block size-full"
           aria-label={`Open ${label}`}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photo.url} alt={label} loading="lazy" className="size-full object-cover transition group-hover:scale-105" />
+          <img src={photo.url} alt={label} loading="lazy" draggable={false} className="size-full object-cover transition group-hover:scale-105" />
           <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 px-2 pt-4 pb-1.5 text-left text-[11px] font-semibold text-white">
             {label}
           </span>
@@ -198,6 +405,7 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
         {canDelete && (
           <button
             type="button"
+            data-no-drag
             onClick={() => setToDelete(photo)}
             aria-label={`Delete ${label}`}
             className="absolute top-1.5 right-1.5 rounded-md bg-card/90 p-1 text-destructive opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:p-1.5 pointer-coarse:opacity-100"
@@ -212,7 +420,7 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
   const pendingFor = (category: MediaCategory) => pending.filter((u) => u.category === category)
 
   return (
-    <div className="space-y-6">
+    <div ref={containerRef} className="space-y-6">
       <input
         ref={inputRef}
         type="file"
@@ -252,6 +460,13 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
               style={{ width: `${(covered / STANDARD_ANGLES.length) * 100}%` }}
             />
           </div>
+          {all.length > 1 && (
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              <span className="pointer-coarse:hidden">Drag</span>
+              <span className="hidden pointer-coarse:inline">Press and hold, then drag</span> a photo onto
+              another to swap them.
+            </p>
+          )}
         </div>
         <div className="flex gap-2 max-sm:w-full max-sm:*:flex-1">
           <Button variant="outline" className="hidden pointer-coarse:inline-flex" onClick={() => shoot("other")}>
@@ -273,7 +488,7 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
           const label = MEDIA_CATEGORY_LABELS[angle]
           if (photo) {
             return (
-              photoTile(photo, angle === "front" ? `${label} · Cover` : label, "aspect-[4/3]")
+              photoTile(photo, angle === "front" ? `${label} · Cover` : label, `angle:${angle}`, "aspect-[4/3]")
             )
           }
           if (uploading) return pendingTile(uploading, "aspect-[4/3]")
@@ -281,11 +496,12 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
             <button
               key={angle}
               type="button"
+              data-slot={`angle:${angle}`}
               onClick={() => pick(angle)}
               {...dropProps(angle)}
               className={cn(
                 "flex aspect-[4/3] flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed text-subtle-foreground transition-colors hover:border-primary hover:bg-accent hover:text-primary",
-                dragOver === angle ? "border-primary bg-accent text-primary" : "border-border"
+                dragOver === angle || dropTarget === `angle:${angle}` ? "border-primary bg-accent text-primary" : "border-border"
               )}
             >
               <ImagePlus className="size-5" />
@@ -308,20 +524,38 @@ export function PhotoManager({ vehicleId, media, canDelete }: PhotoManagerProps)
           )}
         >
           {more.map((m) => (
-            photoTile(m, photoCaption(m.category), "aspect-square")
+            photoTile(m, photoCaption(m.category), `photo:${m.id}`, "aspect-square")
           ))}
           {pendingFor("other").map((u) => (
             pendingTile(u, "aspect-square")
           ))}
           <button
             type="button"
+            data-slot="end"
             onClick={() => pick("other")}
-            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border text-subtle-foreground hover:border-primary hover:bg-accent hover:text-primary"
+            className={cn(
+              "flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed text-subtle-foreground hover:border-primary hover:bg-accent hover:text-primary",
+              dropTarget === "end" ? "border-primary bg-accent text-primary" : "border-border"
+            )}
           >
             <ImagePlus className="size-5" />
             <span className="text-[11px] font-semibold">Add or drop</span>
           </button>
         </div>
+      </div>
+
+      <div
+        ref={ghostRef}
+        aria-hidden
+        className={cn(
+          "pointer-events-none fixed top-0 left-0 z-50 h-[72px] w-24 overflow-hidden rounded-lg shadow-2xl ring-2 ring-primary",
+          !dragging && "hidden"
+        )}
+      >
+        {dragging && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={dragging.url} alt="" draggable={false} className="size-full object-cover" />
+        )}
       </div>
 
       <PhotoLightbox photos={photos} index={lightbox} onIndexChange={setLightbox} />

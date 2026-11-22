@@ -90,6 +90,19 @@ export const confirmMediaSchema = z.object({
   sortOrder: z.number().int().min(0).max(32767),
 })
 
+export const reorderMediaSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        id: z.string().uuid(),
+        category: z.enum(MEDIA_CATEGORIES),
+        sortOrder: z.number().int().min(0).max(32767),
+      })
+    )
+    .min(1)
+    .max(100),
+})
+
 export const documentUploadSchema = z.object({
   docType: z.enum(DOCUMENT_TYPES),
   contentType: z.enum(["application/pdf", "image/jpeg", "image/png"]),
