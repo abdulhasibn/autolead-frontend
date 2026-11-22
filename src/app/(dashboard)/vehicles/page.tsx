@@ -1,4 +1,7 @@
 import type { Metadata } from "next"
+import { RoutePending } from "@/components/route-pending"
+import { CardGridSkeleton } from "@/components/pending-skeletons"
+
 import { Car } from "lucide-react"
 import { getMakes, getModels } from "@/features/catalog/api"
 import type { MakeReadModel, ModelReadModel } from "@/features/catalog/types"
@@ -111,6 +114,7 @@ export default async function VehiclesPage({
       <VehicleStatusTabs params={params} counts={counts} />
       <VehiclesToolbar params={params} makes={makes} models={models} />
 
+      <RoutePending fallback={<CardGridSkeleton />}>
       {vehicles.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card py-16 text-center">
           <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-accent">
@@ -154,6 +158,7 @@ export default async function VehiclesPage({
           pageSize={VEHICLES_PAGE_SIZE}
         />
       )}
+      </RoutePending>
     </div>
   )
 }

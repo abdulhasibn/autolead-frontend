@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { PendingLink } from "@/components/pending-link"
+import { useRouteNavigate } from "@/components/route-pending"
 import { LayoutGrid, List, Loader2, Search, SlidersHorizontal, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -98,17 +98,14 @@ function rangeLabel(min: number | undefined, max: number | undefined, format: (n
 }
 
 export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const { isPending, navigate: go } = useRouteNavigate()
   const [search, setSearch] = useState(params.q ?? "")
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<Draft>(() => toDraft(params))
   const [draftModels, setDraftModels] = useState<ModelReadModel[]>(models)
 
   function navigate(next: Partial<VehiclesSearchParams>) {
-    startTransition(() => {
-      router.push(buildVehiclesHref({ ...params, ...next, page: 1 }))
-    })
+    go(buildVehiclesHref({ ...params, ...next, page: 1 }), { scroll: true })
   }
 
   // Debounce typing into the URL; the page re-renders on the server.
@@ -334,9 +331,7 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
           className="text-xs font-medium text-muted-foreground hover:text-primary"
           onClick={() => {
             setSearch("")
-            startTransition(() =>
-              router.push(buildVehiclesHref({ status: params.status, layout: params.layout }))
-            )
+            go(buildVehiclesHref({ status: params.status, layout: params.layout }), { scroll: true })
           }}
         >
           Clear all
@@ -349,7 +344,9 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
           const Icon = layout === "grid" ? LayoutGrid : List
           const active = params.layout === layout
           return (
-            <Link
+            <PendingLink
+              spinner={false}
+              scroll={false}
               key={layout}
               href={buildVehiclesHref({ ...params, layout })}
               aria-label={layout === "grid" ? "Card view" : "Table view"}
@@ -360,7 +357,7 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
               )}
             >
               <Icon className="size-4" />
-            </Link>
+            </PendingLink>
           )
         })}
       </div>

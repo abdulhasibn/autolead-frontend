@@ -1,4 +1,7 @@
 import type { Metadata } from "next"
+import { RoutePending } from "@/components/route-pending"
+import { DashboardBodySkeleton } from "@/components/pending-skeletons"
+
 import { redirect } from "next/navigation"
 import { Suspense } from "react"
 import { auth } from "@/lib/auth"
@@ -63,6 +66,7 @@ export default async function DashboardPage({
         </Suspense>
       </div>
 
+      <RoutePending fallback={<DashboardBodySkeleton />}>
       {/* Money row: only when finance is unlocked */}
       <div className="max-lg:order-2">
         {/* Tiles only when a finance cookie exists; otherwise the row is a one-line unlock link. */}
@@ -171,6 +175,7 @@ export default async function DashboardPage({
           hour12: true,
         })}
       </p>
+      </RoutePending>
     </div>
   )
 }

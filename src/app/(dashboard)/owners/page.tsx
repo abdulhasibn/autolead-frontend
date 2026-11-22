@@ -1,4 +1,7 @@
 import type { Metadata } from "next"
+import { RoutePending } from "@/components/route-pending"
+import { TableRowsSkeleton } from "@/components/pending-skeletons"
+
 import { Users } from "lucide-react"
 import { getOwners } from "@/features/owners/api"
 import { CreateOwnerSheet } from "@/features/owners/components/create-owner-sheet"
@@ -48,6 +51,7 @@ export default async function OwnersPage({
 
       <OwnersToolbar params={params} />
 
+      <RoutePending fallback={<TableRowsSkeleton />}>
       {owners.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card py-16 text-center">
           <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-accent">
@@ -74,6 +78,7 @@ export default async function OwnersPage({
       {total > 0 && (
         <OwnersPagination params={params} total={total} />
       )}
+      </RoutePending>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { PendingLink } from "@/components/pending-link"
 import { Loader2 } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { OptionSelect } from "@/components/option-select"
@@ -44,7 +44,7 @@ export function ReportControls({ filters, showrooms }: { filters: ReportFilters;
                 key={tab}
                 value={tab}
                 nativeButton={false}
-                render={<Link href={tabHref(tab)} scroll={false} />}
+                render={<PendingLink href={tabHref(tab)} spinner={false} scroll={false} />}
                 className="px-3 whitespace-nowrap pointer-coarse:min-h-9"
               >
                 {REPORT_TAB_LABELS[tab]}

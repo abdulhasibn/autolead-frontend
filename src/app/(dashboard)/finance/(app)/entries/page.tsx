@@ -1,4 +1,7 @@
 import type { Metadata } from "next"
+import { RoutePending } from "@/components/route-pending"
+import { LedgerBodySkeleton } from "@/components/pending-skeletons"
+
 import { Suspense } from "react"
 import { MobileActionBar } from "@/components/mobile-action-bar"
 import { ApiError } from "@/lib/api-error"
@@ -52,6 +55,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
       <Suspense>
         <LedgerToolbar key={toolbarKey} filters={{ ...filters, rangeError }} tags={tags} showrooms={showrooms} />
       </Suspense>
+      <RoutePending fallback={<LedgerBodySkeleton />}>
       {page && (
         <>
           <TruncatedBanner truncated={page.truncated} />
@@ -71,6 +75,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
           </div>
         </>
       )}
+      </RoutePending>
     </div>
   )
 }

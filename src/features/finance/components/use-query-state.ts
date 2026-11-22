@@ -1,17 +1,17 @@
 "use client"
 
-import { useCallback, useTransition } from "react"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useCallback } from "react"
+import { usePathname, useSearchParams } from "next/navigation"
+import { useRouteNavigate } from "@/components/route-pending"
 
 /**
  * Updates the URL query (the page re-renders on the server). `undefined`/""
  * removes a key. Changing any filter other than `page` resets to page 1.
  */
 export function useQueryState() {
-  const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [isPending, startTransition] = useTransition()
+  const { isPending, navigate } = useRouteNavigate()
 
   const update = useCallback(
     (patch: Record<string, string | number | boolean | undefined | null>, opts: { replace?: boolean } = {}) => {
@@ -23,9 +23,9 @@ export function useQueryState() {
       if (!("page" in patch)) params.delete("page")
       const qs = params.toString()
       const href = qs ? `${pathname}?${qs}` : pathname
-      startTransition(() => (opts.replace ? router.replace(href, { scroll: false }) : router.push(href, { scroll: false })))
+      navigate(href, { replace: opts.replace, scroll: false })
     },
-    [pathname, router, searchParams]
+    [navigate, pathname, searchParams]
   )
 
   return { searchParams, update, isPending }

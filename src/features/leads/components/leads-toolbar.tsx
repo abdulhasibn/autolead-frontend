@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useRouteNavigate } from "@/components/route-pending"
 import { Loader2, Search, SlidersHorizontal, X } from "lucide-react"
 import { FilterSheet } from "@/components/filter-sheet"
 import { Button } from "@/components/ui/button"
@@ -26,15 +26,12 @@ interface LeadsToolbarProps {
 }
 
 export function LeadsToolbar({ params, vehicles }: LeadsToolbarProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const { isPending, navigate: go } = useRouteNavigate()
   const [search, setSearch] = useState(params.q ?? "")
   const [filtersOpen, setFiltersOpen] = useState(false)
 
   function navigate(next: Partial<LeadsSearchParams>) {
-    startTransition(() => {
-      router.push(buildLeadsHref({ ...params, ...next, page: 1 }))
-    })
+    go(buildLeadsHref({ ...params, ...next, page: 1 }), { scroll: true })
   }
 
   // Debounce typing into the URL; the page re-renders on the server.
@@ -79,7 +76,7 @@ export function LeadsToolbar({ params, vehicles }: LeadsToolbarProps) {
 
   function clearAll() {
     setSearch("")
-    startTransition(() => router.push("/leads"))
+    go("/leads", { scroll: true })
   }
 
   return (
