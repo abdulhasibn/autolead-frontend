@@ -20,6 +20,8 @@ import type { DealTerms, SaleModel } from "../../types"
 import { Money } from "../money"
 import { MoneyInput } from "../money-input"
 import { useSaveTransition } from "@/hooks/use-save-transition"
+import { DraftBanner } from "@/components/draft-banner"
+import { useDraftKey, useStateDraft } from "@/hooks/use-form-draft"
 
 /**
  * Terms agreed with the owner: a purchase rate for a car we buy outright, or
@@ -50,6 +52,8 @@ export function DealCard({
   const [editing, setEditing] = useState(false)
   const { isPending, run: startTransition, refresh } = useSaveTransition()
   const [form, setForm] = useState(() => toForm(deal))
+  const [initialForm] = useState(form)
+  const draft = useStateDraft(useDraftKey("vehicle:deal", vehicleId), editing, form, setForm, initialForm)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   function toForm(d: DealTerms | null) {
@@ -105,6 +109,7 @@ export function DealCard({
         toast.error(financeErrorMessage(result.error))
         return
       }
+      draft.clear()
       toast.success(payment ? "Deal and payment to the seller saved." : "Deal saved.")
       refresh(() => setEditing(false))
     })
@@ -162,6 +167,7 @@ export function DealCard({
 
   return (
     <form onSubmit={submit} aria-label="Edit deal" className="space-y-3 rounded-xl border border-primary/40 p-4">
+      <DraftBanner draft={draft} />
       <h3 className="text-sm font-semibold">{commission ? "Deal with the owner" : "Deal with the seller"}</h3>
       <div className="grid gap-3 sm:grid-cols-2">
         {commission ? (

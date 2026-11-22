@@ -6,9 +6,15 @@ import { SessionProvider } from "next-auth/react"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ThemeProvider } from "@/components/theme-provider"
 import { getQueryClient } from "@/lib/query-client"
+import { pruneDrafts } from "@/lib/drafts/store"
+import { useEffect } from "react"
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient()
+  // Week-old unsent form drafts are dropped once per app load.
+  useEffect(() => {
+    void pruneDrafts()
+  }, [])
 
   return (
     <ThemeProvider defaultPreference="light">

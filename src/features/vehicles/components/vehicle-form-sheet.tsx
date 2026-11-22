@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Controller, useForm, useWatch, type Resolver } from "react-hook-form"
@@ -10,6 +10,9 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { DatePicker, expiryDateYears } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
+import { NumericInput } from "@/components/ui/numeric-input"
+import { DraftBanner, DraftDot, SaveDraftButton } from "@/components/draft-banner"
+import { useDraftKey, useFormDraft, useHasDraft, useStateDraft } from "@/hooks/use-form-draft"
 import {
   Sheet,
   SheetContent,
@@ -202,24 +205,67 @@ export function VehicleFormSheet(props: Props) {
   const passedMoney = isCreate ? (props.money ?? "hidden") : "hidden"
   const money = passedMoney === "locked" && unlockedHere ? "unlocked" : passedMoney
   const [acquisition, setAcquisition] = useState<AcquisitionForm>(() => emptyAcquisitionForm(todayIST()))
+  const [INITIAL_ACQUISITION] = useState(acquisition)
   const [acquisitionErrors, setAcquisitionErrors] = useState<Partial<Record<keyof AcquisitionForm, string>>>({})
 
   const defaults = props.mode === "edit" ? fromVehicle(props.vehicle) : EMPTY
-  const {
-    register,
-    control,
-    handleSubmit,
-    trigger,
-    reset,
-    setValue,
-    formState: { errors },
-  } = useForm<VehicleFormInput, unknown, VehicleFormOutput>({
+  const form = useForm<VehicleFormInput, unknown, VehicleFormOutput>({
     resolver: zodResolver(
       isCreate ? createVehicleFormSchema : vehicleFormSchema
     ) as Resolver<VehicleFormInput, unknown, VehicleFormOutput>,
     defaultValues: defaults,
     mode: "onTouched",
   })
+  const {
+    register,
+    control,
+    handleSubmit,
+    trigger,
+    reset,
+    getValues,
+    setValue,
+    formState: { errors },
+  } = form
+
+  // Drafts: what's typed survives a phone call or a closed sheet. The photo
+  // step comes after the vehicle is saved, so it is never part of a draft.
+  const draftKey = useDraftKey(...(props.mode === "edit" ? ["vehicle:edit", props.vehicle.id] : ["vehicle:create"]))
+  const draft = useFormDraft(form, {
+    key: draftKey,
+    open: open && !created,
+    step,
+    setStep: (s) => setStep(Math.min(s, isCreate ? 2 : 1)),
+  })
+  const dealDraft = useStateDraft(
+    isCreate && draftKey ? `${draftKey}:deal` : null,
+    open && !created,
+    acquisition,
+    setAcquisition,
+    INITIAL_ACQUISITION
+  )
+  const hasDraft = useHasDraft(draftKey)
+
+  // A restored create draft needs the model/variant lists for its make/model.
+  useEffect(() => {
+    if (!draft.restoredAt || !isCreate) return
+    const { makeId, modelId } = getValues()
+    let cancelled = false
+    void (async () => {
+      if (!makeId) return
+      setLoadingCatalog(true)
+      const [m, v] = await Promise.all([
+        getModelsAction(makeId),
+        modelId ? getVariantsAction(modelId) : Promise.resolve(null),
+      ])
+      if (cancelled) return
+      setLoadingCatalog(false)
+      if (m.ok) setModels(m.data)
+      if (v?.ok) setVariants(v.data)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [draft.restoredAt, isCreate, getValues])
 
   function resetAll() {
     reset(defaults)
@@ -317,6 +363,7 @@ export function VehicleFormSheet(props: Props) {
           return
         }
         toast.success("Vehicle updated.")
+        draft.clear()
         refresh(() => {
           setOpen(false)
           setStep(0)
@@ -355,6 +402,8 @@ export function VehicleFormSheet(props: Props) {
           toast.error("Vehicle added, but the deal wasn’t saved. Add it on the car’s Finance tab.")
         }
       }
+      draft.clear()
+      dealDraft.clear()
       toast.success("Vehicle added. Now add its photos.")
       setCreated(result.data)
       setStep(3)
@@ -398,6 +447,7 @@ export function VehicleFormSheet(props: Props) {
       >
         {isCreate ? <Plus /> : <Pencil />}
         {isCreate ? "Add vehicle" : "Edit details"}
+        <DraftDot show={hasDraft} />
       </SheetTrigger>
 
       <SheetContent className="w-full gap-0 data-[side=right]:sm:max-w-xl">
@@ -447,6 +497,7 @@ export function VehicleFormSheet(props: Props) {
           }}
           className="flex-1 space-y-5 overflow-y-auto overscroll-contain p-4 sm:p-5"
         >
+          {step !== 3 && <DraftBanner draft={draft} />}
           {step === 0 && (
             <>
               {isCreate ? (
@@ -455,6 +506,7 @@ export function VehicleFormSheet(props: Props) {
                     <FormField id="makeId" label="Make *" error={errors.makeId?.message}>
                       <OptionSelect
                         id="makeId"
+                        title="Select make"
                         value={values.makeId ?? ""}
                         onValueChange={chooseMake}
                         options={props.makes.map((m) => ({ value: m.id, label: m.name }))}
@@ -465,6 +517,7 @@ export function VehicleFormSheet(props: Props) {
                     <FormField id="modelId" label="Model *" error={errors.modelId?.message}>
                       <OptionSelect
                         id="modelId"
+                        title="Select model"
                         value={values.modelId ?? ""}
                         onValueChange={chooseModel}
                         options={models.map((m) => ({ value: m.id, label: m.name }))}
@@ -476,6 +529,7 @@ export function VehicleFormSheet(props: Props) {
                     <FormField id="variantId" label="Variant *" error={errors.variantId?.message}>
                       <OptionSelect
                         id="variantId"
+                        title="Select variant"
                         value={values.variantId ?? ""}
                         onValueChange={(id) => chooseVariant(id)}
                         options={variants.map((v) => ({ value: v.id, label: v.name }))}
@@ -552,7 +606,7 @@ export function VehicleFormSheet(props: Props) {
                   />
                 </FormField>
                 <FormField id="kmDriven" label="Km driven *" error={errors.kmDriven?.message}>
-                  <Input id="kmDriven" inputMode="numeric" enterKeyHint="next" placeholder="42,150" className="font-mono-data" aria-invalid={!!errors.kmDriven} {...register("kmDriven")} />
+                  <NumericInput id="kmDriven" enterKeyHint="next" placeholder="42,150" aria-invalid={!!errors.kmDriven} {...register("kmDriven")} />
                 </FormField>
                 <FormField id="numPreviousOwners" label="Previous owners *" error={errors.numPreviousOwners?.message}>
                   <Input id="numPreviousOwners" inputMode="numeric" enterKeyHint="next" className="font-mono-data" aria-invalid={!!errors.numPreviousOwners} {...register("numPreviousOwners")} />
@@ -736,6 +790,16 @@ export function VehicleFormSheet(props: Props) {
               >
                 {step === 0 ? "Cancel" : "Back"}
               </Button>
+              <SaveDraftButton
+                draft={draft}
+                onSaved={() => {
+                  void dealDraft.saveNow()
+                  setOpen(false)
+                  resetAll()
+                }}
+                disabled={isPending}
+                className="mr-auto"
+              />
               <Button type="submit" form="vehicle-form" disabled={isPending}>
                 {isPending && <Loader2 className="animate-spin" />}
                 {step < lastFormStep

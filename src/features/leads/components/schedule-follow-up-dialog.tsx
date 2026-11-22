@@ -23,6 +23,8 @@ import {
   type ScheduleFollowUpInput,
 } from "../schemas"
 import { FollowUpFields } from "./follow-up-fields"
+import { DraftBanner } from "@/components/draft-banner"
+import { useDraftKey, useFormDraft } from "@/hooks/use-form-draft"
 
 const DEFAULT_VALUES: ScheduleFollowUpFormInput = {
   scheduledAt: "",
@@ -41,16 +43,18 @@ export function ScheduleFollowUpDialog({
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
+  const form = useForm<ScheduleFollowUpFormInput, unknown, ScheduleFollowUpInput>({
+    resolver: zodResolver(scheduleFollowUpFormSchema),
+    defaultValues: DEFAULT_VALUES,
+  })
   const {
     register,
     control,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<ScheduleFollowUpFormInput, unknown, ScheduleFollowUpInput>({
-    resolver: zodResolver(scheduleFollowUpFormSchema),
-    defaultValues: DEFAULT_VALUES,
-  })
+  } = form
+  const draft = useFormDraft(form, { key: useDraftKey("lead:follow-up:schedule", leadId), open })
 
   function onSubmit(values: ScheduleFollowUpInput) {
     startTransition(async () => {
@@ -59,6 +63,7 @@ export function ScheduleFollowUpDialog({
         handleError(result.error, "Could not schedule the follow-up.")
         return
       }
+      draft.clear()
       toast.success("Follow-up scheduled.")
       reset(DEFAULT_VALUES)
       setOpen(false)
@@ -93,6 +98,7 @@ export function ScheduleFollowUpDialog({
           className="space-y-4"
           noValidate
         >
+          <DraftBanner draft={draft} className="mb-3" />
           <Controller
             control={control}
             name="scheduledAt"

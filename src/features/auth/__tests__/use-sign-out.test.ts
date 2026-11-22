@@ -6,7 +6,15 @@ const signOut = vi.fn()
 const toastError = vi.fn()
 
 vi.mock("../actions", () => ({ revokeSessionAction: (...a: unknown[]) => revokeSessionAction(...a) }))
-vi.mock("next-auth/react", () => ({ signOut: (...a: unknown[]) => signOut(...a) }))
+vi.mock("next-auth/react", () => ({
+  signOut: (...a: unknown[]) => signOut(...a),
+  useSession: () => ({ data: { user: { id: "user-1" } } }),
+}))
+const deleteDraftsWithPrefix = vi.fn()
+vi.mock("@/lib/drafts/store", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/drafts/store")>()),
+  deleteDraftsWithPrefix: (...a: unknown[]) => deleteDraftsWithPrefix(...a),
+}))
 vi.mock("sonner", () => ({
   toast: { loading: () => "toast-id", error: (...a: unknown[]) => toastError(...a) },
 }))
@@ -34,6 +42,8 @@ describe("useSignOut", () => {
 
       expect(revokeSessionAction).toHaveBeenCalledWith(scope)
       expect(signOut).toHaveBeenCalledWith({ redirectTo: "/login" })
+      // This user's unsent form drafts don't outlive the session.
+      expect(deleteDraftsWithPrefix).toHaveBeenCalledWith("u:user-1:")
       expect(revokeSessionAction.mock.invocationCallOrder[0]).toBeLessThan(
         signOut.mock.invocationCallOrder[0]!
       )

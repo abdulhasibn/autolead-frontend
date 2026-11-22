@@ -23,6 +23,8 @@ import { FormField } from "@/features/leads/components/form-field"
 import { LeadStatusBadge } from "@/features/leads/components/lead-status-badge"
 import type { LeadReadModel } from "@/features/leads/types"
 import { useSaveTransition } from "@/hooks/use-save-transition"
+import { DraftBanner } from "@/components/draft-banner"
+import { useDraftKey, useStateDraft } from "@/hooks/use-form-draft"
 
 type Buyer = Pick<LeadReadModel, "id" | "contactFullName" | "contactPhone" | "status" | "vehicleId">
 
@@ -67,6 +69,8 @@ export function MarkVehicleSoldDialog({
   const [choice, setChoice] = useState(() => defaultChoice(linked))
   const [otherId, setOtherId] = useState("")
   const [notes, setNotes] = useState("")
+  // The buyer pick is quick to redo; the notes are what's worth keeping.
+  const draft = useStateDraft(useDraftKey("vehicle:mark-sold", vehicleId), open, notes, setNotes, "")
   const [candidates, setCandidates] = useState<Buyer[] | null>(null)
   const [loadingCandidates, startLoading] = useTransition()
   const { isPending, run: startTransition, refresh } = useSaveTransition()
@@ -125,6 +129,7 @@ export function MarkVehicleSoldDialog({
         refresh()
         return
       }
+      draft.clear()
       toast.success(`Sold to ${buyer.contactFullName}.`)
       refresh(() => {
         setOpen(false)
@@ -156,6 +161,7 @@ export function MarkVehicleSoldDialog({
         </DialogHeader>
 
         <form id="mark-sold-form" onSubmit={submit} className="space-y-4" noValidate>
+          <DraftBanner draft={draft} />
           <fieldset className="space-y-2">
             <legend className="mb-2 text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">
               Buyer

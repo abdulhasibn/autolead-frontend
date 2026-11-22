@@ -76,6 +76,10 @@ describe("createLeadFormSchema", () => {
     expect(result.tradeInRequired).toBe(false)
   })
 
+  it("accepts a budget typed with Indian commas", () => {
+    expect(createLeadFormSchema.parse({ ...baseForm, budget: "6,50,000" }).budget).toBe(650000)
+  })
+
   it("rejects bad phone, email, budget and missing source", () => {
     const result = createLeadFormSchema.safeParse({
       ...baseForm,
@@ -135,6 +139,11 @@ describe("leadPreferenceFormSchema", () => {
       preferredMaxOwners: 0,
     })
     expect(leadPreferenceSchema.safeParse(result).success).toBe(true)
+  })
+
+  it("accepts max km typed with Indian commas", () => {
+    const result = leadPreferenceFormSchema.parse({ ...EMPTY_PREFERENCE_FORM, preferredKmMax: "1,20,000" })
+    expect(result.preferredKmMax).toBe(120000)
   })
 
   it("sends only the narrowest catalog pick", () => {

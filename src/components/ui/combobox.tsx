@@ -9,6 +9,7 @@ import { popupFrame } from "@/components/ui/popup-frame"
 import { selectItemClassName, selectTriggerClassName } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { useIsMobile } from "@/hooks/use-media-query"
+import { useKeyboardInset } from "@/hooks/use-keyboard-inset"
 
 export interface SearchableOption {
   value: string
@@ -147,6 +148,7 @@ function SheetSelect({
   const [query, setQuery] = React.useState("")
   const selected = options.find((o) => o.value === value)
   const visible = query ? options.filter((o) => matchesQuery(o.label, query)) : options
+  const keyboard = useKeyboardInset(open)
 
   function choose(option: SearchableOption) {
     onValueChange(option.value)
@@ -178,7 +180,22 @@ function SheetSelect({
           if (!next) setQuery("")
         }}
       >
-        <SheetContent side="bottom" className="h-[80dvh] gap-0 p-0">
+        {/* Fixed height (the base sheet's data-[side=bottom]:h-auto would otherwise
+            shrink it as results filter down), lifted above the phone keyboard. */}
+        <SheetContent
+          side="bottom"
+          className="gap-0 p-0 data-[side=bottom]:h-[80dvh]"
+          style={
+            keyboard.visibleHeight != null
+              ? {
+                  bottom: keyboard.bottom,
+                  height: Math.min(keyboard.visibleHeight - 8, window.innerHeight * 0.8),
+                  maxHeight: keyboard.visibleHeight - 8,
+                  paddingBottom: 0,
+                }
+              : undefined
+          }
+        >
           <SheetHeader className="border-b border-border/50 px-4 py-3">
             <SheetTitle className="text-base font-semibold">{title ?? ariaLabel ?? placeholder}</SheetTitle>
           </SheetHeader>

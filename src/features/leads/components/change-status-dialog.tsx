@@ -31,6 +31,8 @@ import {
 import type { LeadReadModel } from "../types"
 import { FormField } from "./form-field"
 import { OptionSelect } from "@/components/option-select"
+import { DraftBanner } from "@/components/draft-banner"
+import { useDraftKey, useFormDraft } from "@/hooks/use-form-draft"
 
 const DEFAULT_VALUES: ChangeLeadStatusFormInput = {
   status: "" as ChangeLeadStatusFormInput["status"],
@@ -46,16 +48,18 @@ export function ChangeStatusDialog({
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
+  const form = useForm<ChangeLeadStatusFormInput, unknown, ChangeLeadStatusInput>({
+    resolver: zodResolver(changeLeadStatusFormSchema),
+    defaultValues: DEFAULT_VALUES,
+  })
   const {
     register,
     control,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<ChangeLeadStatusFormInput, unknown, ChangeLeadStatusInput>({
-    resolver: zodResolver(changeLeadStatusFormSchema),
-    defaultValues: DEFAULT_VALUES,
-  })
+  } = form
+  const draft = useFormDraft(form, { key: useDraftKey("lead:status", lead.id), open })
 
   const nextStatuses = getNextLeadStatuses(lead.status)
   const options = nextStatuses.map((status) => {
@@ -77,6 +81,7 @@ export function ChangeStatusDialog({
         handleError(result.error, "Could not change the status.")
         return
       }
+      draft.clear()
       toast.success(`Status changed to ${LEAD_STATUS_LABELS[values.status]}.`)
       reset(DEFAULT_VALUES)
       setOpen(false)
@@ -112,6 +117,7 @@ export function ChangeStatusDialog({
           className="space-y-4"
           noValidate
         >
+          <DraftBanner draft={draft} className="mb-3" />
           <FormField id="status" label="New status" error={errors.status?.message}>
             <Controller
               control={control}

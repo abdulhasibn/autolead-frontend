@@ -144,6 +144,7 @@ function optionalInt(message: string, min = 0, max = Number.MAX_SAFE_INTEGER) {
   return z
     .string()
     .trim()
+    .transform((value) => value.replace(/[,\s]/g, ""))
     .refine(
       (value) =>
         value === "" || (/^\d+$/.test(value) && Number(value) >= min && Number(value) <= max),
@@ -204,6 +205,7 @@ export const createLeadFormSchema = z.object({
   budget: z
     .string()
     .trim()
+    .transform((value) => value.replace(/[,\s]/g, ""))
     .refine(
       (value) => value === "" || (Number.isFinite(Number(value)) && Number(value) >= 0),
       "Enter a valid amount"
@@ -237,6 +239,7 @@ export const editLeadFormSchema = z.object({
   budget: z
     .string()
     .trim()
+    .transform((value) => value.replace(/[,\s]/g, ""))
     .refine(
       (value) => value === "" || (Number.isFinite(Number(value)) && Number(value) >= 0),
       "Enter a valid amount"
