@@ -60,13 +60,13 @@ export function missingUi(...ids: string[]): void {
   base.fixme(true, `UI not built yet: ${bugUrls(...ids).join(", ")}`)
 }
 
-/** Sign in through the login form (for tests that need their own session). */
+/** Sign in through the login form (for tests that need their own session). Admins land on the dashboard, salespeople on leads. */
 export async function signIn(page: Page, email: string, password: string): Promise<void> {
   await page.goto("/login")
   await page.getByLabel("Email address").fill(email)
   await page.getByLabel("Password", { exact: true }).fill(password)
   await page.getByRole("button", { name: /sign in/i }).click()
-  await expect(page).toHaveURL(/\/dashboard/)
+  await expect(page).toHaveURL(/\/(dashboard|leads)/)
 }
 
 type TestFixtures = {
@@ -91,6 +91,17 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     { scope: "worker" },
   ],
   db: [async ({}, provide) => provide(db), { scope: "worker" }],
+  context: async ({ context }, provide) => {
+    // Test visits must not land in the public site's visitor analytics
+    // (web_sessions / web_events). Drop the beacon and its fetch fallback.
+    await context.addInitScript(() => {
+      const original = navigator.sendBeacon?.bind(navigator)
+      if (!original) return
+      navigator.sendBeacon = (url, data) => (String(url).includes("/public/events") ? true : original(url, data))
+    })
+    await context.route("**/public/events", (route) => route.fulfill({ status: 204, body: "" }))
+    await provide(context)
+  },
   page: async ({ page }, provide) => {
     // `next dev` floats its dev-tools badge over the bottom-right corner,
     // where dialogs keep their primary button. Hide it (test-side only).

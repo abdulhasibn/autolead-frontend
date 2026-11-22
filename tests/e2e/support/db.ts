@@ -122,6 +122,13 @@ export async function cleanupRun(prefix: string, baseUserIds: string[]): Promise
     )
     await attempt("vehicle_quotes(l)", () => rest("DELETE", `/rest/v1/vehicle_quotes?lead_id=${inList(leadIds)}`))
   }
+  if (leadIds.length) {
+    // Website test-drive leads notify every admin, real ones included: remove
+    // notifications about this run's leads whoever received them.
+    await attempt("notifications(lead)", () =>
+      rest("DELETE", `/rest/v1/notifications?entity_type=eq.lead&entity_id=${inList(leadIds)}`)
+    )
+  }
   await attempt("finance_entries", () => rest("DELETE", `/rest/v1/finance_entries?recorded_by=${uids}`))
   await attempt("vehicle_quotes", () => rest("DELETE", `/rest/v1/vehicle_quotes?created_by=${uids}`))
   if (leadIds.length) await attempt("leads", () => rest("DELETE", `/rest/v1/leads?id=${inList(leadIds)}`))
