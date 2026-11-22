@@ -1,4 +1,7 @@
 import type { Metadata } from "next"
+import { RoutePending } from "@/components/route-pending"
+import { TableRowsSkeleton } from "@/components/pending-skeletons"
+
 import { Users2 } from "lucide-react"
 import { getMakes } from "@/features/catalog/api"
 import { getLeads } from "@/features/leads/api"
@@ -66,6 +69,7 @@ export default async function LeadsPage({
 
       <LeadsToolbar params={params} vehicles={vehicles} />
 
+      <RoutePending fallback={<TableRowsSkeleton />}>
       {leads.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card py-16 text-center">
           <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-accent">
@@ -105,6 +109,7 @@ export default async function LeadsPage({
           />
         )
       )}
+      </RoutePending>
     </div>
   )
 }

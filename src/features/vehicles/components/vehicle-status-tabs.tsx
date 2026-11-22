@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { PendingLink } from "@/components/pending-link"
 import { cn } from "@/lib/utils"
 import { VEHICLE_STATUSES, VEHICLE_STATUS_LABELS, VEHICLE_STATUS_STYLES } from "../constants"
 import { buildVehiclesHref, type VehiclesSearchParams } from "../search-params"
@@ -27,7 +27,8 @@ export function VehicleStatusTabs({ params, counts }: VehicleStatusTabsProps) {
           const active = params.status === tab.value
           const count = counts[tab.value ?? "all"]
           return (
-            <Link
+            <PendingLink
+              spinner={false}
               key={tab.label}
               href={buildVehiclesHref({ ...params, status: tab.value, page: 1 })}
               aria-current={active ? "page" : undefined}
@@ -43,7 +44,7 @@ export function VehicleStatusTabs({ params, counts }: VehicleStatusTabsProps) {
               {count !== null && (
                 <span className="font-mono-data text-xs text-subtle-foreground">{count}</span>
               )}
-            </Link>
+            </PendingLink>
           )
         })}
       </div>

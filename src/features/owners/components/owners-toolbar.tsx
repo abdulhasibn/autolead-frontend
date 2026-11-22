@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useRouteNavigate } from "@/components/route-pending"
 import { Loader2, Search } from "lucide-react"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { buildOwnersHref, type OwnersSearchParams } from "../search-params"
@@ -11,14 +11,11 @@ interface OwnersToolbarProps {
 }
 
 export function OwnersToolbar({ params }: OwnersToolbarProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const { isPending, navigate: go } = useRouteNavigate()
   const [search, setSearch] = useState(params.q ?? "")
 
   function navigate(next: Partial<OwnersSearchParams>) {
-    startTransition(() => {
-      router.push(buildOwnersHref({ ...params, ...next, page: 1 }))
-    })
+    go(buildOwnersHref({ ...params, ...next, page: 1 }), { scroll: true })
   }
 
   useEffect(() => {

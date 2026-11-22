@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { PendingLink } from "@/components/pending-link"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { DashboardPeriodKey } from "@/features/dashboard/types"
 import { PERIOD_LABELS } from "@/features/dashboard/format"
@@ -19,7 +19,7 @@ export function PeriodTabs({ activePeriod }: { activePeriod: DashboardPeriodKey 
             key={period}
             value={period}
             nativeButton={false}
-            render={<Link href={buildHref(period)} />}
+            render={<PendingLink href={buildHref(period)} spinner={false} />}
             className="max-sm:flex-1 pointer-coarse:min-h-9"
           >
             {PERIOD_LABELS[period]}

@@ -1,4 +1,7 @@
 import type { Metadata } from "next"
+import { RoutePending } from "@/components/route-pending"
+import { ReportBodySkeleton } from "@/components/pending-skeletons"
+
 import { Suspense } from "react"
 import { SectionCard } from "@/app/(dashboard)/dashboard/_components/section-card"
 import { ApiError } from "@/lib/api-error"
@@ -44,7 +47,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       <Suspense>
         <ReportControls filters={{ ...filters, rangeError }} showrooms={showrooms} />
       </Suspense>
-      {body}
+      <RoutePending fallback={<ReportBodySkeleton />}>{body}</RoutePending>
     </div>
   )
 }

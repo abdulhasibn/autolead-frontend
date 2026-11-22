@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 import { ScrollGradient } from "@/components/layout/scroll-gradient"
 import { hasFinanceSession } from "@/features/finance/session"
+import { RoutePendingProvider } from "@/components/route-pending"
 
 export default async function DashboardLayout({
   children,
@@ -38,7 +39,9 @@ export default async function DashboardLayout({
       <Sidebar roles={roles} financeUnlocked={financeUnlocked} />
       <div className="flex flex-col h-full overflow-hidden md:ml-[80px]">
         <div className="relative flex-1 min-h-0">
-          <ScrollGradient>{children}</ScrollGradient>
+          <ScrollGradient>
+            <RoutePendingProvider>{children}</RoutePendingProvider>
+          </ScrollGradient>
           {/* Floating header — no card, just text */}
           <div className="absolute inset-x-0 top-0 z-20 pt-[env(safe-area-inset-top)] md:pr-3">
             <Header notifications={initialNotifications} unreadCount={unreadCount} roles={roles} financeUnlocked={financeUnlocked} />
