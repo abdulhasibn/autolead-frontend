@@ -247,7 +247,11 @@ export default async function VehicleDetailPage({
                         {ACQUISITION_TYPE_LABELS[vehicle.acquisitionType] ?? vehicle.acquisitionType}
                       </Detail>
                       <Detail label="Insurance until">
-                        {vehicle.insuranceValidUntil ? formatDate(vehicle.insuranceValidUntil) : EMPTY}
+                        {vehicle.insuranceNil
+                          ? "Nil"
+                          : vehicle.insuranceValidUntil
+                            ? formatDate(vehicle.insuranceValidUntil)
+                            : EMPTY}
                       </Detail>
                       <Detail label="Added">{formatDate(vehicle.createdAt)}</Detail>
                       <Detail label="Last updated">

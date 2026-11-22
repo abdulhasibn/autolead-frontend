@@ -35,6 +35,8 @@ export interface VehicleDto {
   numPreviousOwners: number
   colour: string
   insuranceValidUntil: string | null
+  /** True: recorded as no insurance ("Nil"); false with a null date means not filled in. */
+  insuranceNil: boolean
   rcStatus: RcStatus | null
   serviceHistory: ServiceHistory | null
   accidentHistory: boolean

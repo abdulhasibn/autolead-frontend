@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Check, Loader2, Pencil, Plus, Search, Sparkles, UserPlus } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { DatePicker, expiryDateYears } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { NumericInput } from "@/components/ui/numeric-input"
@@ -89,7 +90,7 @@ const STEPS = {
 
 const STEP_FIELDS: Array<Array<keyof VehicleFormInput>> = [
   ["makeId", "modelId", "variantId", "registrationNumber", "year", "fuelType", "transmission", "kmDriven", "numPreviousOwners", "colour"],
-  ["insuranceValidUntil", "rcStatus", "serviceHistory", "accidentHistory", "location", "description"],
+  ["insuranceValidUntil", "insuranceNil", "rcStatus", "serviceHistory", "accidentHistory", "location", "description"],
   ["ownerId", "acquisitionType"],
 ]
 
@@ -105,6 +106,7 @@ const EMPTY: VehicleFormInput = {
   numPreviousOwners: "1",
   colour: "",
   insuranceValidUntil: "",
+  insuranceNil: false,
   rcStatus: "",
   serviceHistory: "",
   accidentHistory: "no",
@@ -125,6 +127,7 @@ function fromVehicle(v: VehicleDto): VehicleFormInput {
     numPreviousOwners: String(v.numPreviousOwners),
     colour: v.colour,
     insuranceValidUntil: v.insuranceValidUntil ?? "",
+    insuranceNil: v.insuranceNil ?? false,
     rcStatus: v.rcStatus ?? "",
     serviceHistory: v.serviceHistory ?? "",
     accidentHistory: v.accidentHistory ? "yes" : "no",
@@ -405,6 +408,7 @@ export function VehicleFormSheet(props: Props) {
 
   const lastFormStep = isCreate ? 2 : 1
   const values = useWatch({ control })
+  const insuranceNil = values.insuranceNil === true
   const q = ownerQuery.trim().toLowerCase()
   const filteredOwners = owners
     .filter(
@@ -617,16 +621,33 @@ export function VehicleFormSheet(props: Props) {
             <>
               <p className="text-xs text-muted-foreground">All optional. Fill in what you know now.</p>
               <FormField id="insuranceValidUntil" label="Insurance valid until" error={errors.insuranceValidUntil?.message}>
-                <Controller control={control} name="insuranceValidUntil" render={({ field }) => (
-                  <DatePicker
-                    id="insuranceValidUntil"
-                    value={field.value}
-                    {...expiryDateYears()}
-                    onChange={field.onChange}
-                    invalid={!!errors.insuranceValidUntil}
-                    className="sm:w-56"
-                  />
-                )} />
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <Controller control={control} name="insuranceValidUntil" render={({ field }) => (
+                    <DatePicker
+                      id="insuranceValidUntil"
+                      value={insuranceNil ? "" : field.value}
+                      {...expiryDateYears()}
+                      onChange={field.onChange}
+                      disabled={insuranceNil}
+                      invalid={!!errors.insuranceValidUntil}
+                      className="sm:w-56"
+                    />
+                  )} />
+                  <Controller control={control} name="insuranceNil" render={({ field }) => (
+                    <label htmlFor="insuranceNil" className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
+                      <Checkbox
+                        id="insuranceNil"
+                        checked={field.value ?? false}
+                        onCheckedChange={(checked) => {
+                          const nil = checked === true
+                          field.onChange(nil)
+                          if (nil) setValue("insuranceValidUntil", "", { shouldDirty: true })
+                        }}
+                      />
+                      Nil (no insurance)
+                    </label>
+                  )} />
+                </div>
               </FormField>
               <FormField id="rcStatus" label="RC status">
                 <Controller control={control} name="rcStatus" render={({ field }) => (

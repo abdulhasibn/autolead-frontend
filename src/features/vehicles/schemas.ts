@@ -33,6 +33,7 @@ const vehicleDetailsSchema = z.object({
   numPreviousOwners: z.number().int().min(0).max(32767),
   colour: z.string().trim().min(1),
   insuranceValidUntil: z.iso.date().nullable(),
+  insuranceNil: z.boolean(),
   rcStatus: z.enum(RC_STATUSES).nullable(),
   serviceHistory: z.enum(SERVICE_HISTORIES).nullable(),
   accidentHistory: z.boolean(),
@@ -160,6 +161,8 @@ export const vehicleFormSchema = z.object({
   colour: z.string().trim().min(1, "Colour is required"),
   // Step 2 — condition and paperwork
   insuranceValidUntil: optionalText.pipe(z.iso.date().nullable()),
+  /** "Nil": the car has no insurance. Clears the date. */
+  insuranceNil: z.boolean(),
   rcStatus: optionalEnum(RC_STATUSES),
   serviceHistory: optionalEnum(SERVICE_HISTORIES),
   accidentHistory: z.enum(["no", "yes"]).transform((value) => value === "yes"),
@@ -191,7 +194,8 @@ export function toVehicleDetails(values: VehicleFormOutput): UpdateVehicleInput 
     kmDriven: values.kmDriven,
     numPreviousOwners: values.numPreviousOwners,
     colour: values.colour,
-    insuranceValidUntil: values.insuranceValidUntil,
+    insuranceValidUntil: values.insuranceNil ? null : values.insuranceValidUntil,
+    insuranceNil: values.insuranceNil,
     rcStatus: values.rcStatus,
     serviceHistory: values.serviceHistory,
     accidentHistory: values.accidentHistory,
