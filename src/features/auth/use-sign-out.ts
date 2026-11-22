@@ -1,10 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { signOut } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { revokeSessionAction } from "./actions"
 import type { SignOutScope } from "./api"
+import { deleteDraftsWithPrefix } from "@/lib/drafts/store"
+import { draftUserPrefix } from "@/hooks/use-form-draft"
 
 /**
  * Signs out on the API first, then clears the next-auth session.
@@ -16,6 +18,7 @@ import type { SignOutScope } from "./api"
  */
 export function useSignOut() {
   const [pending, setPending] = useState<SignOutScope | null>(null)
+  const { data: session } = useSession()
 
   async function signOutWith(scope: SignOutScope) {
     if (pending) return
@@ -33,6 +36,9 @@ export function useSignOut() {
       return
     }
 
+    // Unsent form drafts stay on this device only while their owner is signed in.
+    const userId = session?.user?.id
+    if (userId) await deleteDraftsWithPrefix(draftUserPrefix(userId))
     await signOut({ redirectTo: "/login" })
   }
 

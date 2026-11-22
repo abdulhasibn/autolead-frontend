@@ -19,6 +19,7 @@ import type {
   LeadPreferenceInput,
   ScheduleFollowUpInput,
   SuggestVehiclesInput,
+  UpdateLeadInput,
 } from "./schemas"
 
 export interface LeadsListParams extends PaginationParams {
@@ -105,8 +106,35 @@ export async function cancelFollowUp(
 }
 
 /** Admin undo of a mistaken conversion: back to booking confirmed, the car back to linked. */
+/** Full replace of the CRM fields (see `updateLeadSchema`). The response's names are stale; GET again. */
+export async function updateLead(id: string, body: UpdateLeadInput): Promise<LeadReadModel> {
+  return serverApiClient.patch<LeadReadModel>(`/leads/${id}`, body)
+}
+
+/** Admin only. `assignedTo: null` unassigns. The new assignee is notified. */
+export async function assignLead(
+  id: string,
+  assignedTo: string | null
+): Promise<{ id: string; assignedTo: string | null }> {
+  return serverApiClient.put<{ id: string; assignedTo: string | null }>(`/leads/${id}/assignment`, {
+    assignedTo,
+  })
+}
+
 export async function reopenLead(id: string): Promise<{ status: string }> {
   return serverApiClient.post<{ status: string }>(`/leads/${id}/reopen`, {})
+}
+
+/**
+ * "Mark as sold" in one request: links the car, confirms the booking and
+ * converts the lead. The API checks everything first and puts the lead back if
+ * a later step fails, so a sale never lands half-done.
+ */
+export async function sellVehicleToLead(
+  id: string,
+  body: { vehicleId: string; notes: string | null }
+): Promise<{ status: string; vehicleSold: boolean }> {
+  return serverApiClient.post<{ status: string; vehicleSold: boolean }>(`/leads/${id}/sell`, body)
 }
 
 export async function associateVehicle(

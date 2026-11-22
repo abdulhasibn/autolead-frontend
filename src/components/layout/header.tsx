@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useSession } from "next-auth/react"
-import { LogOut, MonitorSmartphone } from "lucide-react"
+import { LogOut, KeyRound, MonitorSmartphone } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MobileSidebar } from "@/components/layout/sidebar"
+import { ChangePasswordDialog } from "@/features/auth/components/change-password-dialog"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { ThemeMenuItems, ThemeToggle } from "@/components/theme-toggle"
 import { useSignOut } from "@/features/auth/use-sign-out"
@@ -84,6 +85,7 @@ export function Header({ notifications = [], unreadCount = 0, roles = [], financ
   const { data: session } = useSession()
   const { pending: signOutPending, signOutWith } = useSignOut()
   const [confirmSignOutAll, setConfirmSignOutAll] = useState(false)
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false)
 
   const primaryRole = roles[0] ?? session?.user?.roles?.[0]
 
@@ -145,6 +147,11 @@ export function Header({ notifications = [], unreadCount = 0, roles = [], financ
             <DropdownMenuSeparator />
             <ThemeMenuItems className="sm:hidden" />
             <DropdownMenuSeparator className="sm:hidden" />
+            <DropdownMenuItem className="cursor-pointer" onClick={() => setChangePasswordOpen(true)}>
+              <KeyRound className="mr-2 h-4 w-4" />
+              Change password
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
               disabled={signOutPending !== null}
@@ -163,6 +170,8 @@ export function Header({ notifications = [], unreadCount = 0, roles = [], financ
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <ChangePasswordDialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen} />
 
         <ConfirmDialog
           open={confirmSignOutAll}

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { signIn } from "next-auth/react"
@@ -16,6 +17,7 @@ export function LoginForm() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard"
   const sessionExpired = searchParams.get("error") === "SessionExpired"
+  const passwordReset = searchParams.get("reset") === "1"
 
   const [isPending, setIsPending] = useState(false)
   const [authError, setAuthError] = useState<string | null>(
@@ -61,6 +63,12 @@ export function LoginForm() {
         <h2 className="text-2xl font-bold tracking-tight text-foreground mb-1">Welcome back</h2>
         <p className="text-sm text-muted-foreground">Sign in to your Wheels Experts account</p>
       </div>
+
+      {passwordReset && !authError && (
+        <p role="status" className="mb-5 rounded-[4px] border border-primary/20 bg-accent p-3.5 text-xs text-primary">
+          Password changed. Sign in with your new password.
+        </p>
+      )}
 
       {/* Auth error banner */}
       {authError && (
@@ -113,12 +121,12 @@ export function LoginForm() {
             <label htmlFor="password" className="block text-xs font-medium text-secondary-foreground">
               Password
             </label>
-            <a
-              href="#"
+            <Link
+              href="/forgot-password"
               className="text-xs font-medium text-primary hover:text-primary hover:underline transition-colors"
             >
               Forgot password?
-            </a>
+            </Link>
           </div>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-primary">

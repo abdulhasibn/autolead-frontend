@@ -12,6 +12,7 @@ import type { LeadReadModel } from "@/features/leads/types"
 import type { VehicleDto } from "@/features/vehicles/types"
 import { formatVehicleTitle } from "@/features/vehicles/utils"
 import * as api from "./api"
+import { planBuyerPaymentTrim } from "./logic/sale"
 import { clearFinanceSession, setFinanceSession } from "./session"
 import {
   changeKeySchema,
@@ -316,31 +317,61 @@ export async function recordSaleAction(vehicleId: string, input: unknown): Promi
     const id = idSchema.safeParse(vehicleId)
     const parsed = saleSchema.safeParse(input)
     if (!id.success || !parsed.success) return validationError(parsed.error?.issues[0]?.message)
-    const { payment, ...sale } = parsed.data
+    const { payment, buyerPayments, ...sale } = parsed.data
     try {
-      // With a lead, this also converts it: the car becomes sold and its other leads are freed.
-      await api.recordSale(id.data, sale)
-      if (payment) {
-        await api.createEntry({
-          kind: "income",
-          amount: payment.amount,
-          entryDate: payment.paidOn,
-          tagIds: [],
-          vehicleId: id.data,
-          purpose: "sale",
-          party: null,
-          note: "Received from the buyer when the sale was recorded",
-          showroomId: null,
+      // "adjust": the buyer's payments were entered wrong, so cut them down to the new price
+      // before saving it, leaving room for the payment sent with the sale (the API counts it
+      // too). Trim first, price second: if the save then fails, pressing Save again finishes
+      // the job (the payments already fit the price, so the API accepts it).
+      const room = Math.max(0, sale.finalisedPrice - (payment?.amount ?? 0))
+      const trimmed = buyerPayments === "adjust" ? await trimBuyerPayments(id.data, room) : false
+      try {
+        // With a lead, this also converts it: the car becomes sold and its other leads are freed.
+        // The buyer's payment travels in the same request, so it lands with the sale or not at all.
+        await api.recordSale(id.data, {
+          ...sale,
+          keepOverpayment: buyerPayments === "keep",
+          buyerPayment: payment ? { amount: payment.amount, paidOn: payment.paidOn } : null,
         })
+      } catch (err) {
+        unstable_rethrow(err)
+        if (!trimmed) throw err
+        return {
+          ok: false,
+          error: {
+            status: 500,
+            code: "SALE_PAYMENT_TRIMMED_PRICE_NOT_SAVED",
+            message: "The buyer’s payment was reduced but the price wasn’t saved.",
+          },
+        }
       }
     } finally {
-      // The sale (and the lead's conversion) may have landed even if the payment failed.
+      // A trimmed payment may have landed even if the sale then failed.
       revalidateVehicle(id.data)
       revalidateFinance()
       if (sale.leadId) revalidateLeadsAndCars()
     }
     return actionOk(undefined)
   })
+}
+
+/**
+ * Cuts the car's buyer payments (`sale` income entries) down to `price`, newest
+ * first. Returns whether anything changed.
+ */
+async function trimBuyerPayments(vehicleId: string, price: number): Promise<boolean> {
+  const entries: FinanceEntry[] = []
+  for (let offset = 0; ; offset += 100) {
+    const page = await api.getEntries({ vehicleId, kind: "income", purpose: "sale", limit: 100, offset })
+    entries.push(...page.items)
+    if (page.items.length === 0 || entries.length >= page.total) break
+  }
+  const received = entries.reduce((sum, entry) => sum + Math.round(entry.amount * 100), 0) / 100
+  if (received <= price) return false
+  const plan = planBuyerPaymentTrim(entries, received - price)
+  for (const change of plan.update) await api.updateEntry(change.id, { amount: change.amount })
+  for (const entryId of plan.remove) await api.deleteEntry(entryId)
+  return plan.update.length + plan.remove.length > 0
 }
 
 export async function removeSaleAction(vehicleId: string): Promise<ActionResult> {

@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
+import { NumericInput } from "@/components/ui/numeric-input"
 import { Label } from "@/components/ui/label"
 import { useApiError } from "@/hooks/use-api-error"
 import { formatCurrency } from "@/lib/format"
@@ -21,6 +21,8 @@ import { setListedPriceAction } from "../actions"
 import { listedPriceFormSchema } from "../schemas"
 import type { VehicleStatus } from "../types"
 import { useSaveTransition } from "@/hooks/use-save-transition"
+import { DraftBanner } from "@/components/draft-banner"
+import { useDraftKey, useStateDraft } from "@/hooks/use-form-draft"
 
 interface ListedPricePanelProps {
   vehicleId: string
@@ -63,6 +65,13 @@ function ListedPriceDialog({ vehicleId, listedPrice }: { vehicleId: string; list
   const [value, setValue] = useState("")
   const [error, setError] = useState<string | null>(null)
   const { isPending, run: startTransition, refresh } = useSaveTransition()
+  const draft = useStateDraft(
+    useDraftKey("vehicle:listed-price", vehicleId),
+    open,
+    value,
+    setValue,
+    listedPrice == null ? "" : listedPrice.toLocaleString("en-IN")
+  )
 
   function onOpenChange(next: boolean) {
     setOpen(next)
@@ -85,6 +94,7 @@ function ListedPriceDialog({ vehicleId, listedPrice }: { vehicleId: string; list
         handleError(result.error, "Could not save the listed price.")
         return
       }
+      draft.clear()
       toast.success(parsed.data == null ? "Listed price cleared." : "Listed price saved.")
       refresh(() => setOpen(false))
     })
@@ -98,6 +108,7 @@ function ListedPriceDialog({ vehicleId, listedPrice }: { vehicleId: string; list
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <form onSubmit={submit} className="space-y-4">
+          <DraftBanner draft={draft} />
           <DialogHeader>
             <DialogTitle>Listed price</DialogTitle>
             <DialogDescription>
@@ -106,10 +117,9 @@ function ListedPriceDialog({ vehicleId, listedPrice }: { vehicleId: string; list
           </DialogHeader>
           <div className="space-y-2">
             <Label htmlFor="listed-price">Price (₹)</Label>
-            <Input
+            <NumericInput
               id="listed-price"
-              inputMode="numeric"
-              autoComplete="off"
+              prefix="₹"
               placeholder="e.g. 12,50,000"
               value={value}
               onChange={(e) => {

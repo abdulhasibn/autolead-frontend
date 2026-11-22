@@ -33,6 +33,12 @@ export function financeErrorMessage(error: Pick<ActionError, "code" | "message" 
       return "Pick the buyer’s lead. A sale is recorded against a lead whose booking is confirmed."
     case "SALE_LEAD_NOT_BOOKED":
       return "That lead’s booking isn’t confirmed on this car any more. Refresh and pick again."
+    case "SALE_PRICE_BELOW_RECEIVED":
+      return "The buyer’s payments changed since this page loaded. Refreshed — check the amounts and save again."
+    case "SALE_NOT_RECORDED":
+      return "This car has no buyer yet. Confirm a lead’s booking or record the sale first, or save it as “Other car income”."
+    case "SALE_PAYMENT_TRIMMED_PRICE_NOT_SAVED":
+      return "The buyer’s payment was reduced, but the price wasn’t saved. Press Save again."
     case "NOT_FOUND":
       return "That record no longer exists."
     case "FORBIDDEN":

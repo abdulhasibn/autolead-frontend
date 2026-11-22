@@ -30,6 +30,8 @@ import {
 import { FollowUpFields } from "./follow-up-fields"
 import { FormField } from "./form-field"
 import { OptionSelect } from "@/components/option-select"
+import { DraftBanner } from "@/components/draft-banner"
+import { useDraftKey, useFormDraft } from "@/hooks/use-form-draft"
 
 const OUTCOME_OPTIONS = FOLLOW_UP_OUTCOMES.map((o) => ({
   value: o,
@@ -60,6 +62,10 @@ export function CompleteFollowUpDialog({
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
+  const form = useForm<CompleteFollowUpFormInput, unknown, CompleteFollowUpInput>({
+    resolver: zodResolver(completeFollowUpFormSchema),
+    defaultValues: DEFAULT_VALUES,
+  })
   const {
     register,
     control,
@@ -67,10 +73,8 @@ export function CompleteFollowUpDialog({
     reset,
     setValue,
     formState: { errors },
-  } = useForm<CompleteFollowUpFormInput, unknown, CompleteFollowUpInput>({
-    resolver: zodResolver(completeFollowUpFormSchema),
-    defaultValues: DEFAULT_VALUES,
-  })
+  } = form
+  const draft = useFormDraft(form, { key: useDraftKey("lead:follow-up:complete", followUpId), open })
   const scheduleNext = useWatch({ control, name: "scheduleNext" })
 
   function onSubmit(values: CompleteFollowUpInput) {
@@ -80,6 +84,7 @@ export function CompleteFollowUpDialog({
         handleError(result.error, "Could not complete the follow-up.")
         return
       }
+      draft.clear()
       toast.success(
         result.data.next ? "Follow-up done. Next one scheduled." : "Follow-up done."
       )
@@ -128,6 +133,7 @@ export function CompleteFollowUpDialog({
           className="space-y-4"
           noValidate
         >
+          <DraftBanner draft={draft} className="mb-3" />
           <FormField id={`${formId}-outcome`} label="Outcome" error={errors.outcome?.message}>
             <Controller
               control={control}

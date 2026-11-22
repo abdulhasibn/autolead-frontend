@@ -54,8 +54,10 @@ describe("nextPurpose", () => {
     expect(isPurchaseTagName("Purchase tax")).toBe(false)
   })
 
-  it("sends no purpose for business entries", () => {
-    expect(purposeForSave("general", false)).toBeNull()
+  it("sends general for business entries (the update endpoint rejects null)", () => {
+    expect(purposeForSave("general", false)).toBe("general")
+    // A stale car purpose never leaks onto a business entry.
+    expect(purposeForSave("sale", false)).toBe("general")
     expect(purposeForSave("purchase", true)).toBe("purchase")
   })
 })

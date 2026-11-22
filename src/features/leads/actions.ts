@@ -12,19 +12,22 @@ import {
   type ActionResult,
 } from "@/lib/action-result"
 import {
+  assignLead,
   associateVehicle,
   cancelFollowUp,
   changeLeadStatus,
   reopenLead,
   completeFollowUp,
   createLead,
-  getLead,
   getLeads,
   scheduleFollowUp,
+  sellVehicleToLead,
   suggestVehicles,
+  updateLead,
   updateLeadPreference,
 } from "./api"
 import {
+  assignLeadSchema,
   associateVehicleSchema,
   changeLeadStatusSchema,
   completeFollowUpSchema,
@@ -32,7 +35,9 @@ import {
   leadPreferenceSchema,
   scheduleFollowUpSchema,
   suggestVehiclesSchema,
+  updateLeadSchema,
 } from "./schemas"
+import { getUsers } from "@/features/users/api"
 import { isLeadClosed } from "./constants"
 import type {
   CompleteFollowUpResult,
@@ -107,6 +112,63 @@ export async function changeLeadStatusAction(
     const lead = await changeLeadStatus(id.data, parsed.data)
     revalidateLeads()
     return actionOk(lead)
+  } catch (err) {
+    return actionError(err)
+  }
+}
+
+/** Edits the CRM fields. PATCH is a full replace, so the form sends every field. */
+export async function updateLeadAction(leadId: string, input: unknown): Promise<ActionResult> {
+  try {
+    await requireSession()
+    const id = leadIdSchema.safeParse(leadId)
+    const parsed = updateLeadSchema.safeParse(input)
+    if (!id.success || !parsed.success) return validationError(parsed.error?.issues[0]?.message)
+
+    await updateLead(id.data, parsed.data)
+    revalidateLeads()
+    return actionOk(undefined)
+  } catch (err) {
+    return actionError(err)
+  }
+}
+
+async function requireAdmin() {
+  const session = await auth()
+  if (!session?.user) throw new ApiError(401, "AUTHENTICATION_FAILED", "Not signed in")
+  if (!session.user.roles?.includes("admin")) {
+    throw new ApiError(403, "FORBIDDEN", "Only an admin can assign leads")
+  }
+}
+
+/** Admin: staff a lead can be given to (any active admin or salesperson). */
+export async function getAssignableStaffAction(): Promise<
+  ActionResult<{ id: string; fullName: string; roles: string[] }[]>
+> {
+  try {
+    await requireAdmin()
+    const page = await getUsers({ limit: 100 })
+    return actionOk(
+      page.items
+        .map((u) => ({ id: u.id, fullName: u.fullName, roles: u.roles }))
+        .sort((a, b) => a.fullName.localeCompare(b.fullName))
+    )
+  } catch (err) {
+    return actionError(err)
+  }
+}
+
+/** Admin: give the lead to a staff member, or unassign it with null. */
+export async function assignLeadAction(leadId: string, input: unknown): Promise<ActionResult> {
+  try {
+    await requireAdmin()
+    const id = leadIdSchema.safeParse(leadId)
+    const parsed = assignLeadSchema.safeParse(input)
+    if (!id.success || !parsed.success) return validationError()
+
+    await assignLead(id.data, parsed.data.assignedTo)
+    revalidateLeads()
+    return actionOk(undefined)
   } catch (err) {
     return actionError(err)
   }
@@ -272,38 +334,22 @@ const markVehicleSoldSchema = z.object({
 
 /**
  * Sells a car from the car page by converting the buying lead, which is what
- * marks the car sold. Walks the lead through the same steps the lead page
- * would: link it to this car (if it isn't), confirm the booking (if it isn't),
- * then convert. A failure part-way leaves the earlier steps in place; the
- * error names the step so the user can finish from the lead page.
+ * marks the car sold. One API call links the lead to this car (if it isn't),
+ * confirms the booking (if it isn't) and converts it; the API puts the lead
+ * back if a step fails, so nothing is left half-done (#33).
  */
-export async function markVehicleSoldAction(
-  input: unknown
-): Promise<ActionResult<LeadReadModel>> {
+export async function markVehicleSoldAction(input: unknown): Promise<ActionResult> {
   try {
     await requireSession()
     const parsed = markVehicleSoldSchema.safeParse(input)
     if (!parsed.success) return validationError()
     const { vehicleId, leadId } = parsed.data
-    const notes = parsed.data.notes || null
-
-    let lead = await getLead(leadId)
-    if (isLeadClosed(lead.status)) {
-      throw new ApiError(422, "LEAD_CLOSED", "This lead is already closed.")
-    }
     try {
-      if (lead.vehicleId !== vehicleId) {
-        lead = await associateVehicle(leadId, vehicleId)
-      }
-      if (lead.status !== "booking_confirmed") {
-        lead = await changeLeadStatus(leadId, { status: "booking_confirmed", notes })
-      }
-      lead = await changeLeadStatus(leadId, { status: "converted", notes })
+      await sellVehicleToLead(leadId, { vehicleId, notes: parsed.data.notes || null })
     } finally {
-      // Earlier steps may have landed even if a later one failed.
       revalidateLeads()
     }
-    return actionOk(lead)
+    return actionOk(undefined)
   } catch (err) {
     return actionError(err)
   }

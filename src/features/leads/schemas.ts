@@ -62,6 +62,32 @@ export const createLeadSchema = z.object({
 
 export type CreateLeadInput = z.infer<typeof createLeadSchema>
 
+/**
+ * PATCH /leads/:id is a full replace of the CRM fields: anything optional that
+ * is left out is cleared, so the edit form always sends every field.
+ */
+export const updateLeadSchema = z.object({
+  fullName: z.string().trim().min(1, "Full name is required"),
+  phone: z.string().trim().regex(E164_REGEX, phoneMessage),
+  email: z.email().nullable(),
+  source: z.enum(LEAD_SOURCES),
+  budget: z.number().nonnegative().nullable(),
+  purchaseTimeline: z.string().nullable(),
+  financeRequired: z.boolean().nullable(),
+  currentVehicle: z.string().nullable(),
+  tradeInRequired: z.boolean().nullable(),
+  notes: z.string().nullable(),
+})
+
+export type UpdateLeadInput = z.infer<typeof updateLeadSchema>
+
+/** PUT /leads/:id/assignment: a staff member's id, or null to unassign. */
+export const assignLeadSchema = z.object({
+  assignedTo: z.guid().nullable(),
+})
+
+export type AssignLeadInput = z.infer<typeof assignLeadSchema>
+
 /** POST /leads/vehicle-suggestions: score stock against preferences before a lead exists. */
 export const suggestVehiclesSchema = z
   .object({
@@ -118,6 +144,7 @@ function optionalInt(message: string, min = 0, max = Number.MAX_SAFE_INTEGER) {
   return z
     .string()
     .trim()
+    .transform((value) => value.replace(/[,\s]/g, ""))
     .refine(
       (value) =>
         value === "" || (/^\d+$/.test(value) && Number(value) >= min && Number(value) <= max),
@@ -178,6 +205,7 @@ export const createLeadFormSchema = z.object({
   budget: z
     .string()
     .trim()
+    .transform((value) => value.replace(/[,\s]/g, ""))
     .refine(
       (value) => value === "" || (Number.isFinite(Number(value)) && Number(value) >= 0),
       "Enter a valid amount"
@@ -194,6 +222,37 @@ export const createLeadFormSchema = z.object({
   .transform(narrowestCatalogPick)
 
 export type CreateLeadFormInput = z.input<typeof createLeadFormSchema>
+
+/**
+ * Edit form: the create form's contact and requirement fields. Any source is
+ * accepted so a lead from the website or an older channel keeps its source.
+ */
+export const editLeadFormSchema = z.object({
+  fullName: z.string().trim().min(1, "Full name is required"),
+  phone: indianPhoneFormSchema,
+  email: z
+    .string()
+    .trim()
+    .pipe(z.union([z.literal(""), z.email("Enter a valid email address")]))
+    .transform((value) => (value === "" ? null : value)),
+  source: z.enum(LEAD_SOURCES, { error: "Select a source" }),
+  budget: z
+    .string()
+    .trim()
+    .transform((value) => value.replace(/[,\s]/g, ""))
+    .refine(
+      (value) => value === "" || (Number.isFinite(Number(value)) && Number(value) >= 0),
+      "Enter a valid amount"
+    )
+    .transform((value) => (value === "" ? null : Number(value))),
+  purchaseTimeline: optionalText,
+  currentVehicle: optionalText,
+  financeRequired: yesNoUnknown,
+  tradeInRequired: yesNoUnknown,
+  notes: optionalText,
+})
+
+export type EditLeadFormInput = z.input<typeof editLeadFormSchema>
 
 export const changeLeadStatusFormSchema = z.object({
   status: z.enum(LEAD_STATUSES, { error: "Select a status" }),

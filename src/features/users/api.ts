@@ -1,7 +1,7 @@
 import { serverApiClient } from "@/lib/api-client.server"
 import type { Page, PaginationParams } from "@/types/api"
 import type { StaffMemberDto, StaffRole } from "./types"
-import type { CreateUserInput } from "./schemas"
+import type { CreateUserInput, UpdateUserInput } from "./schemas"
 
 interface UsersListParams extends PaginationParams {
   role?: StaffRole
@@ -25,6 +25,11 @@ export async function createUser(
   body: CreateUserInput
 ): Promise<StaffMemberDto> {
   return serverApiClient.post<StaffMemberDto>("/users", body)
+}
+
+/** Replaces name, phone, email and home showroom. Roles have their own endpoint. */
+export async function updateUser(id: string, body: UpdateUserInput): Promise<StaffMemberDto> {
+  return serverApiClient.patch<StaffMemberDto>(`/users/${id}`, body)
 }
 
 export async function updateUserRoles(

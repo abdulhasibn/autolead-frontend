@@ -4,6 +4,14 @@ import { useState } from "react"
 import { Loader2, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { DatePicker, pastDateYears } from "@/components/ui/date-picker"
 import { FormField } from "@/features/leads/components/form-field"
@@ -13,7 +21,7 @@ import { formatYmd, todayIST } from "../../logic/dates"
 import { financeErrorMessage } from "../../logic/errors"
 import { formatMoney, formatMoneyInput, parseMoneyInput } from "../../logic/money"
 import { PAID_OPTIONS } from "../../logic/payment"
-import { buildSale, type BuyerPaid, type SaleForm } from "../../logic/sale"
+import { buildSale, type BuyerPaid, type BuyerPaymentsChoice, type SaleForm, type SalePayload } from "../../logic/sale"
 import type { BookedLead, VehicleSale } from "../../types"
 import { Money } from "../money"
 import { MoneyInput } from "../money-input"
@@ -58,6 +66,8 @@ export function SaleCard({
   const [form, setForm] = useState<SaleForm>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof SaleForm, string>>>({})
   const [confirmRemove, setConfirmRemove] = useState(false)
+  /** A price below what the buyer has paid, waiting for "reduce" or "keep" (#31). */
+  const [overpaid, setOverpaid] = useState<SalePayload | null>(null)
   const { isPending, run: startTransition, refresh } = useSaveTransition()
 
   const set = <K extends keyof SaleForm>(key: K, value: SaleForm[K]) => {
@@ -84,12 +94,36 @@ export function SaleCard({
     event.preventDefault()
     const result = buildSale(form, receivedFromBuyer, needsLead)
     if (!result.ok) return setErrors(result.errors)
+    // The buyer has paid more than the new price: ask whether that payment was a mistake
+    // or a real overpayment, instead of silently leaving a negative "owed by buyer".
+    if (result.payload.finalisedPrice < receivedFromBuyer) return setOverpaid(result.payload)
+    save(result.payload)
+  }
+
+  function save(payload: SalePayload, buyerPayments: BuyerPaymentsChoice | null = null) {
     startTransition(async () => {
-      const saved = await recordSaleAction(vehicleId, result.payload)
-      if (!saved.ok) return void toast.error(financeErrorMessage(saved.error))
-      const recorded = result.payload.payment ? "Sale and buyer payment recorded" : "Sale recorded"
-      toast.success(result.payload.leadId ? `${recorded}. The lead is converted and the car marked sold.` : `${recorded}.`)
-      refresh(() => setEditing(false))
+      const saved = await recordSaleAction(vehicleId, { ...payload, buyerPayments })
+      if (!saved.ok) {
+        toast.error(financeErrorMessage(saved.error))
+        // Stale payments, or a trim that landed without the price: show the real numbers.
+        if (saved.error.code === "SALE_PRICE_BELOW_RECEIVED" || saved.error.code === "SALE_PAYMENT_TRIMMED_PRICE_NOT_SAVED") {
+          refresh(() => setOverpaid(null))
+        }
+        return
+      }
+      const recorded =
+        buyerPayments === "adjust"
+          ? `Sale saved and the buyer’s payment reduced to ${formatMoney(payload.finalisedPrice)}`
+          : buyerPayments === "keep"
+            ? `Sale saved. The buyer is owed ${formatMoney(receivedFromBuyer - payload.finalisedPrice)} back`
+            : payload.payment
+              ? "Sale and buyer payment recorded"
+              : "Sale recorded"
+      toast.success(payload.leadId ? `${recorded}. The lead is converted and the car marked sold.` : `${recorded}.`)
+      refresh(() => {
+        setOverpaid(null)
+        setEditing(false)
+      })
     })
   }
 
@@ -184,6 +218,29 @@ export function SaleCard({
         </p>
 
         {firstError && <p className="text-xs text-destructive">{firstError}</p>}
+        <AlertDialog open={overpaid !== null} onOpenChange={(o) => !isPending && !o && setOverpaid(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>The buyer has paid more than this price</AlertDialogTitle>
+              <AlertDialogDescription>
+                {overpaid &&
+                  `${formatMoney(receivedFromBuyer)} is recorded as received from the buyer, but the new price is ${formatMoney(overpaid.finalisedPrice)}. Was the payment entered wrong, or did the buyer really pay more?`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="sm:flex-col sm:items-stretch">
+              <Button onClick={() => overpaid && save(overpaid, "adjust")} disabled={isPending}>
+                {isPending && <Loader2 className="animate-spin" />}
+                Entered wrong: reduce it to {overpaid && formatMoney(overpaid.finalisedPrice)}
+              </Button>
+              <Button variant="outline" onClick={() => overpaid && save(overpaid, "keep")} disabled={isPending}>
+                Buyer overpaid: keep it (refund {overpaid && formatMoney(receivedFromBuyer - overpaid.finalisedPrice)})
+              </Button>
+              <Button variant="ghost" onClick={() => setOverpaid(null)} disabled={isPending}>
+                Cancel
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={() => setEditing(false)} disabled={isPending}>Cancel</Button>
           <Button type="submit" disabled={isPending}>{isPending && <Loader2 className="animate-spin" />}Save sale</Button>
