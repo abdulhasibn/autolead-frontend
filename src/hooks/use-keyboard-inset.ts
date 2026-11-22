@@ -14,13 +14,23 @@ const NONE: KeyboardInset = { bottom: 0, visibleHeight: null }
 /** Below this the difference is browser chrome (URL bar), not a keyboard. */
 const MIN_KEYBOARD_PX = 80
 
-/** Pure maths, split out for tests. */
+/**
+ * Pure maths, split out for tests.
+ *
+ * The keyboard is detected from how much shorter the visible area is than the
+ * layout viewport. Where the visible area sits is a separate question: iOS
+ * also scrolls the visual viewport down (offsetTop) to keep the focused field
+ * in view, so the visible bottom can be anywhere from the keyboard's top edge
+ * to the layout bottom. `bottom` lines the sheet up with that visible bottom
+ * and `visibleHeight` caps its height, so the whole sheet (title, search box,
+ * results) stays on screen however Safari has scrolled.
+ */
 export function computeKeyboardInset(
   layoutHeight: number,
   viewport: { height: number; offsetTop: number }
 ): KeyboardInset {
+  if (layoutHeight - viewport.height < MIN_KEYBOARD_PX) return NONE
   const bottom = Math.max(0, Math.round(layoutHeight - viewport.height - viewport.offsetTop))
-  if (bottom < MIN_KEYBOARD_PX) return NONE
   return { bottom, visibleHeight: Math.round(viewport.height) }
 }
 
