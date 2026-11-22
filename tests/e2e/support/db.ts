@@ -5,6 +5,7 @@
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs"
 import path from "node:path"
+import { groupByRun } from "./run-prefix"
 
 function requireEnv(name: string): string {
   const value = process.env[name]
@@ -110,6 +111,22 @@ export async function cleanupRun(prefix: string, baseUserIds: string[]): Promise
   const contactIds = [...new Set(leads.map((l) => l.contact_id))]
 
   if (vehicleIds.length) {
+    // Files first: deleting the vehicle cascades its media/document rows, and
+    // nothing would point at the files any more.
+    for (const [table, bucket] of [
+      ["vehicle_media", "vehicle-media"],
+      ["vehicle_documents", "vehicle-documents"],
+    ] as const) {
+      const files =
+        (await attempt(`${table}?`, () =>
+          select<{ storage_path: string }>(table, `vehicle_id=${inList(vehicleIds)}`, "storage_path")
+        )) ?? []
+      if (files.length) {
+        await attempt(`storage ${bucket}`, () =>
+          rest("DELETE", `/storage/v1/object/${bucket}`, { prefixes: files.map((f) => f.storage_path) })
+        )
+      }
+    }
     await attempt("vehicles.sold_lead_id", () =>
       rest("PATCH", `/rest/v1/vehicles?id=${inList(vehicleIds)}`, { sold_lead_id: null })
     )
@@ -126,7 +143,12 @@ export async function cleanupRun(prefix: string, baseUserIds: string[]): Promise
     // Website test-drive leads notify every admin, real ones included: remove
     // notifications about this run's leads whoever received them.
     await attempt("notifications(lead)", () =>
-      rest("DELETE", `/rest/v1/notifications?entity_type=eq.lead&entity_id=${inList(leadIds)}`)
+      rest("DELETE", `/rest/v1/notifications?or=(entity_id.${inList(leadIds)},lead_id.${inList(leadIds)})`)
+    )
+  }
+  if (vehicleIds.length) {
+    await attempt("notifications(vehicle)", () =>
+      rest("DELETE", `/rest/v1/notifications?entity_id=${inList(vehicleIds)}`)
     )
   }
   await attempt("finance_entries", () => rest("DELETE", `/rest/v1/finance_entries?recorded_by=${uids}`))
@@ -170,23 +192,73 @@ export async function cleanupRun(prefix: string, baseUserIds: string[]): Promise
   return problems
 }
 
+export interface LeftoverRun {
+  prefix: string
+  userIds: string[]
+  createdAt: string
+}
+
 /**
- * Removes runs that never reached teardown (interrupted or crashed), found by
- * their `e2e-<prefix>-admin|sales@example.com` users older than maxAgeMinutes.
+ * E2E runs whose staff users still exist, i.e. runs that never reached
+ * teardown (interrupted, crashed, or copied by a database dump mid-run).
+ * Found by their `<prefix>-<label>@example.com` users, oldest first.
  */
-export async function sweepStaleRuns(maxAgeMinutes = 60): Promise<string[]> {
-  const cutoff = new Date(Date.now() - maxAgeMinutes * 60_000).toISOString()
-  const users = await select<{ id: string; email: string }>(
+export async function findLeftoverRuns(olderThanMinutes = 0): Promise<LeftoverRun[]> {
+  const cutoff = new Date(Date.now() - olderThanMinutes * 60_000).toISOString()
+  const users = await select<{ id: string; email: string; created_at: string }>(
     "users",
-    `email=like.e2e-*@example.com&created_at=lt.${cutoff}`,
-    "id,email"
+    `email=like.e2e-*@example.com&created_at=lt.${cutoff}&order=created_at.asc`,
+    "id,email,created_at"
   )
-  const byPrefix = new Map<string, string[]>()
-  for (const u of users) {
-    const prefix = u.email.replace(/-(admin|sales)@example\.com$/, "").replace(/@example\.com$/, "")
-    byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), u.id])
+  return [...groupByRun(users)].map(([prefix, us]) => ({
+    prefix,
+    userIds: us.map((u) => u.id),
+    createdAt: us[0]?.created_at ?? "",
+  }))
+}
+
+async function count(table: string, filter: string): Promise<number> {
+  const res = await fetch(`${supabaseUrl()}/rest/v1/${table}?select=*&${filter}`, {
+    method: "HEAD",
+    headers: { ...serviceHeaders(), Prefer: "count=exact" },
+  })
+  if (!res.ok) throw new Error(`E2E HEAD ${table} -> ${res.status}`)
+  return Number(res.headers.get("content-range")?.split("/")[1] ?? 0)
+}
+
+/** What a run left behind, read-only. Same scope cleanupRun() deletes. */
+export async function auditRun(run: LeftoverRun): Promise<Record<string, number>> {
+  const uids = inList(run.userIds)
+  const owners = await select<{ id: string }>("owners", `created_by=${uids}`, "id")
+  const vehicles = owners.length
+    ? await select<{ id: string }>("vehicles", `owner_id=${inList(owners.map((o) => o.id))}`, "id")
+    : []
+  const vids = vehicles.map((v) => v.id)
+  const leadFilter = vids.length ? `or=(created_by.${uids},vehicle_id.${inList(vids)})` : `created_by=${uids}`
+  const leads = await select<{ id: string; contact_id: string }>("leads", leadFilter, "id,contact_id")
+  const lids = leads.map((l) => l.id)
+  return {
+    "staff accounts": await count("users", `id=${uids}`),
+    owners: owners.length,
+    vehicles: vids.length,
+    leads: lids.length,
+    contacts: new Set(leads.map((l) => l.contact_id)).size,
+    "follow-ups": lids.length ? await count("follow_ups", `lead_id=${inList(lids)}`) : 0,
+    notifications: await count(
+      "notifications",
+      lids.length ? `or=(entity_id.${inList(lids)},lead_id.${inList(lids)},user_id.${uids})` : `user_id=${uids}`
+    ),
+    "photos (rows + files)": vids.length ? await count("vehicle_media", `vehicle_id=${inList(vids)}`) : 0,
+    documents: vids.length ? await count("vehicle_documents", `vehicle_id=${inList(vids)}`) : 0,
+    "audit log entries": await count("audit_logs", `actor_id=${uids}`),
   }
+}
+
+/** Removes runs that never reached teardown and are older than maxAgeMinutes. */
+export async function sweepStaleRuns(maxAgeMinutes = 60): Promise<string[]> {
   const problems: string[] = []
-  for (const [prefix, ids] of byPrefix) problems.push(...(await cleanupRun(prefix, ids)))
+  for (const run of await findLeftoverRuns(maxAgeMinutes)) {
+    problems.push(...(await cleanupRun(run.prefix, run.userIds)))
+  }
   return problems
 }

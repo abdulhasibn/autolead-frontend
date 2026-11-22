@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:cleanup": "tsx tests/e2e/cleanup.ts",
     "type-check": "tsc --noEmit",
     "prepare": "husky"
   },
@@ -55,6 +56,7 @@
     "husky": "^9.1.7",
     "jsdom": "^30.1.1",
     "tailwindcss": "^4",
+    "tsx": "4.23.13",
     "typescript": "^5",
     "vitest": "^5.0.3"
   },
