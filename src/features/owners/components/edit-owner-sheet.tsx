@@ -18,6 +18,7 @@ import { useApiError } from "@/hooks/use-api-error"
 import { updateOwnerAction } from "../actions"
 import { createOwnerSchema, type CreateOwnerInput } from "../schemas"
 import type { OwnerDto } from "../types"
+import { showOwnerPhoneConflict } from "../conflicts"
 import { OwnerFormFields } from "./owner-form-fields"
 import { useSaveTransition } from "@/hooks/use-save-transition"
 import { DraftBanner } from "@/components/draft-banner"
@@ -51,6 +52,7 @@ export function EditOwnerSheet({ owner }: { owner: OwnerDto }) {
     control,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
   } = form
   const draft = useFormDraft(form, { key: useDraftKey("owner:edit", owner.id), open })
@@ -63,7 +65,7 @@ export function EditOwnerSheet({ owner }: { owner: OwnerDto }) {
     startTransition(async () => {
       const result = await updateOwnerAction(owner.id, data)
       if (!result.ok) {
-        handleError(result.error)
+        if (!showOwnerPhoneConflict(result.error, setError)) handleError(result.error)
         return
       }
       draft.clear()

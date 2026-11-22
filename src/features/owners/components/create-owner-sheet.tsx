@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sheet"
 import { useApiError } from "@/hooks/use-api-error"
 import { createOwnerAction } from "../actions"
+import { showOwnerPhoneConflict } from "../conflicts"
 import { createOwnerSchema, type CreateOwnerInput } from "../schemas"
 import { OwnerFormFields } from "./owner-form-fields"
 import { useSaveTransition } from "@/hooks/use-save-transition"
@@ -49,6 +50,7 @@ export function CreateOwnerSheet() {
     handleSubmit,
     reset,
     clearErrors,
+    setError,
     formState: { errors },
   } = form
   const draft = useFormDraft(form, { key: useDraftKey("owner:create"), open })
@@ -69,7 +71,7 @@ export function CreateOwnerSheet() {
     startTransition(async () => {
       const result = await createOwnerAction(data)
       if (!result.ok) {
-        handleError(result.error)
+        if (!showOwnerPhoneConflict(result.error, setError)) handleError(result.error)
         return
       }
       draft.clear()

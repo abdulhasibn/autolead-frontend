@@ -69,6 +69,8 @@ import type { VehicleDto } from "../types"
 import { formatPlate, formatVehicleTitle, variantLabel } from "../utils"
 import { AcquisitionTypeEditField } from "./acquisition-type-edit-field"
 import { AcquisitionMoneyFields, AcquisitionMoneyLocked } from "./acquisition-money-fields"
+import { OWNER_PHONE_TAKEN } from "@/features/owners/conflicts"
+import { PLATE_TAKEN, showPlateConflict } from "./plate-conflict"
 import { clearVariantAndDependents } from "./catalog-cascade"
 import { ColourPicker } from "./colour-picker"
 import { PhotoManager } from "./photo-manager"
@@ -227,6 +229,7 @@ export function VehicleFormSheet(props: Props) {
     reset,
     getValues,
     setValue,
+    setError,
     formState: { errors },
   } = form
 
@@ -339,7 +342,8 @@ export function VehicleFormSheet(props: Props) {
     const result = await createOwnerQuickAction(newOwner)
     setSavingOwner(false)
     if (!result.ok) {
-      handleError(result.error, "Could not add the owner. Check the name and the 10-digit phone number.")
+      if (result.error.status === 409) toast.error(OWNER_PHONE_TAKEN)
+      else handleError(result.error, "Could not add the owner. Check the name and the 10-digit phone number.")
       return
     }
     setOwners((list) => [result.data, ...list])
@@ -359,7 +363,11 @@ export function VehicleFormSheet(props: Props) {
       if (props.mode === "edit") {
         const result = await updateVehicleAction(props.vehicle.id, details)
         if (!result.ok) {
-          handleError(result.error, "Could not save the changes.")
+          if (showPlateConflict(result.error, setError, () => setStep(0))) {
+            toast.error(PLATE_TAKEN)
+          } else {
+            handleError(result.error, "Could not save the changes.")
+          }
           return
         }
         toast.success("Vehicle updated.")
@@ -384,9 +392,8 @@ export function VehicleFormSheet(props: Props) {
         acquisitionType: values.acquisitionType,
       })
       if (!result.ok) {
-        if (result.error.status === 409) {
-          setStep(0)
-          toast.error("A vehicle with this registration number already exists.")
+        if (showPlateConflict(result.error, setError, () => setStep(0))) {
+          toast.error(PLATE_TAKEN)
         } else {
           handleError(result.error, "Could not add the vehicle.")
         }
