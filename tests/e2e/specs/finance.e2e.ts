@@ -281,6 +281,8 @@ test.describe("finance", () => {
     const form = page.getByRole("form", { name: "Record sale" })
     await form.getByLabel("Finalised price").fill("450000")
     await form.getByRole("button", { name: "Save sale" }).click()
+    // A price below what the buyer paid asks whether that payment was wrong or a real overpayment.
+    await page.getByRole("alertdialog").getByRole("button", { name: /Entered wrong: reduce it to/ }).click()
     await expect(form).toBeHidden()
     // Money received from the buyer must not exceed the new price.
     await expect
