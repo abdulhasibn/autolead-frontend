@@ -147,3 +147,14 @@ describe("formatDraftAge", () => {
     expect(formatDraftAge(now - 26 * 3_600_000, now)).toBe("1 day ago")
   })
 })
+
+describe("deleteDraftsExceptPrefix", () => {
+  it("keeps only the signed-in user's drafts", async () => {
+    const { deleteDraftsExceptPrefix } = await import("@/lib/drafts/store")
+    await putDraft("u:user-1:a", 1)
+    await putDraft("u:user-2:a", 2)
+    await deleteDraftsExceptPrefix(draftUserPrefix("user-1"))
+    expect((await getDraft("u:user-1:a"))?.values).toBe(1)
+    expect(await getDraft("u:user-2:a")).toBeNull()
+  })
+})

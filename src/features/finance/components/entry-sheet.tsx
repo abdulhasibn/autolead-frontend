@@ -33,8 +33,6 @@ import { VehiclePicker } from "./pickers"
 import type { PickerOption } from "./search-picker"
 import { TagMultiSelect } from "./tag-multi-select"
 import { useSaveTransition } from "@/hooks/use-save-transition"
-import { DraftBanner } from "@/components/draft-banner"
-import { useDraftKey, useFormDraft, useStateDraft } from "@/hooks/use-form-draft"
 
 export interface EntrySheetProps {
   open: boolean
@@ -105,10 +103,6 @@ function EntryForm(props: EntrySheetProps) {
   // Did the admin choose the purpose by hand? Then car/tag changes leave it alone.
   const userPickedPurpose = useRef(Boolean(entry))
 
-  const form = useForm<EntryFormValues>({
-    resolver: zodResolver(entryFormSchema),
-    defaultValues: initialValues(props),
-  })
   const {
     control,
     register,
@@ -116,14 +110,10 @@ function EntryForm(props: EntrySheetProps) {
     setValue,
     getValues,
     formState: { errors },
-  } = form
-  // Mounted only while the sheet is open, so "open" is always true here.
-  const draftKey = useDraftKey(
-    ...(entry ? ["finance:entry:edit", entry.id] : ["finance:entry:new", defaultVehicle?.id ?? "any"])
-  )
-  const draft = useFormDraft(form, { key: draftKey, open: true })
-  const [initialVehicle] = useState(vehicle)
-  const vehicleDraft = useStateDraft(draftKey && `${draftKey}:vehicle`, true, vehicle, setVehicle, initialVehicle)
+  } = useForm<EntryFormValues>({
+    resolver: zodResolver(entryFormSchema),
+    defaultValues: initialValues(props),
+  })
   const kind = useWatch({ control, name: "kind" })
   const vehicleId = useWatch({ control, name: "vehicleId" })
   const purpose = useWatch({ control, name: "purpose" })
@@ -195,8 +185,6 @@ function EntryForm(props: EntrySheetProps) {
         }
         return
       }
-      draft.clear()
-      vehicleDraft.clear()
       toast.success(entry ? "Entry updated." : values.kind === "income" ? "Income added." : "Expense added.")
       refresh(() => onOpenChange(false))
     })
@@ -208,7 +196,6 @@ function EntryForm(props: EntrySheetProps) {
   return (
     <form onSubmit={handleSubmit(submit)} className="flex flex-1 flex-col" noValidate>
       <div className="flex-1 space-y-4 px-4 pb-4 sm:px-6">
-        <DraftBanner draft={draft} />
         <FormField id="entry-kind" label="Kind">
           {entry ? (
             <p className="text-sm font-medium text-foreground">

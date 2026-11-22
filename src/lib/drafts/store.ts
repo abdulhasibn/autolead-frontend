@@ -154,6 +154,16 @@ export async function deleteDraftsWithPrefix(prefix: string): Promise<void> {
   await Promise.all(keys.map(deleteDraft))
 }
 
+/**
+ * Deletes every draft that does not start with `prefix`. Run when someone
+ * signs in, so a previous user's drafts (left behind by a session that
+ * expired instead of signing out) never sit on a shared phone.
+ */
+export async function deleteDraftsExceptPrefix(prefix: string): Promise<void> {
+  const keys = (await allKeys()).filter((k) => !k.startsWith(prefix))
+  await Promise.all(keys.map(deleteDraft))
+}
+
 /** Drops drafts past their TTL. Cheap; run once per session. */
 export async function pruneDrafts(now = Date.now()): Promise<void> {
   const db = await openDb()

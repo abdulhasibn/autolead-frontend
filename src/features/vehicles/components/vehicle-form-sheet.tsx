@@ -12,7 +12,7 @@ import { DatePicker, expiryDateYears } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { NumericInput } from "@/components/ui/numeric-input"
 import { DraftBanner, DraftDot, SaveDraftButton } from "@/components/draft-banner"
-import { useDraftKey, useFormDraft, useHasDraft, useStateDraft } from "@/hooks/use-form-draft"
+import { useDraftKey, useFormDraft, useHasDraft } from "@/hooks/use-form-draft"
 import {
   Sheet,
   SheetContent,
@@ -205,7 +205,6 @@ export function VehicleFormSheet(props: Props) {
   const passedMoney = isCreate ? (props.money ?? "hidden") : "hidden"
   const money = passedMoney === "locked" && unlockedHere ? "unlocked" : passedMoney
   const [acquisition, setAcquisition] = useState<AcquisitionForm>(() => emptyAcquisitionForm(todayIST()))
-  const [INITIAL_ACQUISITION] = useState(acquisition)
   const [acquisitionErrors, setAcquisitionErrors] = useState<Partial<Record<keyof AcquisitionForm, string>>>({})
 
   const defaults = props.mode === "edit" ? fromVehicle(props.vehicle) : EMPTY
@@ -229,6 +228,8 @@ export function VehicleFormSheet(props: Props) {
 
   // Drafts: what's typed survives a phone call or a closed sheet. The photo
   // step comes after the vehicle is saved, so it is never part of a draft.
+  // The deal amounts (finance vault) are deliberately left out: drafts are
+  // stored unencrypted on the device, outside the vault's lock.
   const draftKey = useDraftKey(...(props.mode === "edit" ? ["vehicle:edit", props.vehicle.id] : ["vehicle:create"]))
   const draft = useFormDraft(form, {
     key: draftKey,
@@ -236,13 +237,6 @@ export function VehicleFormSheet(props: Props) {
     step,
     setStep: (s) => setStep(Math.min(s, isCreate ? 2 : 1)),
   })
-  const dealDraft = useStateDraft(
-    isCreate && draftKey ? `${draftKey}:deal` : null,
-    open && !created,
-    acquisition,
-    setAcquisition,
-    INITIAL_ACQUISITION
-  )
   const hasDraft = useHasDraft(draftKey)
 
   // A restored create draft needs the model/variant lists for its make/model.
@@ -403,7 +397,6 @@ export function VehicleFormSheet(props: Props) {
         }
       }
       draft.clear()
-      dealDraft.clear()
       toast.success("Vehicle added. Now add its photos.")
       setCreated(result.data)
       setStep(3)
@@ -793,7 +786,6 @@ export function VehicleFormSheet(props: Props) {
               <SaveDraftButton
                 draft={draft}
                 onSaved={() => {
-                  void dealDraft.saveNow()
                   setOpen(false)
                   resetAll()
                 }}
