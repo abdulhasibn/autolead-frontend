@@ -224,3 +224,6 @@ export function getNextLeadStatuses(current: LeadStatus): LeadStatus[] {
     (status) => !SYSTEM_MANAGED_STATUSES.includes(status)
   )
 }
+
+/** Highest lead budget the API accepts (₹100 crore); more overflows the database column. */
+export const MAX_BUDGET = 1_000_000_000
