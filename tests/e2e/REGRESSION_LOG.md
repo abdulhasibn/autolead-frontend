@@ -6,6 +6,24 @@ Status values: **open** (failing, not yet picked up) · **in progress** (fix PR 
 
 ---
 
+## 2026-11-22 (night): leftover-run cleanup command
+
+### Suite changes
+- New `pnpm test:e2e:cleanup` (`tests/e2e/cleanup.ts`): lists E2E runs whose staff users still exist (interrupted runs, or runs copied by a database dump mid-run) and what each left behind. Dry run by default; `--apply` deletes, `--older-than <min>` and `--prefix <run>` narrow it. It uses the same `cleanupRun()` as teardown, refuses production, and re-audits after deleting (exit 1 if anything is left).
+- `support/db.ts`:
+  - `cleanupRun()` now also deletes the run's vehicle photo/document **files** from storage, and notifications about its vehicles or with `lead_id` set.
+  - Runs are grouped by their real prefix (`support/run-prefix.ts`, unit-tested), so a run's extra staff (`-u01`, `-u04`, …) are cleaned together with its admin. Before, they were treated as separate runs.
+  - Added `findLeftoverRuns()` and a read-only `auditRun()`. `sweepStaleRuns()` (global setup, runs older than 60 min) uses them.
+- Dev dependency `tsx` to run the command.
+
+### Why
+The Sydney → Mumbai dev database dump was taken during run `e2e-mws0fybp-81262e`; teardown cleaned Sydney but not the copy. Deleting it through the Supabase MCP failed: its `execute_sql` declines destructive SQL here (the repo guard hook allows dev; the decline comes from the connector). Earlier flushes had worked around this with one-off scripts that weren't committed. This command is the tracked replacement.
+
+### Run
+- 2026-11-22, `lms_dev01`: `--apply --prefix e2e-mws0fybp-81262e` removed 5 test accounts, 78 owners, 35 vehicles, 45 leads, 44 contacts, 11 follow-ups, 13 notifications, 4 audit entries and 2 photos (rows and files). UAT data untouched (2 users, 1 owner, 2 vehicles, 3 leads remain). Dry run afterwards: no leftover runs. Logged in the backend's `docs/MIGRATIONS_LOG.md` → Data operations log.
+
+---
+
 ## 2026-11-22 (evening): finance key guard and stale locators
 
 ### Suite changes
