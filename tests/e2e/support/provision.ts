@@ -7,7 +7,7 @@
  * removes everything the run's users created.
  *
  * Needs: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, API_BASE_URL (backend).
- * Optional: E2E_FINANCE_KEY (shared vault, e.g. lms_dev). Without it, an
+ * Optional: E2E_FINANCE_KEY (shared vault, e.g. the dev database lms_dev01). Without it, an
  * uninitialised vault (fresh CI database) is set up and its key used.
  * E2E_SKIP_FINANCE=1 skips the finance tests and never touches the vault.
  */
