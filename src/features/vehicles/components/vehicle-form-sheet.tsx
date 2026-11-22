@@ -69,6 +69,7 @@ import type { VehicleDto } from "../types"
 import { formatPlate, formatVehicleTitle, variantLabel } from "../utils"
 import { AcquisitionTypeEditField } from "./acquisition-type-edit-field"
 import { AcquisitionMoneyFields, AcquisitionMoneyLocked } from "./acquisition-money-fields"
+import { clearVariantAndDependents } from "./catalog-cascade"
 import { ColourPicker } from "./colour-picker"
 import { PhotoManager } from "./photo-manager"
 import { useSaveTransition } from "@/hooks/use-save-transition"
@@ -286,7 +287,8 @@ export function VehicleFormSheet(props: Props) {
   async function chooseMake(makeId: string) {
     setValue("makeId", makeId, { shouldValidate: true })
     setValue("modelId", "")
-    setValue("variantId", "")
+    clearVariantAndDependents(setValue)
+    setPrefilled(false)
     setModels([])
     setVariants([])
     if (!makeId) return
@@ -299,7 +301,8 @@ export function VehicleFormSheet(props: Props) {
 
   async function chooseModel(modelId: string) {
     setValue("modelId", modelId, { shouldValidate: true })
-    setValue("variantId", "")
+    clearVariantAndDependents(setValue)
+    setPrefilled(false)
     setVariants([])
     if (!modelId) return
     setLoadingCatalog(true)
