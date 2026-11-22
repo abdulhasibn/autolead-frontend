@@ -94,6 +94,7 @@ export default async function DashboardPage({
           value={conversionValue}
           display={formatPercent(conversionValue)}
           previous={conversionPrev}
+          kind="rate"
           showTrend
         />
         <KpiCard

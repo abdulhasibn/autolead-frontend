@@ -1,11 +1,13 @@
 import { cn } from "@/lib/utils"
-import { trendDelta } from "@/features/dashboard/format"
+import { trendDelta, type TrendKind } from "@/features/dashboard/format"
 
 interface KpiCardProps {
   label: string
   value: number | null
   display?: string // Override formatted display (e.g. "18%")
   previous?: number | null
+  /** How the trend badge and previous value are formatted. */
+  kind?: TrendKind
   showTrend?: boolean
   className?: string
 }
@@ -15,12 +17,13 @@ export function KpiCard({
   value,
   display,
   previous,
+  kind = "count",
   showTrend = false,
   className,
 }: KpiCardProps) {
   const delta =
     showTrend && previous !== undefined
-      ? trendDelta(value ?? null, previous ?? null)
+      ? trendDelta(value ?? null, previous ?? null, kind)
       : null
 
   return (
@@ -58,7 +61,7 @@ export function KpiCard({
       </div>
       {showTrend && previous !== undefined && (
         <p className="text-[11px] text-subtle-foreground">
-          vs {display !== undefined ? (previous !== null ? `${Math.round((previous ?? 0) * 100)}%` : "—") : (previous ?? "—")} last period
+          vs {previous === null ? "—" : kind === "rate" ? `${Math.round(previous * 100)}%` : previous} last period
         </p>
       )}
     </div>

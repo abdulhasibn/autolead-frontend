@@ -99,7 +99,6 @@ async function TrafficTab({ period }: { period: DashboardPeriodKey }) {
   return (
     <>
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        {/* KpiCard formats `previous` as a percent whenever `display` is set, so counts pass raw values. */}
         <KpiCard label="Visitors" value={data.visitors} previous={data.previous.visitors} showTrend />
         <KpiCard
           label="From Instagram"
