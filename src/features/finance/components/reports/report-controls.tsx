@@ -44,7 +44,7 @@ export function ReportControls({ filters, showrooms }: { filters: ReportFilters;
                 key={tab}
                 value={tab}
                 nativeButton={false}
-                render={<PendingLink href={tabHref(tab)} spinner={false} />}
+                render={<PendingLink href={tabHref(tab)} spinner={false} scroll={false} />}
                 className="px-3 whitespace-nowrap pointer-coarse:min-h-9"
               >
                 {REPORT_TAB_LABELS[tab]}

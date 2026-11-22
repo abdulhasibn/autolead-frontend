@@ -26,7 +26,7 @@ export function PendingLink({ children, spinner = true, onClick, href, replace, 
     if (typeof href !== "string" || props.target === "_blank") return
     e.preventDefault()
     setClicked(true)
-    navigate(href, { replace, scroll: scroll ?? false })
+    navigate(href, { replace, scroll: scroll ?? true })
   }
 
   return (

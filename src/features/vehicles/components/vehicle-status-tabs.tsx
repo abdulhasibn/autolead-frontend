@@ -29,6 +29,7 @@ export function VehicleStatusTabs({ params, counts }: VehicleStatusTabsProps) {
           return (
             <PendingLink
               spinner={false}
+              scroll={false}
               key={tab.label}
               href={buildVehiclesHref({ ...params, status: tab.value, page: 1 })}
               aria-current={active ? "page" : undefined}

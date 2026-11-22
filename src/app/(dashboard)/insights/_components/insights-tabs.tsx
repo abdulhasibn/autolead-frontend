@@ -17,7 +17,7 @@ export function InsightsTabs({ activeTab }: { activeTab: InsightsTab }) {
             key={tab}
             value={tab}
             nativeButton={false}
-            render={<PendingLink href={buildHref(tab)} spinner={false} />}
+            render={<PendingLink href={buildHref(tab)} spinner={false} scroll={false} />}
             className="px-3 max-sm:flex-1 pointer-coarse:min-h-9"
           >
             {INSIGHTS_TAB_LABELS[tab]}

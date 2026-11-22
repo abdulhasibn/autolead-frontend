@@ -19,7 +19,7 @@ export function PeriodTabs({ activePeriod }: { activePeriod: DashboardPeriodKey 
             key={period}
             value={period}
             nativeButton={false}
-            render={<PendingLink href={buildHref(period)} spinner={false} />}
+            render={<PendingLink href={buildHref(period)} spinner={false} scroll={false} />}
             className="max-sm:flex-1 pointer-coarse:min-h-9"
           >
             {PERIOD_LABELS[period]}

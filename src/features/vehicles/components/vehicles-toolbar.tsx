@@ -346,6 +346,7 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
           return (
             <PendingLink
               spinner={false}
+              scroll={false}
               key={layout}
               href={buildVehiclesHref({ ...params, layout })}
               aria-label={layout === "grid" ? "Card view" : "Table view"}
