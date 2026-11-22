@@ -33,14 +33,15 @@ test.describe("leads", () => {
   test("@smoke leads list renders the provisioned lead", async ({ page, e2e }) => {
     await page.goto("/leads")
     await expect(page.getByRole("heading", { name: "Leads", level: 1 })).toBeVisible()
-    await expect(page.getByRole("link", { name: e2e.leadName })).toBeVisible()
+    // exact: the run's other leads are named "<leadName> 1234" and would match too.
+    await expect(page.getByRole("link", { name: e2e.leadName, exact: true })).toBeVisible()
   })
 
   test("@smoke opens a lead detail from the list", async ({ page, e2e }) => {
     await page.goto("/leads")
-    await page.getByRole("link", { name: e2e.leadName }).click()
+    await page.getByRole("link", { name: e2e.leadName, exact: true }).click()
     await expect(page).toHaveURL(new RegExp(`/leads/${e2e.leadId}$`))
-    await expect(page.getByRole("heading", { name: e2e.leadName, level: 1 })).toBeVisible()
+    await expect(page.getByRole("heading", { name: e2e.leadName, level: 1, exact: true })).toBeVisible()
   })
 
   test("@smoke LEAD-01 creates a lead without a car: New, unassigned", async ({ page, e2e, db }) => {
@@ -92,9 +93,23 @@ test.describe("leads", () => {
     expect(contacts[0].full_name).toBe(`Lead ${e2e.prefix} Original`)
   })
 
-  // Negative, non-numeric and absurdly large budgets get a field error; 0
-  // (= unknown) and a normal budget are stored and display without breaking.
-  for (const [budget, ok] of [["-5", false], ["abc", false], ["1000000000000", false], ["0", true], ["850000", true]] as const) {
+  // The budget field only takes digits: "-5" and "abc" can't be entered.
+  for (const budget of ["-5", "abc"]) {
+    test(`@regression LEAD-05 budget "${budget}" keeps digits only`, async ({ page }) => {
+      const d = await openNewLead(page)
+      await d.getByLabel("Full name *").fill("Digits only")
+      await d.getByLabel("Phone *").fill(randomPhone().slice(3))
+      await pick(d, "Source *", "Phone")
+      await d.getByRole("button", { name: "Continue" }).click()
+      const field = d.getByLabel("Max budget (₹)")
+      await field.fill(budget)
+      await expect(field).toHaveValue(/^[\d,]*$/)
+    })
+  }
+
+  // An absurdly large budget gets a field error; 0 (= unknown) and a normal
+  // budget are stored and display without breaking.
+  for (const [budget, ok] of [["1000000000000", false], ["0", true], ["850000", true]] as const) {
     test(`@regression LEAD-05 budget "${budget}" is ${ok ? "accepted" : "rejected"}`, async ({ page, e2e, db }) => {
       const name = `Lead ${e2e.prefix} L05 ${budget}`
       const d = await openNewLead(page)
@@ -316,10 +331,11 @@ test.describe("leads", () => {
     const d = dialog(page, "Buyer preference")
     await d.getByLabel("Year from").fill("1949")
     await d.getByLabel("Max km").fill("-5")
+    // Max km only takes digits, so the minus sign never lands.
+    await expect(d.getByLabel("Max km")).toHaveValue(/^[\d,]*$/)
     await d.getByRole("button", { name: /save/i }).click()
     await expect(d).toBeVisible()
     await expect(d.getByLabel("Year from")).toHaveAttribute("aria-invalid", "true")
-    await expect(d.getByLabel("Max km")).toHaveAttribute("aria-invalid", "true")
   })
 
   test("@regression LEAD-22 lead detail shows server-scored suggestions with match %", async ({ page, api, e2e }) => {

@@ -29,7 +29,13 @@ function newStaff(prefix: string, label: string) {
 /** A salesperson created the way the CRM does it (POST /users), registered for cleanup. */
 async function addSalesperson(api: Api, prefix: string, label: string) {
   const u = newStaff(prefix, label)
-  const created = await api.ok<{ id: string }>("POST", "/users", { ...u, roles: ["salesperson"], showroomId: null })
+  // The form takes 10 digits and adds +91; the API itself only accepts E.164.
+  const created = await api.ok<{ id: string }>("POST", "/users", {
+    ...u,
+    phone: `+91${u.phone}`,
+    roles: ["salesperson"],
+    showroomId: null,
+  })
   register("user", created.id)
   return { ...u, id: created.id }
 }

@@ -6,6 +6,44 @@ Status values: **open** (failing, not yet picked up) · **in progress** (fix PR 
 
 ---
 
+## 2026-11-22 (evening): finance key guard and stale locators
+
+### Suite changes
+- **Finance key guard** (`support/provision.ts`): the configured `E2E_FINANCE_KEY` is tried once in global setup. If it's refused (wrong key or lockout), finance tests skip with a warning instead of failing and locking the shared vault. `E2E_SKIP_FINANCE=1` skips finance without sending any key. FIN-01 and FIN-18 (locked state) run without a key.
+- **Env loader** (`support/env.ts`): a variable set to `""` is no longer refilled from `.env.e2e.local`. Workers re-run the loader. Before, they refilled `E2E_FINANCE_KEY` with the file's (stale) key after global setup had cleared it, so the "no key → skip" path never worked locally.
+- **Dev overlays** (`fixtures.ts`): also hide the TanStack Query devtools button, which covered dialog Save buttons (USER-04).
+- **Locators brought up to date with the app:**
+  - leads list: exact lead-name match (the run's other leads share the prefix).
+  - USER-04/07 seed: send the phone as +91 E.164 (`POST /users` rejects 10 digits; `showroomId: null` was not the cause).
+  - FU-01/03: exact "Time" combobox (a loose match hit the "Date and time" trigger and closed the picker).
+  - NUM-05, VEH-01, VEH-03: "Commission sale" is a radio; owner search results are buttons.
+  - VEH-09/10/10b: empty photo slots read "Add front" since the drag-and-swap change (#69).
+  - VEH-11/12: target the documents tab's file input, not the photos one.
+  - VEH-17/18/19: match the plate in the visible list (the page renders a hidden phone list first).
+  - VEH-20 and FIN-14: `api.createLead()` returns `fullName`/`phone` (the API sends `contactFullName`/`contactPhone`; `undefined` crashed one test and matched anything in the other).
+- **Expectations updated:** LEAD-05 ("-5", "abc"), LEAD-21 (Max km) and VEH-05 (Km "-5", "12.5") now check that the number fields keep digits only. The fields strip other characters as you type, so there's nothing to mark invalid.
+- **Known-bug tags:** dropped for closed issues FN-1 (FIN-08), DI-2 (FIN-13b) and DI-3 (FIN-15).
+
+### Latest run
+- **When:** 2026-11-22, locally, with `E2E_SKIP_FINANCE=1`.
+- **Against:** CRM on `next dev`, backend `pnpm dev` on `dev`.
+- **Scope:** leads, users, follow-ups, vehicles, drafts, owners, navigation, finance.
+- **Result:** all 26 targeted test-side failures now pass except USER-03/04 (below). Finance: FIN-01 and FIN-18 pass, the rest skip. Remaining failures are known bugs plus the items below.
+- **Incident:** the first run of this change still sent the stale key (the env-loader bug above), which locked the `lms_dev` finance vault for about 15 minutes, around 21:30–21:55 IST. Fixed before the second run, which sent no key.
+
+### Failures
+
+| ID | Test | Symptom | Suspected cause | Status | Fix PR |
+|---|---|---|---|---|---|
+| USER-03, USER-04 | role checkboxes in Add/Edit staff | Unticking a role doesn't stick: Add staff can't untick Salesperson; Edit staff unticks Admin and says "updated", but the role stays in `user_roles` | **Probably an app bug** in removing roles (form or save path). Ticking a role works. Reproduce by hand, then file | open | |
+| NAV-03 | `/leads/<random uuid>` shows not found | `next dev` error overlay instead of "Lead not found" | **App error** on the lead page for an unknown id (the 422 path is handled; something else throws). Reproduce by hand | open | |
+| OWN-06 | Unicode owner name stored intact | No "Owner created" toast for `Zoë 😀 ராஜ் …` | Possibly the API rejects emoji/Tamil names. Check the response | open | |
+| (flaky) | VEH-05 year, VEH-20 | Random `401 Authentication is required` mid-run | Backend `SupabaseAuthAdapter.verify()` returns "not signed in" on **any** Supabase Auth error (rate limit or network), so transient failures surface as 401. Backend fix: map provider failures to 503 | open | |
+| WEB-07 | test-drive request | Not rerun, to avoid adding to the public rate limit | Check the backend log for `PublicRateLimitedError` before treating it as a bug | open | |
+| LEAD-18, FIN-* | finance flows | Skipped: no working key | Add the new key to `tests/e2e/.env.e2e.local`, then run `--project=finance` | open | |
+
+---
+
 ## 2026-11-22: drafts, follow-ups, navigation, notifications, site and users specs
 
 ### Suite changes

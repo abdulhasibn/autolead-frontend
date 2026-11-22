@@ -1,5 +1,5 @@
 import { writeFileSync } from "node:fs"
-import type { Page } from "@playwright/test"
+import type { Locator, Page } from "@playwright/test"
 import { test, expect, bug } from "../fixtures"
 import { randomPlate, type Api } from "../support/api"
 import { dialog, pick, toast } from "../support/ui"
@@ -42,11 +42,27 @@ async function openAddVehicle(page: Page) {
   return page.getByRole("dialog", { name: "Add vehicle" })
 }
 
+/** Empty photo slots read "Add front", "Add right side", … */
 async function uploadPhoto(page: Page, slot: string, path: string) {
   const chooser = page.waitForEvent("filechooser")
-  await page.getByRole("button", { name: new RegExp(`^${slot}`) }).first().click()
+  await page.getByRole("button", { name: new RegExp(`^Add ${slot}`, "i") }).first().click()
   await (await chooser).setFiles(path)
 }
+
+/** Owner step: search results are buttons ("O Owner … · Bengaluru"). */
+async function pickOwner(s: Locator, query: string) {
+  await s.getByLabel("Search owners").fill(query)
+  await s.getByRole("button", { name: new RegExp(query) }).first().click()
+}
+
+/** The documents tab's own file input (the photos tab keeps one mounted too). */
+const documentInput = (page: Page) => page.locator('input[type="file"][accept*="application/pdf"]')
+
+/**
+ * The vehicles page renders a phone list and a desktop grid; only one is
+ * visible. Match the plate in the visible one.
+ */
+const visiblePlate = (page: Page, reg: string) => page.getByText(plate(reg)).filter({ visible: true }).first()
 
 test.describe("vehicles", () => {
   test("@smoke VEH-01 add a vehicle through the wizard: saved as open", async ({ page, api, e2e, db }) => {
@@ -57,9 +73,8 @@ test.describe("vehicles", () => {
     const s = await fillCarStep(page, api, reg)
     await s.getByRole("button", { name: "Continue" }).click() // condition
     await s.getByRole("button", { name: "Continue" }).click() // owner
-    await s.getByLabel("Search owners").fill(owner.fullName)
-    await page.getByRole("option", { name: new RegExp(owner.fullName) }).first().click()
-    await s.getByRole("button", { name: "Commission sale" }).click()
+    await pickOwner(s, owner.fullName)
+    await s.getByRole("radio", { name: "Commission sale" }).click()
     await s.getByRole("button", { name: "Add vehicle" }).click()
     await expect(toast(page, "Vehicle added. Now add its photos.")).toBeVisible({ timeout: 30_000 })
     const row = await db.one("vehicles", `registration_number=eq.${reg}`, "status,owner_id")
@@ -81,9 +96,8 @@ test.describe("vehicles", () => {
     const s = await fillCarStep(page, api, existing.registrationNumber)
     await s.getByRole("button", { name: "Continue" }).click()
     await s.getByRole("button", { name: "Continue" }).click()
-    await s.getByLabel("Search owners").fill(e2e.prefix)
-    await page.getByRole("option").first().click()
-    await s.getByRole("button", { name: "Commission sale" }).click()
+    await pickOwner(s, e2e.prefix)
+    await s.getByRole("radio", { name: "Commission sale" }).click()
     await s.getByRole("button", { name: "Add vehicle" }).click()
     await expect(toast(page, "A vehicle with this registration number already exists.")).toBeVisible()
     // The plate field (step 1) should be where the user lands.
@@ -110,12 +124,20 @@ test.describe("vehicles", () => {
     void db
   })
 
-  for (const [field, value] of [["Year *", "1899"], ["Year *", "2101"], ["Km driven *", "-5"], ["Km driven *", "12.5"], ["Previous owners *", "33000"]] as const) {
+  // Km driven only takes digits: a minus sign or a decimal point never lands.
+  for (const value of ["-5", "12.5"]) {
+    test(`@regression VEH-05 Km driven ${value} keeps digits only`, async ({ page }) => {
+      const s = await openAddVehicle(page)
+      await s.getByLabel("Km driven *").fill(value)
+      await expect(s.getByLabel("Km driven *")).toHaveValue(/^[\d,]+$/)
+    })
+  }
+
+  for (const [field, value] of [["Year *", "1899"], ["Year *", "2101"], ["Previous owners *", "33000"]] as const) {
     test(`@regression VEH-05 ${field.replace(" *", "")} ${value} is rejected`, async ({ page, api }) => {
       await openAddVehicle(page)
       const s = await fillCarStep(page, api, randomPlate(), {
         year: field === "Year *" ? value : undefined,
-        km: field === "Km driven *" ? value : undefined,
         owners: field === "Previous owners *" ? value : undefined,
       })
       await s.getByRole("button", { name: "Continue" }).click()
@@ -190,7 +212,7 @@ test.describe("vehicles", () => {
   test("@regression VEH-11 upload, list and delete a PDF document", async ({ page, api, e2e }) => {
     const v = await api.createVehicle(e2e.prefix)
     await page.goto(`/vehicles/${v.id}?tab=documents`)
-    await page.locator('input[type="file"]').first().setInputFiles(file("rc-copy.pdf", PDF))
+    await documentInput(page).setInputFiles(file("rc-copy.pdf", PDF))
     await expect(toast(page, /uploaded\./)).toBeVisible({ timeout: 30_000 })
     await expect(page.getByText("rc-copy.pdf").first()).toBeVisible()
     await page.getByRole("button", { name: /Delete rc-copy\.pdf/ }).click()
@@ -201,7 +223,7 @@ test.describe("vehicles", () => {
   test("@regression VEH-12 document over 15 MB is rejected", async ({ page, api, e2e }) => {
     const v = await api.createVehicle(e2e.prefix)
     await page.goto(`/vehicles/${v.id}?tab=documents`)
-    await page.locator('input[type="file"]').first().setInputFiles(file("big.pdf", Buffer.alloc(16 * 1024 * 1024, 1)))
+    await documentInput(page).setInputFiles(file("big.pdf", Buffer.alloc(16 * 1024 * 1024, 1)))
     await expect(toast(page, /uploaded\./)).toHaveCount(0)
     await expect(page.getByText(/15 ?MB|too large/i).first()).toBeVisible()
   })
@@ -267,7 +289,7 @@ test.describe("vehicles", () => {
     const a = await api.createVehicle(tag, { year: 2015, kmDriven: 90000 })
     const b = await api.createVehicle(tag, { year: 2022, kmDriven: 10000 })
     await page.goto(`/vehicles?q=${b.registrationNumber}&yearMin=2020&kmMax=20000`)
-    await expect(page.getByText(plate(b.registrationNumber)).first()).toBeVisible()
+    await expect(visiblePlate(page, b.registrationNumber)).toBeVisible()
     await page.goto(`/vehicles?q=${a.registrationNumber}&yearMin=2020`)
     await expect(page.getByText(plate(a.registrationNumber))).toHaveCount(0)
   })
@@ -282,7 +304,7 @@ test.describe("vehicles", () => {
   test("@regression VEH-18 min greater than max is handled (swapped), not an empty crash", async ({ page, api, e2e }) => {
     const v = await api.createVehicle(e2e.prefix, { year: 2019 })
     await page.goto(`/vehicles?q=${v.registrationNumber}&yearMin=2021&yearMax=2017`)
-    await expect(page.getByText(plate(v.registrationNumber)).first()).toBeVisible()
+    await expect(visiblePlate(page, v.registrationNumber)).toBeVisible()
   })
 
   test("@regression VEH-19 multi-word search matches every word", async ({ page, api, e2e }) => {
@@ -290,7 +312,7 @@ test.describe("vehicles", () => {
     const v = await api.createVehicle(e2e.prefix)
     await page.goto("/vehicles")
     await page.getByRole("searchbox", { name: "Search vehicles" }).fill(`${cat.model.name.split(" ")[0]} ${v.registrationNumber.slice(0, 6)}`)
-    await expect(page.getByText(plate(v.registrationNumber)).first()).toBeVisible()
+    await expect(visiblePlate(page, v.registrationNumber)).toBeVisible()
   })
 
   test("@regression VEH-20 vehicle detail lists linked and suggested leads with match %", async ({ page, api, e2e }) => {

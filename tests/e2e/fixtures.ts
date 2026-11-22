@@ -103,12 +103,13 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     await provide(context)
   },
   page: async ({ page }, provide) => {
-    // `next dev` floats its dev-tools badge over the bottom-right corner,
-    // where dialogs keep their primary button. Hide it (test-side only).
+    // `next dev` floats its dev-tools badge, and dev builds float the
+    // TanStack Query devtools button, over the bottom corners where dialogs
+    // keep their primary button. Hide both (test-side only).
     await page.addInitScript(() => {
       const hide = () => {
         const style = document.createElement("style")
-        style.textContent = "nextjs-portal { display: none !important; }"
+        style.textContent = "nextjs-portal, .tsqd-parent-container { display: none !important; }"
         document.head.appendChild(style)
       }
       if (document.head) hide()

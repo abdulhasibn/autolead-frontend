@@ -118,13 +118,20 @@ export class Api {
   }
 
   async createLead(prefix: string, over: Record<string, unknown> = {}): Promise<Lead> {
-    return this.ok<Lead>("POST", "/leads", {
+    const body = {
       fullName: `Lead ${prefix} ${randomInt(1000, 9999)}`,
       phone: randomPhone(),
       source: "phone",
       budget: 800000,
       ...over,
-    })
+    }
+    // The API returns the contact as contactFullName / contactPhone.
+    const lead = await this.ok<Omit<Lead, "fullName" | "phone"> & { contactFullName: string; contactPhone: string }>(
+      "POST",
+      "/leads",
+      body
+    )
+    return { ...lead, fullName: lead.contactFullName, phone: lead.contactPhone }
   }
 
   setStatus(leadId: string, status: string, notes?: string) {
