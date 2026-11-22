@@ -97,11 +97,12 @@ export function paperworkHealth(
   vehicle: Pick<
     VehicleDto,
     "insuranceValidUntil" | "rcStatus" | "serviceHistory" | "accidentHistory"
-  >,
+  > &
+    Partial<Pick<VehicleDto, "insuranceNil">>,
   now: Date = new Date()
 ): HealthItem[] {
   return [
-    insuranceHealth(vehicle.insuranceValidUntil, now),
+    insuranceHealth(vehicle.insuranceValidUntil, now, vehicle.insuranceNil === true),
     {
       key: "rc",
       label: "RC",
@@ -130,8 +131,9 @@ export function paperworkHealth(
   ]
 }
 
-function insuranceHealth(validUntil: string | null, now: Date): HealthItem {
+function insuranceHealth(validUntil: string | null, now: Date, nil = false): HealthItem {
   const base = { key: "insurance", label: "Insurance" } as const
+  if (nil) return { ...base, value: "Nil", tone: "bad" }
   if (!validUntil) return { ...base, value: "Not recorded", tone: "unknown" }
   // Calendar date (YYYY-MM-DD); compare at local midnight.
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(validUntil)
