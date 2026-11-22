@@ -2,56 +2,68 @@
 
 import { useEffect, useState } from "react"
 
-export interface KeyboardInset {
-  /** Pixels the on-screen keyboard covers at the bottom of the layout viewport. */
-  bottom: number
-  /** Height of the part of the screen the user can actually see. */
-  visibleHeight: number | null
+export interface SheetFrame {
+  /** `top` for a `position: fixed` sheet, in layout-viewport pixels. */
+  top: number
+  height: number
+  /** True while an on-screen keyboard is taking up part of the screen. */
+  keyboardOpen: boolean
 }
-
-const NONE: KeyboardInset = { bottom: 0, visibleHeight: null }
 
 /** Below this the difference is browser chrome (URL bar), not a keyboard. */
 const MIN_KEYBOARD_PX = 80
+/** Space kept free above the sheet so it never touches the screen's top edge. */
+const TOP_GAP_PX = 8
 
 /**
  * Pure maths, split out for tests.
  *
- * The keyboard is detected from how much shorter the visible area is than the
- * layout viewport. Where the visible area sits is a separate question: iOS
- * also scrolls the visual viewport down (offsetTop) to keep the focused field
- * in view, so the visible bottom can be anywhere from the keyboard's top edge
- * to the layout bottom. `bottom` lines the sheet up with that visible bottom
- * and `visibleHeight` caps its height, so the whole sheet (title, search box,
- * results) stays on screen however Safari has scrolled.
+ * Places a bottom sheet inside the part of the screen the user can actually
+ * see (the visual viewport). The sheet is positioned by `top`, measured from
+ * the visual viewport's own offset, so it lands on screen however iOS has
+ * scrolled or resized things for the keyboard. It never relies on
+ * `window.innerHeight`, which iOS Safari reports inconsistently while the
+ * keyboard is open.
+ *
+ * `fullHeight` is the screen height with no keyboard; the sheet aims for
+ * `fraction` of it and shrinks to fit when the keyboard leaves less room.
  */
-export function computeKeyboardInset(
-  layoutHeight: number,
-  viewport: { height: number; offsetTop: number }
-): KeyboardInset {
-  if (layoutHeight - viewport.height < MIN_KEYBOARD_PX) return NONE
-  const bottom = Math.max(0, Math.round(layoutHeight - viewport.height - viewport.offsetTop))
-  return { bottom, visibleHeight: Math.round(viewport.height) }
+export function computeSheetFrame(
+  fullHeight: number,
+  viewport: { height: number; offsetTop: number },
+  fraction = 0.8
+): SheetFrame {
+  const height = Math.round(Math.min(fullHeight * fraction, viewport.height - TOP_GAP_PX))
+  const top = Math.round(viewport.offsetTop + viewport.height - height)
+  return { top, height, keyboardOpen: fullHeight - viewport.height >= MIN_KEYBOARD_PX }
+}
+
+function sameFrame(a: SheetFrame | null, b: SheetFrame) {
+  return a != null && a.top === b.top && a.height === b.height && a.keyboardOpen === b.keyboardOpen
 }
 
 /**
- * Tracks how much of the screen the on-screen keyboard covers while `active`.
+ * Keeps a bottom sheet inside the visible part of the screen while `active`.
  *
- * iOS Safari and Android Chrome keep the layout viewport full height when the
- * keyboard opens, so anything pinned with `bottom: 0` ends up under the
- * keyboard. Bottom sheets use this to sit on top of it instead.
+ * Phone browsers keep the layout viewport full height when the keyboard opens,
+ * so a sheet pinned with `bottom: 0` ends up under the keyboard, and iOS then
+ * scrolls the page to reveal the focused field, which pushes the sheet's top
+ * off screen. This follows the visual viewport instead and returns where the
+ * sheet should sit. Returns null where `visualViewport` isn't supported.
  */
-export function useKeyboardInset(active: boolean): KeyboardInset {
-  const [inset, setInset] = useState<KeyboardInset>(NONE)
+export function useVisualViewportSheet(active: boolean, fraction = 0.8): SheetFrame | null {
+  const [frame, setFrame] = useState<SheetFrame | null>(null)
 
   useEffect(() => {
     const vv = typeof window === "undefined" ? undefined : window.visualViewport
     if (!active || !vv) return
+    // Screen height without a keyboard: the largest visible height seen while
+    // open, starting from the layout viewport (which the keyboard doesn't change).
+    let fullHeight = Math.max(document.documentElement.clientHeight, vv.height)
     const update = () => {
-      const next = computeKeyboardInset(window.innerHeight, vv)
-      setInset((prev) =>
-        prev.bottom === next.bottom && prev.visibleHeight === next.visibleHeight ? prev : next
-      )
+      fullHeight = Math.max(fullHeight, vv.height)
+      const next = computeSheetFrame(fullHeight, vv, fraction)
+      setFrame((prev) => (sameFrame(prev, next) ? prev : next))
     }
     update()
     vv.addEventListener("resize", update)
@@ -59,9 +71,9 @@ export function useKeyboardInset(active: boolean): KeyboardInset {
     return () => {
       vv.removeEventListener("resize", update)
       vv.removeEventListener("scroll", update)
-      setInset(NONE)
+      setFrame(null)
     }
-  }, [active])
+  }, [active, fraction])
 
-  return inset
+  return frame
 }

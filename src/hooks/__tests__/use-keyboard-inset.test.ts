@@ -1,32 +1,43 @@
 import { describe, expect, it } from "vitest"
 
-import { computeKeyboardInset } from "../use-keyboard-inset"
+import { computeSheetFrame } from "../use-keyboard-inset"
 
-describe("computeKeyboardInset", () => {
-  it("is zero when the keyboard is closed", () => {
-    expect(computeKeyboardInset(812, { height: 812, offsetTop: 0 })).toEqual({ bottom: 0, visibleHeight: null })
+describe("computeSheetFrame", () => {
+  it("sits at the bottom at 80% height with no keyboard", () => {
+    expect(computeSheetFrame(812, { height: 812, offsetTop: 0 })).toEqual({
+      top: 162,
+      height: 650,
+      keyboardOpen: false,
+    })
   })
 
-  it("ignores small differences from the browser's URL bar", () => {
-    expect(computeKeyboardInset(812, { height: 760, offsetTop: 0 })).toEqual({ bottom: 0, visibleHeight: null })
+  it("treats a small difference (URL bar) as no keyboard", () => {
+    expect(computeSheetFrame(812, { height: 760, offsetTop: 0 }).keyboardOpen).toBe(false)
   })
 
-  it("lifts the sheet by the keyboard height (iPhone, ~336px keyboard)", () => {
-    expect(computeKeyboardInset(812, { height: 476, offsetTop: 0 })).toEqual({ bottom: 336, visibleHeight: 476 })
+  it("sits right above the keyboard when the view isn't scrolled", () => {
+    // 336px keyboard: visible area is 0..476.
+    expect(computeSheetFrame(812, { height: 476, offsetTop: 0 })).toEqual({
+      top: 8,
+      height: 468,
+      keyboardOpen: true,
+    })
   })
 
-  it("accounts for the visual viewport being scrolled", () => {
-    expect(computeKeyboardInset(812, { height: 476, offsetTop: 100 })).toEqual({ bottom: 236, visibleHeight: 476 })
+  // Regression (real iPhone): iOS scrolls the visual viewport down to reveal
+  // the focused search box. The sheet must follow it, top edge on screen.
+  it("follows the visual viewport when iOS scrolls it down", () => {
+    const frame = computeSheetFrame(812, { height: 476, offsetTop: 336 })
+    expect(frame).toEqual({ top: 344, height: 468, keyboardOpen: true })
+    expect(frame.top).toBeGreaterThanOrEqual(336)
+    expect(frame.top + frame.height).toBeLessThanOrEqual(336 + 476)
   })
 
-  // Regression: iOS scrolls the visual viewport all the way down when a field
-  // in a bottom sheet is focused. The keyboard is still open, so the sheet must
-  // still be capped to the visible height, or its top runs off the screen.
-  it("still caps the height when iOS has scrolled the view fully down", () => {
-    expect(computeKeyboardInset(812, { height: 476, offsetTop: 336 })).toEqual({ bottom: 0, visibleHeight: 476 })
-  })
-
-  it("never goes negative if the view over-scrolls", () => {
-    expect(computeKeyboardInset(812, { height: 476, offsetTop: 400 })).toEqual({ bottom: 0, visibleHeight: 476 })
+  it("stays inside the visible area for any scroll position", () => {
+    for (const offsetTop of [0, 50, 120, 336, 500]) {
+      const frame = computeSheetFrame(812, { height: 476, offsetTop })
+      expect(frame.top).toBeGreaterThanOrEqual(offsetTop)
+      expect(frame.top + frame.height).toBe(offsetTop + 476)
+    }
   })
 })
