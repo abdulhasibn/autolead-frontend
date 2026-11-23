@@ -96,7 +96,7 @@ export function AssignLeadDialog({
       }}
     >
       <DialogTrigger
-        disabled={disabled}
+        disabled={disabled || isPending}
         render={
           <Button
             variant="outline"
