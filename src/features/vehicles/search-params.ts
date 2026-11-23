@@ -16,6 +16,8 @@ export interface VehiclesSearchParams {
   yearMax?: number
   kmMin?: number
   kmMax?: number
+  priceMin?: number
+  priceMax?: number
   layout: VehiclesLayout
   page: number
 }
@@ -68,6 +70,10 @@ export function parseVehiclesSearchParams(raw: RawSearchParams): VehiclesSearchP
     int(raw.kmMin, 0, Number.MAX_SAFE_INTEGER),
     int(raw.kmMax, 0, Number.MAX_SAFE_INTEGER)
   )
+  const [priceMin, priceMax] = range(
+    int(raw.priceMin, 0, Number.MAX_SAFE_INTEGER),
+    int(raw.priceMax, 0, Number.MAX_SAFE_INTEGER)
+  )
   const makeId = guid(raw.makeId)
 
   return {
@@ -82,6 +88,8 @@ export function parseVehiclesSearchParams(raw: RawSearchParams): VehiclesSearchP
     yearMax,
     kmMin,
     kmMax,
+    priceMin,
+    priceMax,
     layout: first(raw.layout) === "table" ? "table" : "grid",
     page: Number.isInteger(page) && page > 0 ? page : 1,
   }
@@ -99,6 +107,7 @@ export function countActiveFilters(params: VehiclesSearchParams): number {
     params.transmission.length > 0,
     params.yearMin !== undefined || params.yearMax !== undefined,
     params.kmMin !== undefined || params.kmMax !== undefined,
+    params.priceMin !== undefined || params.priceMax !== undefined,
   ].filter(Boolean).length
 }
 
@@ -115,6 +124,8 @@ export function buildVehiclesHref(params: Partial<VehiclesSearchParams>): string
   if (params.yearMax !== undefined) query.set("yearMax", String(params.yearMax))
   if (params.kmMin !== undefined) query.set("kmMin", String(params.kmMin))
   if (params.kmMax !== undefined) query.set("kmMax", String(params.kmMax))
+  if (params.priceMin !== undefined) query.set("priceMin", String(params.priceMin))
+  if (params.priceMax !== undefined) query.set("priceMax", String(params.priceMax))
   if (params.layout === "table") query.set("layout", "table")
   if (params.page && params.page > 1) query.set("page", String(params.page))
   const qs = query.toString()
@@ -133,5 +144,7 @@ export function toListQuery(params: VehiclesSearchParams) {
     yearMax: params.yearMax,
     kmMin: params.kmMin,
     kmMax: params.kmMax,
+    priceMin: params.priceMin,
+    priceMax: params.priceMax,
   }
 }
