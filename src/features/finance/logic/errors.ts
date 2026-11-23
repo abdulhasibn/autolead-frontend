@@ -48,6 +48,21 @@ export function financeErrorMessage(error: Pick<ActionError, "code" | "message" 
   }
 }
 
+/** Pause length after too many wrong keys; the server enforces it. */
+export const UNLOCK_PAUSE_MINUTES = 15
+
+/** Wrong keys still allowed before the pause, from `INVALID_FINANCE_KEY` details; null if the server didn't say. */
+export function attemptsLeftFrom(error: Pick<ActionError, "code" | "details">): number | null {
+  if (error.code !== "INVALID_FINANCE_KEY") return null
+  const left = error.details?.attemptsLeft
+  return typeof left === "number" && Number.isFinite(left) && left >= 0 ? Math.floor(left) : null
+}
+
+/** "2 tries left before a 15-minute pause" for a wrong key. */
+export function triesLeftMessage(attemptsLeft: number): string {
+  return `${attemptsLeft} ${attemptsLeft === 1 ? "try" : "tries"} left before a ${UNLOCK_PAUSE_MINUTES}-minute pause.`
+}
+
 /** Key fields: a VALIDATION_ERROR means the key isn't in the expected shape (doesn't count toward lockout). */
 export function keyErrorMessage(error: Pick<ActionError, "code" | "message" | "status">, kind: "finance" | "recovery"): string {
   if (error.code === "VALIDATION_ERROR") {
