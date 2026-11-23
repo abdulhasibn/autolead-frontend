@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useCallback } from "react"
+import { useState, useTransition, useCallback, useRef } from "react"
 import { Bell, CheckCheck, ChevronDown, User, Phone, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -139,10 +139,16 @@ export function NotificationDrawer({
   const [isRefreshing, startRefresh] = useTransition()
   const [, startMarkRead] = useTransition()
 
+  // Bumped whenever the user marks something read. A refresh that started
+  // before that carries the old read state, so its result is dropped.
+  const generation = useRef(0)
+
   const refresh = useCallback(() => {
+    const started = generation.current
     startRefresh(async () => {
       try {
         const page: NotificationPageDto = await fetchNotificationsAction(50)
+        if (generation.current !== started) return
         setNotifications(page.items)
         setUnreadCount(page.unreadCount)
       } catch {
@@ -161,6 +167,7 @@ export function NotificationDrawer({
     setExpandedId(nextExpanded)
 
     if (!n.isRead && nextExpanded === n.id) {
+      generation.current += 1
       // optimistic update
       setNotifications((prev) =>
         prev.map((item) => (item.id === n.id ? { ...item, isRead: true } : item))
@@ -185,6 +192,7 @@ export function NotificationDrawer({
     const unread = notifications.filter((n) => !n.isRead)
     if (unread.length === 0) return
 
+    generation.current += 1
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
     setUnreadCount(0)
 
@@ -192,8 +200,11 @@ export function NotificationDrawer({
       try {
         await Promise.all(unread.map((n) => markNotificationReadAction(n.id)))
       } catch {
-        refresh()
+        // fall through: the refresh shows what the server kept
       }
+      // Sync with the server once the marks are saved (also picks up
+      // anything that arrived meanwhile).
+      refresh()
     })
   }
 
