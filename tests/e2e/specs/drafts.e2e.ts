@@ -31,6 +31,38 @@ async function draftKeys(page: Page): Promise<string[]> {
   })
 }
 
+/** Stored drafts as [key, JSON of the record], from IndexedDB or the localStorage fallback. */
+async function draftRecords(page: Page): Promise<[string, string][]> {
+  return page.evaluate(async () => {
+    const fromLocal = Object.keys(localStorage)
+      .filter((k) => k.startsWith("autolead-draft:"))
+      .map((k): [string, string] => [k.slice("autolead-draft:".length), localStorage.getItem(k) ?? ""])
+    const fromIdb = await new Promise<[string, string][]>((resolve) => {
+      const req = indexedDB.open("autolead-drafts")
+      req.onerror = () => resolve([])
+      req.onsuccess = () => {
+        const db = req.result
+        if (!db.objectStoreNames.contains("drafts")) return (db.close(), resolve([]))
+        const all = db.transaction("drafts", "readonly").objectStore("drafts").getAll()
+        all.onsuccess = () => (db.close(), resolve(all.result.map((r: { key: string }) => [String(r.key), JSON.stringify(r)])))
+        all.onerror = () => (db.close(), resolve([]))
+      }
+    })
+    return [...fromIdb, ...fromLocal]
+  })
+}
+
+/**
+ * Waits until the saved draft holds what was typed last. A draft can already
+ * exist from earlier fields, and saves are debounced, so "a draft exists" is
+ * not enough before a reload.
+ */
+async function waitForDraftWith(page: Page, fragment: string, ...values: RegExp[]) {
+  await expect
+    .poll(async () => (await draftRecords(page)).some(([k, json]) => k.includes(fragment) && values.every((v) => v.test(json))))
+    .toBe(true)
+}
+
 /** Waits until a draft whose key contains `fragment` has been written (saves are debounced). */
 async function waitForDraft(page: Page, fragment: string) {
   await expect.poll(async () => (await draftKeys(page)).some((k) => k.includes(fragment))).toBe(true)
@@ -154,7 +186,7 @@ test.describe("form drafts", () => {
     await pick(s, "Model *", cat.model.name)
     await s.getByLabel("Registration number *").fill(reg)
     await s.getByLabel("Km driven *").fill("42000")
-    await waitForDraft(page, "vehicle:create")
+    await waitForDraftWith(page, "vehicle:create", new RegExp(reg.slice(-4)), /42,?000/)
     await page.reload()
     s = await openAddVehicle(page)
     await expect(restoredBanner(s)).toBeVisible()
