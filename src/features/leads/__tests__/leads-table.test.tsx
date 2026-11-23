@@ -37,4 +37,19 @@ describe("LeadsTable", () => {
     expect(screen.getByText("Ravi Kumar")).toBeInTheDocument()
     expect(screen.getByText("Unassigned")).toBeInTheDocument()
   })
+
+  it("links sortable headers and marks the active one", () => {
+    render(
+      <LeadsTable
+        leads={[lead]}
+        vehicleLabels={{ [lead.vehicleId!]: "Car" }}
+        params={{ sort: "-budget", status: "new", page: 3 }}
+      />
+    )
+    expect(screen.getByRole("columnheader", { name: "Budget" })).toHaveAttribute("aria-sort", "descending")
+    expect(screen.getByRole("link", { name: "Budget" })).toHaveAttribute("href", "/leads?status=new&sort=budget")
+    expect(screen.getByRole("columnheader", { name: "Created" })).toHaveAttribute("aria-sort", "none")
+    // Back to the default order drops the param and returns to page 1.
+    expect(screen.getByRole("link", { name: "Created" })).toHaveAttribute("href", "/leads?status=new")
+  })
 })

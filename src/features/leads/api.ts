@@ -28,6 +28,7 @@ export interface LeadsListParams extends PaginationParams {
   /** Admin-only; salespeople always get their own leads. */
   assignedTo?: string
   source?: string
+  sort?: string
 }
 
 export async function getLeads(
@@ -40,6 +41,7 @@ export async function getLeads(
   if (params.vehicleId) query.set("vehicleId", params.vehicleId)
   if (params.assignedTo) query.set("assignedTo", params.assignedTo)
   if (params.source) query.set("source", params.source)
+  if (params.sort) query.set("sort", params.sort)
   return serverApiClient.get<Page<LeadReadModel>>(`/leads?${query}`)
 }
 

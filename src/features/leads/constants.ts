@@ -20,6 +20,10 @@ export const LEAD_STATUSES = [
   "vehicle_unavailable",
 ] as const
 
+/** `-` = descending; matches the API's `sort` values. */
+export const LEAD_SORTS = ["-created", "created", "-updated", "updated", "-budget", "budget"] as const
+export const DEFAULT_LEAD_SORT = "-created"
+
 export const LEAD_SOURCES = [
   "marketplace",
   "mobile_app",

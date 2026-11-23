@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   buildLeadsHref,
   matchesLeadSearch,
+  nextSort,
   pageToOffset,
   parseLeadsSearchParams,
 } from "../search-params"
@@ -62,6 +63,29 @@ describe("assignee and source filters", () => {
     expect(href).toBe(`/leads?assignedTo=${STAFF_ID}&source=phone`)
     const parsed = parseLeadsSearchParams(Object.fromEntries(new URL(href, "http://x").searchParams))
     expect(parsed).toMatchObject({ assignedTo: STAFF_ID, source: "phone" })
+  })
+})
+
+describe("sort", () => {
+  it("keeps a valid sort and drops the default and unknown values", () => {
+    expect(parseLeadsSearchParams({ sort: "-budget" }).sort).toBe("-budget")
+    expect(parseLeadsSearchParams({ sort: "created" }).sort).toBe("created")
+    expect(parseLeadsSearchParams({ sort: "-created" }).sort).toBeUndefined()
+    expect(parseLeadsSearchParams({ sort: "name" }).sort).toBeUndefined()
+  })
+
+  it("writes a non-default sort to the href", () => {
+    expect(buildLeadsHref({ sort: "budget", page: 1 })).toBe("/leads?sort=budget")
+    expect(buildLeadsHref({ sort: undefined, page: 1 })).toBe("/leads")
+  })
+
+  it("cycles a column descending, ascending, descending", () => {
+    expect(nextSort(undefined, "created")).toBe("created")
+    expect(nextSort("created", "created")).toBe("-created")
+    expect(nextSort(undefined, "budget")).toBe("-budget")
+    expect(nextSort("-budget", "budget")).toBe("budget")
+    expect(nextSort("budget", "budget")).toBe("-budget")
+    expect(nextSort("-budget", "created")).toBe("-created")
   })
 })
 

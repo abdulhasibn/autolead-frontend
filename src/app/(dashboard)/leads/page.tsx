@@ -46,6 +46,7 @@ export default async function LeadsPage({
       vehicleId: params.vehicleId,
       assignedTo: params.assignedTo,
       source: params.source,
+      sort: params.sort,
       limit: params.q ? LEADS_SEARCH_SCAN_LIMIT : LEADS_PAGE_SIZE,
       offset: params.q ? 0 : pageToOffset(params.page),
     }),
@@ -105,7 +106,7 @@ export default async function LeadsPage({
       ) : (
         <>
           <div className="hidden md:block">
-            <LeadsTable leads={leads} vehicleLabels={vehicleLabels} />
+            <LeadsTable leads={leads} vehicleLabels={vehicleLabels} params={params} />
           </div>
           <div className="md:hidden">
             <LeadsCardList leads={leads} vehicleLabels={vehicleLabels} />
