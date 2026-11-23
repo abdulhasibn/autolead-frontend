@@ -4,6 +4,7 @@ import {
   completeFollowUpFormSchema,
   createLeadFormSchema,
   createLeadSchema,
+  editLeadFormSchema,
   leadPreferenceFormSchema,
   leadPreferenceSchema,
   scheduleFollowUpFormSchema,
@@ -91,6 +92,24 @@ describe("createLeadFormSchema", () => {
     expect(result.success).toBe(false)
     const fields = result.error!.issues.map((i) => i.path[0])
     expect(fields).toEqual(expect.arrayContaining(["phone", "email", "budget", "source"]))
+  })
+})
+
+describe("budget limit", () => {
+  const fields = (schema: typeof createLeadFormSchema | typeof editLeadFormSchema, budget: string) => {
+    const r = schema.safeParse({ ...baseForm, budget })
+    return r.success ? [] : r.error.issues.map((i) => i.path[0])
+  }
+
+  it.each([createLeadFormSchema, editLeadFormSchema])("rejects a budget over ₹100 crore", (schema) => {
+    expect(fields(schema, "1000000000000")).toContain("budget")
+    expect(fields(schema, "1,00,00,00,001")).toContain("budget")
+  })
+
+  it.each([createLeadFormSchema, editLeadFormSchema])("accepts the maximum, zero and blank", (schema) => {
+    for (const ok of ["1000000000", "1,00,00,00,000", "0", "850000", ""]) {
+      expect(fields(schema, ok)).not.toContain("budget")
+    }
   })
 })
 
