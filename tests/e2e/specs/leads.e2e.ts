@@ -141,11 +141,58 @@ test.describe("leads", () => {
     })
   }
 
-  test("@regression LEAD-06 edit lead fields (no UI yet)", async () => {
-    missingUi("MF-2")
+  test("@regression LEAD-06 edit lead fields; changes persist after reload", async ({ page, api, e2e }) => {
+    const lead = await api.createLead(e2e.prefix)
+    const name = `Lead ${e2e.prefix} L06 edited`
+    await page.goto(`/leads/${lead.id}`)
+    await page.getByRole("button", { name: "Edit lead" }).click()
+    const s = dialog(page, "Edit lead")
+    await s.getByLabel("Full name *").fill(name)
+    await s.getByLabel("Max budget (₹)").fill("950000")
+    await s.getByLabel("Notes").fill("Wants a white hatchback")
+    await s.getByRole("button", { name: "Save" }).click()
+    await expect(toast(page, "Lead updated.")).toBeVisible()
+    await expect(s).toBeHidden()
+    await page.reload()
+    await expect(page.getByRole("heading", { name, level: 1 })).toBeVisible()
+    const saved = await api.ok("GET", `/leads/${lead.id}`)
+    expect({ name: saved.contactFullName, budget: Number(saved.budget), notes: saved.notes }).toEqual({
+      name,
+      budget: 950000,
+      notes: "Wants a white hatchback",
+    })
   })
-  test("@regression LEAD-07 assign / reassign / unassign (no UI yet)", async () => {
-    missingUi("MF-2")
+
+  test("@regression LEAD-07 assign, reassign and unassign a lead", async ({ page, api, e2e }) => {
+    const lead = await api.createLead(e2e.prefix)
+    await page.goto(`/leads/${lead.id}`)
+    const assignedTo = async () => (await api.ok("GET", `/leads/${lead.id}`)).assignedTo
+
+    await page.getByRole("button", { name: "Assign", exact: true }).click()
+    let d = dialog(page, "Assign lead")
+    await pick(d, "Assigned to", e2e.salesName)
+    await d.getByRole("button", { name: "Save" }).click()
+    await expect(toast(page, `Assigned to ${e2e.salesName}.`)).toBeVisible()
+    await expect(d).toBeHidden()
+    await expect(page.getByText(`assigned to ${e2e.salesName}`)).toBeVisible()
+    expect(await assignedTo()).toBe(e2e.salesId)
+
+    await page.getByRole("button", { name: "Reassign", exact: true }).click()
+    d = dialog(page, "Assign lead")
+    await pick(d, "Assigned to", `${e2e.userName} · Admin`)
+    await d.getByRole("button", { name: "Save" }).click()
+    await expect(toast(page, `Assigned to ${e2e.userName}.`)).toBeVisible()
+    await expect(d).toBeHidden()
+    expect(await assignedTo()).toBe(e2e.userId)
+
+    await page.getByRole("button", { name: "Reassign", exact: true }).click()
+    d = dialog(page, "Assign lead")
+    await pick(d, "Assigned to", "Unassigned")
+    await d.getByRole("button", { name: "Save" }).click()
+    await expect(toast(page, "Lead unassigned.")).toBeVisible()
+    await expect(d).toBeHidden()
+    await expect(page.getByText(`assigned to ${e2e.userName}`)).toHaveCount(0)
+    expect(await assignedTo()).toBeNull()
   })
 
   test("@smoke LEAD-08 full lifecycle new → not now → new → booked → converted", async ({ page, api, e2e, db }) => {
