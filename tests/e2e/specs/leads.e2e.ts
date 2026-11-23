@@ -128,9 +128,13 @@ test.describe("leads", () => {
         return
       }
       await expect(toast(page, `Lead created for ${name}.`)).toBeVisible({ timeout: 30_000 })
-      const [row] = await db.select("leads", `created_by=eq.${e2e.userId}&order=created_at.desc&limit=1`, "id,budget")
+      // Read this test's own lead by id: the parallel budget cases use the same
+      // admin, so "newest lead by creator" can be another case's lead.
+      await expect(page.getByRole("heading", { name, level: 1 })).toBeVisible({ timeout: 30_000 })
+      const id = page.url().split("/").pop()!
+      const row = await db.one("leads", `id=eq.${id}`, "id,budget")
       expect(Number(row.budget)).toBe(Number(budget))
-      await page.goto(`/leads/${row.id}`)
+      await page.reload()
       await expect(page.getByText(/NaN|undefined/)).toHaveCount(0)
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
       expect(overflow).toBeLessThanOrEqual(1)
@@ -361,7 +365,7 @@ test.describe("leads", () => {
     await expect(row.getByText(`${match.match.score}%`)).toBeVisible()
   })
 
-  test("@regression LEAD-22b new-lead wizard suggestions agree with the server score", async ({ page, api, e2e, db }) => {
+  test("@regression LEAD-22b new-lead wizard suggestions agree with the server score", async ({ page, api, e2e }) => {
     bug("FN-2")
     // Seed a petrol car of make A, then ask the wizard for make B. The wizard
     // must score make A cars the way the server does once the lead exists.
@@ -390,27 +394,28 @@ test.describe("leads", () => {
     await d.getByRole("button", { name: "Petrol", exact: true }).click()
     await d.getByLabel("Year from").fill("2015")
     await d.getByRole("button", { name: "Continue" }).click()
-    // Compare the wizard's top suggestion with the server's score for the
-    // same car once the lead exists.
+    // Compare the wizard's % for this test's own car (other cars may score
+    // higher and be listed first) with the server's score once the lead exists.
     const scored = d
       .getByRole("heading", { name: /Suggested cars/ })
       .locator("xpath=..")
       .getByRole("listitem")
       .filter({ hasText: /\d+%/ })
-      .first()
-    await expect(scored).toBeVisible()
+      .filter({ hasText: new RegExp(v.registrationNumber.split("").join(" ?")) })
+    await expect(scored).toHaveCount(1)
     const wizardText = (await scored.textContent()) ?? ""
-    const wizardPlate = /[A-Z]{2} ?\d{1,2} ?[A-Z]{1,3} ?\d{4}/.exec(wizardText)?.[0].replace(/ /g, "")
     const wizardPct = Number(/(\d+)%/.exec(wizardText)?.[1])
-    expect(wizardPlate, `plate in "${wizardText}"`).toBeTruthy()
     await d.getByRole("button", { name: "Create lead" }).click()
     await expect(toast(page, `Lead created for ${name}.`)).toBeVisible({ timeout: 30_000 })
-    const [created] = await db.select("leads", `created_by=eq.${e2e.userId}&order=created_at.desc&limit=1`, "id")
-    const server = await api.ok("GET", `/leads/${created.id}/vehicle-matches?minScore=0&limit=50`)
+    await expect(page.getByRole("heading", { name, level: 1 })).toBeVisible({ timeout: 30_000 })
+    const id = page.url().split("/").pop()!
+    const server = await api.ok("GET", `/leads/${id}/vehicle-matches?minScore=0&limit=50`)
+    const reg = v.registrationNumber.replace(/ /g, "")
     const match = [...(server.suggested ?? []), ...(server.linked ? [].concat(server.linked) : [])].find(
-      (s: any) => s.vehicle.registrationNumber.replace(/ /g, "") === wizardPlate
+      (s: any) => s.vehicle.registrationNumber.replace(/ /g, "") === reg
     )
-    expect(wizardPct).toBe(match?.match.score ?? 0)
+    expect(match, `server match for ${reg}`).toBeTruthy()
+    expect(wizardPct).toBe(match.match.score)
   })
 
   test("@regression LEAD-23 filter by assignee and source", async ({ page }) => {
