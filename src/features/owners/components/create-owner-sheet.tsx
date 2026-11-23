@@ -48,9 +48,22 @@ export function CreateOwnerSheet() {
     control,
     handleSubmit,
     reset,
+    clearErrors,
     formState: { errors },
   } = form
   const draft = useFormDraft(form, { key: useDraftKey("owner:create"), open })
+
+  // Closing with Esc or a tap outside keeps what was typed as a draft (it comes
+  // back on reopen), but never the errors. Cancel throws the draft away.
+  function handleOpenChange(next: boolean) {
+    setOpen(next)
+    if (!next) clearErrors()
+  }
+
+  function cancel() {
+    draft.discard()
+    handleOpenChange(false)
+  }
 
   function onSubmit(data: CreateOwnerInput) {
     startTransition(async () => {
@@ -69,7 +82,7 @@ export function CreateOwnerSheet() {
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger render={<Button size="sm" className="gap-1.5" />}>
         <Plus className="size-4" />
         Add owner
@@ -94,7 +107,7 @@ export function CreateOwnerSheet() {
               type="button"
               variant="outline"
               className="flex-1"
-              onClick={() => setOpen(false)}
+              onClick={cancel}
             >
               Cancel
             </Button>

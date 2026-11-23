@@ -1,0 +1,59 @@
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { render, screen, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+
+vi.mock("next-auth/react", () => ({ useSession: () => ({ data: { user: { id: "user-1" } } }) }))
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
+vi.mock("../actions", () => ({ createOwnerAction: vi.fn() }))
+
+import { __resetDraftStoreForTests } from "@/lib/drafts/store"
+import { CreateOwnerSheet } from "../components/create-owner-sheet"
+
+beforeEach(() => {
+  localStorage.clear()
+  __resetDraftStoreForTests()
+})
+
+async function openSheet(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "Add owner" }))
+  return screen.findByRole("dialog")
+}
+
+describe("CreateOwnerSheet", () => {
+  it("starts fresh after Cancel: no typed name and no old error", async () => {
+    const user = userEvent.setup()
+    render(<CreateOwnerSheet />)
+    const sheet = await openSheet(user)
+    await waitFor(() => expect(sheet).toBeVisible())
+
+    await user.type(screen.getByLabelText("Full name"), "Half typed")
+    await user.click(screen.getByRole("button", { name: "Create owner" }))
+    expect(await screen.findByText("Enter a 10-digit mobile number")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }))
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+
+    await openSheet(user)
+    expect(screen.getByLabelText("Full name")).toHaveValue("")
+    expect(screen.queryByText("Enter a 10-digit mobile number")).not.toBeInTheDocument()
+    expect(screen.queryByText(/Draft from/)).not.toBeInTheDocument()
+  })
+
+  it("keeps the typed name as a draft when closed with Escape, without the old error", async () => {
+    const user = userEvent.setup()
+    render(<CreateOwnerSheet />)
+    await openSheet(user)
+    await user.type(screen.getByLabelText("Full name"), "Kept")
+    await user.click(screen.getByRole("button", { name: "Create owner" }))
+    expect(await screen.findByText("Enter a 10-digit mobile number")).toBeInTheDocument()
+    await new Promise((r) => setTimeout(r, 500)) // draft autosave
+
+    await user.keyboard("{Escape}")
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+
+    await openSheet(user)
+    await waitFor(() => expect(screen.getByLabelText("Full name")).toHaveValue("Kept"))
+    expect(screen.getByText(/Draft from/)).toBeInTheDocument()
+    expect(screen.queryByText("Enter a 10-digit mobile number")).not.toBeInTheDocument()
+  })
+})
