@@ -68,9 +68,11 @@ export default async function LeadDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const [lead, vehicles, makes, openFollowUps, closedFollowUps, statusHistory, vehicleMatches, journey, session] =
+  // Resolve the lead alone first: for an unknown id every sibling call also
+  // answers 404, and whichever rejected first would win the race and skip notFound().
+  const lead = await loadLead(id)
+  const [vehicles, makes, openFollowUps, closedFollowUps, statusHistory, vehicleMatches, journey, session] =
     await Promise.all([
-      loadLead(id),
       getVehicleOptions(),
       // The preference make picker degrades to "any" if the catalog is down.
       getMakes().then((page) => page.items).catch(() => []),
