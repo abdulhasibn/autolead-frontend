@@ -100,7 +100,7 @@ export function EditLeadSheet({ lead, disabled }: { lead: LeadReadModel; disable
       }}
     >
       <SheetTrigger
-        disabled={disabled}
+        disabled={disabled || isPending}
         render={
           <Button
             variant="outline"
