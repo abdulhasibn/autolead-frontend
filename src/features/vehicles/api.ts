@@ -24,6 +24,9 @@ export interface VehiclesListParams extends PaginationParams {
   yearMax?: number
   kmMin?: number
   kmMax?: number
+  /** Whole rupees, on the listed price. */
+  priceMin?: number
+  priceMax?: number
   /** Comma-separated fuel types. */
   fuelType?: string
   /** Comma-separated transmissions. */
