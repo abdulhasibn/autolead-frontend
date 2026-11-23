@@ -1,5 +1,11 @@
-import { isLeadStatus, LEAD_SOURCES, LEADS_PAGE_SIZE } from "./constants"
-import type { LeadSource, LeadStatus } from "./types"
+import {
+  DEFAULT_LEAD_SORT,
+  isLeadStatus,
+  LEAD_SORTS,
+  LEAD_SOURCES,
+  LEADS_PAGE_SIZE,
+} from "./constants"
+import type { LeadSort, LeadSource, LeadStatus } from "./types"
 
 export type RawSearchParams = Record<string, string | string[] | undefined>
 
@@ -10,6 +16,8 @@ export interface LeadsSearchParams {
   assignedTo?: string
   source?: LeadSource
   q?: string
+  /** Absent means the default, newest created first. */
+  sort?: LeadSort
   page: number
 }
 
@@ -28,6 +36,7 @@ export function parseLeadsSearchParams(raw: RawSearchParams): LeadsSearchParams 
   const vehicleId = first(raw.vehicleId)
   const assignedTo = first(raw.assignedTo)
   const source = first(raw.source)
+  const sort = first(raw.sort)
   const page = Number(first(raw.page) ?? "1")
 
   return {
@@ -36,6 +45,10 @@ export function parseLeadsSearchParams(raw: RawSearchParams): LeadsSearchParams 
     assignedTo: assignedTo && GUID_REGEX.test(assignedTo) ? assignedTo : undefined,
     source: (LEAD_SOURCES as readonly string[]).includes(source ?? "") ? (source as LeadSource) : undefined,
     q: first(raw.q),
+    sort:
+      sort !== DEFAULT_LEAD_SORT && (LEAD_SORTS as readonly string[]).includes(sort ?? "")
+        ? (sort as LeadSort)
+        : undefined,
     page: Number.isInteger(page) && page > 0 ? page : 1,
   }
 }
@@ -52,6 +65,7 @@ export function buildLeadsHref(params: Partial<LeadsSearchParams>): string {
   if (params.vehicleId) query.set("vehicleId", params.vehicleId)
   if (params.assignedTo) query.set("assignedTo", params.assignedTo)
   if (params.source) query.set("source", params.source)
+  if (params.sort && params.sort !== DEFAULT_LEAD_SORT) query.set("sort", params.sort)
   if (params.page && params.page > 1) query.set("page", String(params.page))
   const qs = query.toString()
   return qs ? `/leads?${qs}` : "/leads"
@@ -68,4 +82,13 @@ export function matchesLeadSearch(
   if (lead.contactEmail?.toLowerCase().includes(needle)) return true
   const digits = needle.replace(/\D/g, "")
   return digits.length > 0 && lead.contactPhone.replace(/\D/g, "").includes(digits)
+}
+
+/**
+ * The sort a column header switches to: its descending order first (newest,
+ * biggest), then ascending, then descending again.
+ */
+export function nextSort(current: LeadSort | undefined, column: "created" | "budget"): LeadSort {
+  const effective = current ?? DEFAULT_LEAD_SORT
+  return effective === `-${column}` ? column : `-${column}`
 }

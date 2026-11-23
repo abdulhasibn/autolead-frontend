@@ -3,11 +3,13 @@ import type {
   BODY_TYPES,
   FOLLOW_UP_OUTCOMES,
   FOLLOW_UP_TASK_TYPES,
+  LEAD_SORTS,
   LEAD_SOURCES,
   LEAD_STATUSES,
   MATCH_CRITERIA,
 } from "./constants"
 
+export type LeadSort = (typeof LEAD_SORTS)[number]
 export type LeadSource = (typeof LEAD_SOURCES)[number]
 
 export type LeadStatus = (typeof LEAD_STATUSES)[number]

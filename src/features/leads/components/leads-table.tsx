@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { ArrowDown, ArrowUp } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -10,18 +11,53 @@ import {
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { FOLLOW_UP_TASK_TYPE_LABELS, LEAD_SOURCE_LABELS } from "../constants"
 import type { FollowUpTaskType, LeadReadModel } from "../types"
+import { buildLeadsHref, nextSort, type LeadsSearchParams } from "../search-params"
+import { DEFAULT_LEAD_SORT } from "../constants"
 import { LeadStatusBadge } from "./lead-status-badge"
 
 interface LeadsTableProps {
   leads: LeadReadModel[]
   vehicleLabels: Record<string, string>
+  /** The current list state; without it the headers are plain labels. */
+  params?: LeadsSearchParams
 }
 
 const HEAD = "h-10 px-4 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
 const CELL = "px-4 py-3"
 const EMPTY = <span className="text-subtle-foreground">—</span>
 
-export function LeadsTable({ leads, vehicleLabels }: LeadsTableProps) {
+function SortHead({
+  column,
+  label,
+  params,
+  className,
+}: {
+  column: "created" | "budget"
+  label: string
+  params?: LeadsSearchParams
+  className: string
+}) {
+  if (!params) return <TableHead className={className}>{label}</TableHead>
+  const current = params.sort ?? DEFAULT_LEAD_SORT
+  const active = current === column || current === `-${column}`
+  const Icon = current === column ? ArrowUp : ArrowDown
+  return (
+    <TableHead
+      className={className}
+      aria-sort={active ? (current === column ? "ascending" : "descending") : "none"}
+    >
+      <Link
+        href={buildLeadsHref({ ...params, sort: nextSort(params.sort, column), page: 1 })}
+        className={`inline-flex items-center gap-1 hover:text-foreground ${active ? "text-foreground" : ""}`}
+      >
+        {label}
+        {active && <Icon aria-hidden className="size-3" />}
+      </Link>
+    </TableHead>
+  )
+}
+
+export function LeadsTable({ leads, vehicleLabels, params }: LeadsTableProps) {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
       <Table>
@@ -32,9 +68,9 @@ export function LeadsTable({ leads, vehicleLabels }: LeadsTableProps) {
             <TableHead className={HEAD}>Source</TableHead>
             <TableHead className={HEAD}>Assigned to</TableHead>
             <TableHead className={HEAD}>Vehicle</TableHead>
-            <TableHead className={`${HEAD} text-right`}>Budget</TableHead>
+            <SortHead column="budget" label="Budget" params={params} className={`${HEAD} text-right`} />
             <TableHead className={HEAD}>Next follow-up</TableHead>
-            <TableHead className={HEAD}>Created</TableHead>
+            <SortHead column="created" label="Created" params={params} className={HEAD} />
           </TableRow>
         </TableHeader>
         <TableBody>
