@@ -22,4 +22,19 @@ describe("LeadsTable", () => {
     expect(screen.getByText("Test drive")).toBeInTheDocument()
     expect(screen.getByText(/6,50,000/)).toBeInTheDocument()
   })
+
+  it("shows who a lead is assigned to, or Unassigned", () => {
+    render(
+      <LeadsTable
+        leads={[
+          { ...lead, id: "a", assignedTo: "u1", assignedToName: "Ravi Kumar" },
+          { ...lead, id: "b", contactFullName: "Nina Rao", assignedTo: null, assignedToName: null },
+        ]}
+        vehicleLabels={{ [lead.vehicleId!]: "Car" }}
+      />
+    )
+    expect(screen.getByRole("columnheader", { name: "Assigned to" })).toBeInTheDocument()
+    expect(screen.getByText("Ravi Kumar")).toBeInTheDocument()
+    expect(screen.getByText("Unassigned")).toBeInTheDocument()
+  })
 })

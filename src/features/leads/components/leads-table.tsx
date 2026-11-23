@@ -30,6 +30,7 @@ export function LeadsTable({ leads, vehicleLabels }: LeadsTableProps) {
             <TableHead className={HEAD}>Contact</TableHead>
             <TableHead className={HEAD}>Status</TableHead>
             <TableHead className={HEAD}>Source</TableHead>
+            <TableHead className={HEAD}>Assigned to</TableHead>
             <TableHead className={HEAD}>Vehicle</TableHead>
             <TableHead className={`${HEAD} text-right`}>Budget</TableHead>
             <TableHead className={HEAD}>Next follow-up</TableHead>
@@ -65,6 +66,9 @@ export function LeadsTable({ leads, vehicleLabels }: LeadsTableProps) {
               </TableCell>
               <TableCell className={`${CELL} text-foreground`}>
                 {LEAD_SOURCE_LABELS[lead.source] ?? lead.source}
+              </TableCell>
+              <TableCell className={`${CELL} text-foreground`}>
+                {lead.assignedToName ?? <span className="text-subtle-foreground">Unassigned</span>}
               </TableCell>
               <TableCell className={`${CELL} max-w-56 truncate text-foreground`}>
                 {lead.vehicleId
