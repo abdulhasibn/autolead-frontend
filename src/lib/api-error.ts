@@ -2,7 +2,9 @@ export class ApiError extends Error {
   constructor(
     public readonly status: number,
     public readonly code: string,
-    message: string
+    message: string,
+    /** Extra facts the server sends with the error, e.g. `attemptsLeft` on a wrong finance key. */
+    public readonly details?: Readonly<Record<string, string | number>>
   ) {
     super(message)
     this.name = "ApiError"
@@ -37,11 +39,11 @@ export class ApiError extends Error {
 async function parseErrorResponse(res: Response): Promise<ApiError> {
   try {
     const body = (await res.json()) as {
-      error?: { code?: string; message?: string }
+      error?: { code?: string; message?: string; details?: Record<string, string | number> }
     }
     const code = body.error?.code ?? "UNKNOWN_ERROR"
     const message = body.error?.message ?? res.statusText
-    return new ApiError(res.status, code, message)
+    return new ApiError(res.status, code, message, body.error?.details)
   } catch {
     return new ApiError(res.status, "UNKNOWN_ERROR", res.statusText)
   }
