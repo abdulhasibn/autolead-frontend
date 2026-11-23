@@ -39,6 +39,7 @@ import {
 } from "./schemas"
 import { getUsers } from "@/features/users/api"
 import { isLeadClosed } from "./constants"
+import { WIZARD_SUGGESTION_MIN_SCORE } from "./suggest-payload"
 import type {
   CompleteFollowUpResult,
   FollowUpDto,
@@ -293,7 +294,13 @@ export async function suggestVehiclesAction(
     // Same showroom fallback as createLeadAction, so suggestions come from
     // the showroom the lead will be filed under.
     try {
-      return actionOk(await suggestVehicles({ ...parsed.data, showroomId: null }))
+      return actionOk(
+        await suggestVehicles({
+          ...parsed.data,
+          showroomId: null,
+          minScore: WIZARD_SUGGESTION_MIN_SCORE,
+        })
+      )
     } catch (err) {
       if (
         ApiError.isApiError(err) &&
@@ -301,7 +308,11 @@ export async function suggestVehiclesAction(
         env.DEFAULT_SHOWROOM_ID
       ) {
         return actionOk(
-          await suggestVehicles({ ...parsed.data, showroomId: env.DEFAULT_SHOWROOM_ID })
+          await suggestVehicles({
+            ...parsed.data,
+            showroomId: env.DEFAULT_SHOWROOM_ID,
+            minScore: WIZARD_SUGGESTION_MIN_SCORE,
+          })
         )
       }
       throw err
