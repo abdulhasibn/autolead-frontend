@@ -9,6 +9,8 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart"
+import { EmptyState } from "@/components/empty-state"
+import { hasChartData } from "../../logic/chart"
 import { formatBucketLabel } from "../../logic/dates"
 import { formatMoney } from "../../logic/money"
 import type { CashFlowReport, PnlReport } from "../../types"
@@ -42,6 +44,10 @@ const pnlConfig = {
 
 export function PnlChart({ report }: { report: PnlReport }) {
   const data = report.buckets.map((b) => ({ label: formatBucketLabel(b.label, report.period), netProfit: b.netProfit }))
+  // All zeros would draw an axis of ₹0 to ₹4, so say so instead.
+  if (!hasChartData(data.map((d) => d.netProfit))) {
+    return <EmptyState message="No profit or loss in this period" className="h-64 justify-center" />
+  }
   return (
     <ChartContainer config={pnlConfig} className="aspect-auto h-64 w-full">
       <BarChart data={data} margin={{ left: 4, right: 8 }}>
@@ -73,6 +79,9 @@ export function CashFlowChart({ report }: { report: CashFlowReport }) {
     out: b.out,
     cumulative: b.cumulative,
   }))
+  if (!hasChartData(data.flatMap((d) => [d.in, d.out, d.cumulative]))) {
+    return <EmptyState message="No money in or out in this period" className="h-72 justify-center" />
+  }
   return (
     <ChartContainer config={cashConfig} className="aspect-auto h-72 w-full">
       <ComposedChart data={data} margin={{ left: 4, right: 8 }}>
