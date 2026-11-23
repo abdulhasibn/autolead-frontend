@@ -79,7 +79,8 @@ test.describe("public site", () => {
     await page.getByLabel("Mobile number").fill(phone)
     await page.getByRole("button", { name: "Show me the location" }).click()
     await expect(page.getByRole("button", { name: "Show me the location" })).toBeHidden({ timeout: 20_000 })
-    await expect(page.getByRole("alert")).toHaveCount(0)
+    // Next.js always renders an empty route-announcer with role=alert; only alerts with text are errors.
+    await expect(page.getByRole("alert").filter({ hasText: /\S/ })).toHaveCount(0)
 
     await expect.poll(async () => (await db.select("leads", `vehicle_id=eq.${v.id}&${OPEN_LEADS}`, "id")).length).toBe(1)
     const [lead] = await db.select("leads", `vehicle_id=eq.${v.id}&${OPEN_LEADS}`, "id,source,status")

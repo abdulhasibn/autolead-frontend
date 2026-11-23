@@ -6,6 +6,15 @@ Status values: **open** (failing, not yet picked up) · **in progress** (fix PR 
 
 ---
 
+## 2026-11-23: WEB-07 alert check and FIN-08b row uniqueness
+
+### Suite changes
+- WEB-07 (`site.e2e.ts`): "no error alert" now only counts alerts with text. Next.js always renders an empty `role=alert` route announcer, so `toHaveCount(0)` failed even on success. No other spec used the pattern (`api-down` already filters by text).
+- FIN-08b (`finance.e2e.ts`): the note now has a random suffix and the test waits for exactly one matching row before clicking. The prefix is per run, so `--repeat-each` (or a re-run in the same run) left several rows with the same note and tripped strict mode. Not an app bug.
+
+### Results
+- WEB-07: 1 passed. FIN-08b `--repeat-each=3`: 3 passed (was 3 failed before the fix).
+
 ## 2026-11-22 (night): leftover-run cleanup command
 
 ### Suite changes

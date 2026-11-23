@@ -162,11 +162,13 @@ test.describe("finance", () => {
   // Delete). This test keeps it working.
   test("@regression FIN-08b delete an entry (soft)", async ({ page, api, e2e, db }) => {
     const fin = await finSession(api, e2e.financeKey)
-    const note = `Note ${e2e.prefix} delete-me`
+    // Unique per execution: the prefix is per run, so --repeat-each would otherwise leave several matching rows.
+    const note = `Note ${e2e.prefix} delete-me ${Math.random().toString(36).slice(2, 8)}`
     const entry = await api.ok("POST", "/finance/entries", { kind: "expense", amount: 555, entryDate: today(), vehicleId: null, purpose: null, note }, fin)
     await unlock(page, e2e.financeKey)
     await page.goto("/finance/entries")
     const row = page.getByRole("row").filter({ hasText: note })
+    await expect(row).toHaveCount(1)
     await row.getByRole("button", { name: "Entry actions" }).click()
     await page.getByRole("menuitem", { name: "Delete" }).click()
     const confirm = page.getByRole("alertdialog")
