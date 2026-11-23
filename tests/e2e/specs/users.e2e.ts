@@ -79,6 +79,11 @@ test.describe("users", () => {
 
   test("@regression USER-03 required fields, short password and no role are caught", async ({ page }) => {
     const s = await openAddStaff(page)
+    // The sheet autofocuses Full name. Clicking away blurs it and its "required" error appears,
+    // shifting the roles down between mousedown and mouseup, so the click misses the checkbox.
+    // Blur it first and let the error render before unticking.
+    await s.getByLabel("Full name *").blur()
+    await expect(s.getByText("Full name is required")).toBeVisible()
     // Salesperson comes ticked; untick it to leave no role.
     await s.getByRole("checkbox", { name: /Salesperson/ }).uncheck()
     await s.getByRole("button", { name: "Add staff" }).click()
