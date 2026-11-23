@@ -9,7 +9,10 @@ export async function pick(scope: Page | Locator, field: string | RegExp, option
   const page = "page" in scope ? scope.page() : scope
   const trigger = scope.getByRole("combobox", { name: field }).or(scope.getByRole("button", { name: field })).first()
   await trigger.click()
-  const search = page.getByPlaceholder("Search…")
+  // Only the search box of an open popup: the previous field's popup keeps
+  // its box in the DOM while it animates out (data-closed), and a page-wide
+  // match would pick that one and wait forever to type into it.
+  const search = page.locator('[data-open] > div > input[placeholder="Search…"]')
   if (typeof option === "string" && (await search.isVisible().catch(() => false))) await search.fill(option)
   await page.getByRole("option", { name: option, exact: typeof option === "string" }).first().click()
 }
