@@ -10,44 +10,12 @@ import { formatCurrency } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { suggestVehiclesAction } from "../actions"
 import type { MatchLead } from "../match"
-import { hasPreference } from "../preference"
-import { leadPreferenceFormSchema, type CreateLeadFormInput, type SuggestVehiclesInput } from "../schemas"
+import type { CreateLeadFormInput } from "../schemas"
+import { buildSuggestPayload } from "../suggest-payload"
 import type { VehicleSuggestions } from "../types"
 import { MatchBreakdownChips, MatchScorePill } from "./match-score-pill"
 
 const INITIAL_SHOW = 3
-
-type Draft =
-  | { kind: "invalid" }
-  | { kind: "empty" }
-  | { kind: "ready"; payload: SuggestVehiclesInput; key: string }
-
-/** Turns the form's raw inputs into the suggestions payload. */
-function toDraft(values: Partial<CreateLeadFormInput>): Draft {
-  const pref = leadPreferenceFormSchema.safeParse({
-    preferredMakeId: values.preferredMakeId ?? "",
-    preferredModelId: values.preferredModelId ?? "",
-    preferredVariantId: values.preferredVariantId ?? "",
-    preferredColours: values.preferredColours ?? [],
-    preferredFuelTypes: values.preferredFuelTypes ?? [],
-    preferredTransmissions: values.preferredTransmissions ?? [],
-    preferredBodyTypes: values.preferredBodyTypes ?? [],
-    preferredYearMin: values.preferredYearMin ?? "",
-    preferredKmMax: values.preferredKmMax ?? "",
-    preferredMaxOwners: values.preferredMaxOwners ?? "",
-  })
-  const rawBudget = (values.budget ?? "").trim()
-  const budget = rawBudget === "" ? null : Number(rawBudget)
-  if (!pref.success || (budget != null && !(Number.isFinite(budget) && budget >= 0))) {
-    return { kind: "invalid" }
-  }
-  const preferredColours = pref.data.preferredColours
-    .map((c) => c.trim().toLowerCase())
-    .filter(Boolean)
-  const payload: SuggestVehiclesInput = { ...pref.data, preferredColours, budget }
-  if (budget == null && !hasPreference(payload)) return { kind: "empty" }
-  return { kind: "ready", payload, key: JSON.stringify(payload) }
-}
 
 type Result =
   | { key: string; ok: true; data: VehicleSuggestions }
@@ -82,7 +50,7 @@ export function SuggestedVehiclesPicker({
   onSelect: (vehicleId: string) => void
   onEditRequirements: () => void
 }) {
-  const draft = toDraft(values)
+  const draft = buildSuggestPayload(values)
   const key = draft.kind === "ready" ? draft.key : null
   const [result, setResult] = useState<Result | null>(null)
   const [showAll, setShowAll] = useState(false)
