@@ -43,7 +43,10 @@ export class Api {
     headers: Record<string, string> = {}
   ): Promise<ApiResponse<T>> {
     const first = await this.send<T>(method, path, body, headers)
-    if (first.status !== 401 || !this.credentials || path === "/auth/login") return first
+    // Only a rejected token is retried. Other 401s (e.g. a wrong finance key)
+    // must not be resent: a second wrong key counts towards the vault lockout.
+    const tokenRejected = (first.body as any)?.error?.code === "AUTHENTICATION_FAILED"
+    if (first.status !== 401 || !tokenRejected || !this.credentials || path === "/auth/login") return first
     const login = await new Api().send<{ accessToken: string }>("POST", "/auth/login", this.credentials)
     if (login.status !== 200) return first
     this.token = login.body.accessToken
