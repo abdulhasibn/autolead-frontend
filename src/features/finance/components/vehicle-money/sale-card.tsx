@@ -23,8 +23,10 @@ import { formatMoney, formatMoneyInput, parseMoneyInput } from "../../logic/mone
 import { PAID_OPTIONS } from "../../logic/payment"
 import { buildSale, type BuyerPaid, type BuyerPaymentsChoice, type SaleForm, type SalePayload } from "../../logic/sale"
 import type { BookedLead, VehicleSale } from "../../types"
+import { saleBelowMinimumWarning } from "../../logic/price-warnings"
 import { Money } from "../money"
 import { MoneyInput } from "../money-input"
+import { PriceWarning } from "../price-warning"
 import { useSaveTransition } from "@/hooks/use-save-transition"
 
 const EMPTY_FORM: SaleForm = { price: "", soldOn: "", paid: "none", paidAmount: "", paidOn: "", leadId: "" }
@@ -47,6 +49,7 @@ export function SaleCard({
   sale,
   suggestedPrice,
   receivedFromBuyer,
+  minimumSellingPrice,
   carSold,
   bookedLeads,
 }: {
@@ -55,6 +58,8 @@ export function SaleCard({
   suggestedPrice: number | null
   /** Sum of the car's payments from the buyer so far. */
   receivedFromBuyer: number
+  /** The car's minimum selling price, if one is set; a lower sale price only warns. */
+  minimumSellingPrice: number | null
   /** The car is already sold through a converted lead. */
   carSold: boolean
   /** Booking-confirmed leads on this car while it isn't sold. */
@@ -180,6 +185,8 @@ export function SaleCard({
           </FormField>
         </div>
 
+        <PriceWarning>{saleBelowMinimumWarning(price, minimumSellingPrice)}</PriceWarning>
+
         <FormField id="sale-paid" label={receivedFromBuyer > 0 ? "Received from the buyer now" : "Received from the buyer"}>
           <SegmentedChoice
             id="sale-paid"
@@ -273,6 +280,9 @@ export function SaleCard({
           <div>
             <dt className="text-xs text-muted-foreground">Sold on</dt>
             <dd>{formatYmd(sale.soldOn)}</dd>
+          </div>
+          <div className="col-span-2 empty:hidden">
+            <PriceWarning>{saleBelowMinimumWarning(sale.finalisedPrice, minimumSellingPrice)}</PriceWarning>
           </div>
         </dl>
       ) : (

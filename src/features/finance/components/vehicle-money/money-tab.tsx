@@ -44,12 +44,14 @@ export function MoneyTab({
         <DealCard vehicleId={money.vehicleId} deal={money.deal} saleModel={money.vehicle.saleModel} paidToSeller={money.paidToSeller}
           owedToSeller={money.owedToSeller}
           owedByBuyer={money.owedByBuyer}
+          listedPrice={money.listedPrice}
         />
         <SaleCard
           vehicleId={money.vehicleId}
           sale={money.sale}
           suggestedPrice={money.currentQuote?.amount ?? money.listedPrice}
           receivedFromBuyer={money.receivedFromBuyer}
+          minimumSellingPrice={money.deal?.minimumSellingPrice ?? null}
           carSold={money.vehicle.status === "sold"}
           bookedLeads={money.bookedLeads}
         />

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   buildLeadsHref,
   matchesLeadSearch,
+  nextSort,
   pageToOffset,
   parseLeadsSearchParams,
 } from "../search-params"
@@ -38,6 +39,53 @@ describe("parseLeadsSearchParams", () => {
 
   it("uses the first value of repeated params", () => {
     expect(parseLeadsSearchParams({ status: ["new", "lost"] }).status).toBe("new")
+  })
+})
+
+describe("assignee and source filters", () => {
+  const STAFF_ID = "7f0c6b1e-8a3d-4c2b-9e7f-1a2b3c4d5e6f"
+
+  it("keeps a valid assignee and source", () => {
+    const parsed = parseLeadsSearchParams({ assignedTo: STAFF_ID, source: "walkin" })
+    expect(parsed.assignedTo).toBe(STAFF_ID)
+    expect(parsed.source).toBe("walkin")
+  })
+
+  it("drops values the API would reject", () => {
+    const parsed = parseLeadsSearchParams({ assignedTo: "abc", source: "carrier-pigeon" })
+    expect(parsed.assignedTo).toBeUndefined()
+    expect(parsed.source).toBeUndefined()
+  })
+
+  it("round-trips through the href", () => {
+    const params = { assignedTo: STAFF_ID, source: "phone" as const, page: 1 }
+    const href = buildLeadsHref(params)
+    expect(href).toBe(`/leads?assignedTo=${STAFF_ID}&source=phone`)
+    const parsed = parseLeadsSearchParams(Object.fromEntries(new URL(href, "http://x").searchParams))
+    expect(parsed).toMatchObject({ assignedTo: STAFF_ID, source: "phone" })
+  })
+})
+
+describe("sort", () => {
+  it("keeps a valid sort and drops the default and unknown values", () => {
+    expect(parseLeadsSearchParams({ sort: "-budget" }).sort).toBe("-budget")
+    expect(parseLeadsSearchParams({ sort: "created" }).sort).toBe("created")
+    expect(parseLeadsSearchParams({ sort: "-created" }).sort).toBeUndefined()
+    expect(parseLeadsSearchParams({ sort: "name" }).sort).toBeUndefined()
+  })
+
+  it("writes a non-default sort to the href", () => {
+    expect(buildLeadsHref({ sort: "budget", page: 1 })).toBe("/leads?sort=budget")
+    expect(buildLeadsHref({ sort: undefined, page: 1 })).toBe("/leads")
+  })
+
+  it("cycles a column descending, ascending, descending", () => {
+    expect(nextSort(undefined, "created")).toBe("created")
+    expect(nextSort("created", "created")).toBe("-created")
+    expect(nextSort(undefined, "budget")).toBe("-budget")
+    expect(nextSort("-budget", "budget")).toBe("budget")
+    expect(nextSort("budget", "budget")).toBe("-budget")
+    expect(nextSort("-budget", "created")).toBe("-created")
   })
 })
 

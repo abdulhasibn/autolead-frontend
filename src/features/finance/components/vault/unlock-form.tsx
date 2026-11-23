@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import { Loader2, LockOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import type { ActionError } from "@/lib/action-result"
 import { recoverAction, unlockAction } from "../../actions"
-import { keyErrorMessage, VAULT_STATE_CODES } from "../../logic/errors"
+import { attemptsLeftFrom, keyErrorMessage, triesLeftMessage, UNLOCK_PAUSE_MINUTES, VAULT_STATE_CODES } from "../../logic/errors"
 import type { VaultKeys } from "../../types"
 import { KeyDisplay } from "../key-display"
 import { KeyInput } from "../key-input"
@@ -18,6 +19,7 @@ export function UnlockForm({ next }: { next: string }) {
   const [mode, setMode] = useState<Mode>("unlock")
   const [key, setKey] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [triesLeft, setTriesLeft] = useState<number | null>(null)
   const [blocked, setBlocked] = useState<string | null>(null)
   const [newKeys, setNewKeys] = useState<VaultKeys | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -26,10 +28,11 @@ export function UnlockForm({ next }: { next: string }) {
     setMode(to)
     setKey("")
     setError(null)
+    setTriesLeft(null)
     setNewKeys(null)
   }
 
-  function handleFailure(error: { status: number; code: string; message: string }, kind: "finance" | "recovery") {
+  function handleFailure(error: ActionError, kind: "finance" | "recovery") {
     if (error.code === "FINANCE_UNLOCK_BLOCKED") {
       setBlocked(error.message)
       return
@@ -38,7 +41,14 @@ export function UnlockForm({ next }: { next: string }) {
       router.refresh()
       return
     }
+    const left = attemptsLeftFrom(error)
+    if (left === 0) {
+      // That was the last try: the server has paused unlock, so say so now.
+      setBlocked(`Too many wrong keys. Unlock is paused for ${UNLOCK_PAUSE_MINUTES} minutes.`)
+      return
+    }
     setError(keyErrorMessage(error, kind))
+    setTriesLeft(left)
   }
 
   function submit(event: React.FormEvent) {
@@ -47,6 +57,7 @@ export function UnlockForm({ next }: { next: string }) {
     const typed = key
     setKey("")
     setError(null)
+    setTriesLeft(null)
     startTransition(async () => {
       if (mode === "unlock") {
         const result = await unlockAction({ financeKey: typed })
@@ -120,6 +131,11 @@ export function UnlockForm({ next }: { next: string }) {
         {error && (
           <p id="vault-key-error" role="alert" className="text-xs text-destructive">
             {error}
+          </p>
+        )}
+        {error && triesLeft !== null && (
+          <p role="status" className="text-xs font-medium text-destructive">
+            {triesLeftMessage(triesLeft)}
           </p>
         )}
       </div>

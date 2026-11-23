@@ -3,7 +3,9 @@ import { RoutePending } from "@/components/route-pending"
 import { TableRowsSkeleton } from "@/components/pending-skeletons"
 
 import { Users2 } from "lucide-react"
+import { auth } from "@/lib/auth"
 import { getMakes } from "@/features/catalog/api"
+import { getUsers } from "@/features/users/api"
 import { getLeads } from "@/features/leads/api"
 import {
   LEADS_PAGE_SIZE,
@@ -30,20 +32,37 @@ export default async function LeadsPage({
 }: {
   searchParams: Promise<RawSearchParams>
 }) {
-  const params = parseLeadsSearchParams(await searchParams)
+  const session = await auth()
+  const isAdmin = session?.user.roles?.includes("admin") ?? false
+  const parsed = parseLeadsSearchParams(await searchParams)
+  // The API scopes a salesperson to their own leads, so only admins filter by assignee.
+  const params = isAdmin ? parsed : { ...parsed, assignedTo: undefined }
 
   // The API has no text search, so a search scans the newest leads (with the
   // other filters applied) and matches on the server instead of paginating.
-  const [leadsPage, vehicles, makes] = await Promise.all([
+  const [leadsPage, vehicles, makes, assignees] = await Promise.all([
     getLeads({
       status: params.status,
       vehicleId: params.vehicleId,
+      assignedTo: params.assignedTo,
+      source: params.source,
+      sort: params.sort,
       limit: params.q ? LEADS_SEARCH_SCAN_LIMIT : LEADS_PAGE_SIZE,
       offset: params.q ? 0 : pageToOffset(params.page),
     }),
     getVehicleOptions(),
     // The preference make picker degrades to "any" if the catalog is down.
     getMakes().then((page) => page.items).catch(() => []),
+    // Only admins can filter by assignee; the list degrades to no filter if users are down.
+    isAdmin
+      ? getUsers({ limit: 100 })
+          .then((page) =>
+            page.items
+              .map((u) => ({ id: u.id, name: u.fullName }))
+              .sort((a, b) => a.name.localeCompare(b.name))
+          )
+          .catch(() => [])
+      : Promise.resolve(null),
   ])
 
   const leads = params.q
@@ -51,7 +70,9 @@ export default async function LeadsPage({
     : leadsPage.items
   const searchTruncated = Boolean(params.q) && leadsPage.total > leadsPage.items.length
   const vehicleLabels = Object.fromEntries(vehicles.map((v) => [v.id, v.label]))
-  const hasFilters = Boolean(params.q || params.status || params.vehicleId)
+  const hasFilters = Boolean(
+    params.q || params.status || params.vehicleId || params.assignedTo || params.source
+  )
   const resultCount = params.q ? leads.length : leadsPage.total
 
   return (
@@ -67,7 +88,7 @@ export default async function LeadsPage({
         action={<CreateLeadSheet vehicles={vehicles} makes={makes} />}
       />
 
-      <LeadsToolbar params={params} vehicles={vehicles} />
+      <LeadsToolbar params={params} vehicles={vehicles} assignees={assignees} />
 
       <RoutePending fallback={<TableRowsSkeleton />}>
       {leads.length === 0 ? (
@@ -85,7 +106,7 @@ export default async function LeadsPage({
       ) : (
         <>
           <div className="hidden md:block">
-            <LeadsTable leads={leads} vehicleLabels={vehicleLabels} />
+            <LeadsTable leads={leads} vehicleLabels={vehicleLabels} params={params} />
           </div>
           <div className="md:hidden">
             <LeadsCardList leads={leads} vehicleLabels={vehicleLabels} />
@@ -97,7 +118,7 @@ export default async function LeadsPage({
         searchTruncated && (
           <p className="text-xs text-subtle-foreground">
             Search covers the {LEADS_SEARCH_SCAN_LIMIT} most recent leads.
-            Narrow it with the status or vehicle filter.
+            Narrow it with a filter.
           </p>
         )
       ) : (

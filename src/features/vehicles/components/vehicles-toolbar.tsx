@@ -21,6 +21,7 @@ import {
   type VehiclesSearchParams,
 } from "../search-params"
 import type { FuelType, Transmission } from "../types"
+import { formatCurrency } from "@/lib/format"
 import { formatKm } from "../utils"
 
 interface VehiclesToolbarProps {
@@ -32,7 +33,7 @@ interface VehiclesToolbarProps {
 
 type Draft = Pick<
   VehiclesSearchParams,
-  "makeId" | "modelId" | "fuel" | "transmission" | "yearMin" | "yearMax" | "kmMin" | "kmMax"
+  "makeId" | "modelId" | "fuel" | "transmission" | "yearMin" | "yearMax" | "kmMin" | "kmMax" | "priceMin" | "priceMax"
 >
 
 const fieldLabel = "text-[11px] font-medium tracking-wide text-subtle-foreground uppercase"
@@ -47,6 +48,8 @@ function toDraft(params: VehiclesSearchParams): Draft {
     yearMax: params.yearMax,
     kmMin: params.kmMin,
     kmMax: params.kmMax,
+    priceMin: params.priceMin,
+    priceMax: params.priceMax,
   }
 }
 
@@ -166,6 +169,13 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
       clear: { kmMin: undefined, kmMax: undefined },
     })
   }
+  if (params.priceMin !== undefined || params.priceMax !== undefined) {
+    chips.push({
+      key: "price",
+      label: rangeLabel(params.priceMin, params.priceMax, formatCurrency),
+      clear: { priceMin: undefined, priceMax: undefined },
+    })
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -216,7 +226,7 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
               className="text-xs font-medium text-muted-foreground hover:text-primary pointer-coarse:h-10 pointer-coarse:px-2 pointer-coarse:text-sm"
               onClick={() => {
                 setOpen(false)
-                navigate({ makeId: undefined, modelId: undefined, fuel: [], transmission: [], yearMin: undefined, yearMax: undefined, kmMin: undefined, kmMax: undefined })
+                navigate({ makeId: undefined, modelId: undefined, fuel: [], transmission: [], yearMin: undefined, yearMax: undefined, kmMin: undefined, kmMax: undefined, priceMin: undefined, priceMax: undefined })
               }}
             >
               Reset
@@ -313,6 +323,17 @@ export function VehiclesToolbar({ params, makes, models }: VehiclesToolbarProps)
                 <NumericInput aria-label="Maximum km" placeholder="Max" className="font-mono-data h-9 text-xs"
                   defaultValue={draft.kmMax ?? ""} key={`kmax-${open}`}
                   onChange={(e) => setDraft((d) => ({ ...d, kmMax: parseNumber(e.target.value) }))} />
+              </div>
+            </div>
+            <div className="col-span-2 space-y-1">
+              <span className={fieldLabel}>Price (₹)</span>
+              <div className="flex gap-1">
+                <NumericInput aria-label="Minimum price" placeholder="Min" className="font-mono-data h-9 text-xs"
+                  defaultValue={draft.priceMin ?? ""} key={`pmin-${open}`}
+                  onChange={(e) => setDraft((d) => ({ ...d, priceMin: parseNumber(e.target.value) }))} />
+                <NumericInput aria-label="Maximum price" placeholder="Max" className="font-mono-data h-9 text-xs"
+                  defaultValue={draft.priceMax ?? ""} key={`pmax-${open}`}
+                  onChange={(e) => setDraft((d) => ({ ...d, priceMax: parseNumber(e.target.value) }))} />
               </div>
             </div>
           </div>

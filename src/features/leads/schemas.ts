@@ -13,9 +13,9 @@ import {
   PREFERRED_YEAR_MAX,
   PREFERRED_YEAR_MIN,
 } from "./constants"
-import { E164_REGEX, indianPhoneFormSchema } from "@/lib/phone"
+import { INDIAN_MOBILE_E164_REGEX, INDIAN_MOBILE_MESSAGE, indianPhoneFormSchema } from "@/lib/phone"
 
-const phoneMessage = "Enter a valid phone number"
+const phoneMessage = INDIAN_MOBILE_MESSAGE
 
 const yearMessage = `Enter a year between ${PREFERRED_YEAR_MIN} and ${PREFERRED_YEAR_MAX}`
 
@@ -47,7 +47,7 @@ export type LeadPreferenceInput = z.infer<typeof leadPreferenceSchema>
 export const createLeadSchema = z.object({
   showroomId: z.guid().nullable().optional(),
   fullName: z.string().trim().min(1, "Full name is required"),
-  phone: z.string().trim().regex(E164_REGEX, phoneMessage),
+  phone: z.string().trim().regex(INDIAN_MOBILE_E164_REGEX, phoneMessage),
   email: z.email().nullable().optional(),
   source: z.enum(LEAD_SOURCES),
   vehicleId: z.guid().nullable().optional(),
@@ -69,7 +69,7 @@ export type CreateLeadInput = z.infer<typeof createLeadSchema>
  */
 export const updateLeadSchema = z.object({
   fullName: z.string().trim().min(1, "Full name is required"),
-  phone: z.string().trim().regex(E164_REGEX, phoneMessage),
+  phone: z.string().trim().regex(INDIAN_MOBILE_E164_REGEX, phoneMessage),
   email: z.email().nullable(),
   source: z.enum(LEAD_SOURCES),
   budget: z.number().nonnegative().nullable(),

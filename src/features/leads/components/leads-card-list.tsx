@@ -46,6 +46,7 @@ export function LeadsCardList({ leads, vehicleLabels }: LeadsCardListProps) {
                 {lead.budget != null && (
                   <span className="font-mono-data"> · {formatCurrency(lead.budget)}</span>
                 )}
+                <span> · {lead.assignedToName ?? "Unassigned"}</span>
               </p>
               {vehicle && (
                 <p className="flex items-center gap-1.5 text-xs text-muted-foreground">

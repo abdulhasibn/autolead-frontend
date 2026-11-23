@@ -121,10 +121,10 @@ describe("createLeadFormSchema phone", () => {
     }
   )
 
-  it("keeps other E.164 numbers as typed", () => {
-    expect(createLeadFormSchema.parse({ ...baseForm, phone: "+447700900123" }).phone).toBe(
-      "+447700900123"
-    )
+  it.each(["1234500001", "+447700900123", "+911234567890"])("rejects %s: not an Indian mobile", (phone) => {
+    const result = createLeadFormSchema.safeParse({ ...baseForm, phone })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.message).toBe("Enter a 10-digit mobile number")
   })
 
   it.each(["987654321", "98765432101", "abcdefghij", "+0123"])("rejects %s", (phone) => {

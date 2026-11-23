@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Toggle } from "@/components/ui/toggle"
 import { cn } from "@/lib/utils"
-import { LEAD_STATUSES, LEAD_STATUS_LABELS } from "../constants"
+import { LEAD_SOURCES, LEAD_SOURCE_LABELS, LEAD_STATUSES, LEAD_STATUS_LABELS } from "../constants"
 import { buildLeadsHref, type LeadsSearchParams } from "../search-params"
 import { OptionSelect } from "@/components/option-select"
 import type { VehicleOption } from "./types"
@@ -20,12 +20,19 @@ const STATUS_OPTIONS = [
   ...LEAD_STATUSES.map((s) => ({ value: s, label: LEAD_STATUS_LABELS[s] })),
 ]
 
+const SOURCE_OPTIONS = [
+  { value: ALL, label: "All sources" },
+  ...LEAD_SOURCES.map((s) => ({ value: s, label: LEAD_SOURCE_LABELS[s] })),
+]
+
 interface LeadsToolbarProps {
   params: LeadsSearchParams
   vehicles: VehicleOption[]
+  /** Staff an admin can filter by; null for a salesperson, who only sees their own leads. */
+  assignees: Array<{ id: string; name: string }> | null
 }
 
-export function LeadsToolbar({ params, vehicles }: LeadsToolbarProps) {
+export function LeadsToolbar({ params, vehicles, assignees }: LeadsToolbarProps) {
   const { isPending, navigate: go } = useRouteNavigate()
   const [search, setSearch] = useState(params.q ?? "")
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -48,8 +55,19 @@ export function LeadsToolbar({ params, vehicles }: LeadsToolbarProps) {
     ...vehicles.map((v) => ({ value: v.id, label: v.label })),
   ]
 
-  const hasFilters = Boolean(params.q || params.status || params.vehicleId)
-  const activeCount = (params.status ? 1 : 0) + (params.vehicleId ? 1 : 0)
+  const assigneeOptions = [
+    { value: ALL, label: "All assignees" },
+    ...(assignees ?? []).map((a) => ({ value: a.id, label: a.name })),
+  ]
+
+  const hasFilters = Boolean(
+    params.q || params.status || params.vehicleId || params.assignedTo || params.source
+  )
+  const activeCount =
+    (params.status ? 1 : 0) +
+    (params.vehicleId ? 1 : 0) +
+    (params.assignedTo ? 1 : 0) +
+    (params.source ? 1 : 0)
 
   const statusSelect = (className: string) => (
     <OptionSelect
@@ -74,6 +92,28 @@ export function LeadsToolbar({ params, vehicles }: LeadsToolbarProps) {
     />
   )
 
+  const sourceSelect = (className: string) => (
+    <OptionSelect
+      aria-label="Filter by source"
+      className={className}
+      value={params.source ?? ALL}
+      options={SOURCE_OPTIONS}
+      onValueChange={(value) =>
+        navigate({ source: value === ALL ? undefined : (value as LeadsSearchParams["source"]) })
+      }
+    />
+  )
+  const assigneeSelect = (className: string) =>
+    assignees && (
+      <OptionSelect
+        aria-label="Filter by assignee"
+        className={className}
+        value={params.assignedTo ?? ALL}
+        options={assigneeOptions}
+        onValueChange={(value) => navigate({ assignedTo: value === ALL ? undefined : value })}
+      />
+    )
+
   function clearAll() {
     setSearch("")
     go("/leads", { scroll: true })
@@ -96,7 +136,7 @@ export function LeadsToolbar({ params, vehicles }: LeadsToolbarProps) {
           />
         </InputGroup>
 
-        {/* Phones: status and vehicle live in a bottom sheet. */}
+        {/* Phones: filters live in a bottom sheet. */}
         <div className="md:hidden">
           <FilterSheet
             open={filtersOpen}
@@ -136,12 +176,24 @@ export function LeadsToolbar({ params, vehicles }: LeadsToolbarProps) {
               <span className="text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">Vehicle</span>
               {vehicleSelect("h-10 border-border bg-card")}
             </div>
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">Source</span>
+              {sourceSelect("h-10 border-border bg-card")}
+            </div>
+            {assignees && (
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">Assignee</span>
+                {assigneeSelect("h-10 border-border bg-card")}
+              </div>
+            )}
           </FilterSheet>
         </div>
 
         <div className="hidden md:contents">
           {statusSelect("h-9 border-border bg-card md:w-48")}
           {vehicleSelect("h-9 border-border bg-card md:w-64")}
+          {sourceSelect("h-9 border-border bg-card md:w-40")}
+          {assigneeSelect("h-9 border-border bg-card md:w-48")}
         </div>
         {hasFilters && (
           <Button

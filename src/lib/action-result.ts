@@ -4,6 +4,8 @@ export interface ActionError {
   status: number
   code: string
   message: string
+  /** Extra facts from the server, e.g. `attemptsLeft` on a wrong finance key. */
+  details?: Readonly<Record<string, string | number>>
 }
 
 /**
@@ -22,7 +24,12 @@ export function actionError(err: unknown): { ok: false; error: ActionError } {
   if (ApiError.isApiError(err)) {
     return {
       ok: false,
-      error: { status: err.status, code: err.code, message: err.message },
+      error: {
+        status: err.status,
+        code: err.code,
+        message: err.message,
+        ...(err.details === undefined ? {} : { details: err.details }),
+      },
     }
   }
   return {
