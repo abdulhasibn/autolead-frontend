@@ -23,6 +23,11 @@ export function dialog(page: Page, name: string | RegExp): Locator {
   return page.getByRole("dialog", { name })
 }
 
+/** Waits for the element's open/close animations to finish, so a click can't land on a moving target. */
+export async function settled(locator: Locator) {
+  await locator.evaluate((el) => Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished.catch(() => undefined))))
+}
+
 /** Fails if the page scrolls horizontally (mobile layout check). */
 export async function expectNoHorizontalScroll(page: Page) {
   const overflow = await page.evaluate(

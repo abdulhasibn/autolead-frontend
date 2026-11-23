@@ -5,7 +5,7 @@ import { test, expect } from "../fixtures"
 import { Api, randomPhone } from "../support/api"
 import { register } from "../support/db"
 import { ADMIN_ROLE_ID, SALES_ROLE_ID } from "../support/provision"
-import { toast } from "../support/ui"
+import { settled, toast } from "../support/ui"
 
 const sheet = (page: Page, name: string | RegExp) => page.getByRole("dialog", { name })
 
@@ -14,6 +14,7 @@ async function openAddStaff(page: Page) {
   await page.getByRole("button", { name: "Add staff" }).click()
   const s = sheet(page, "Add staff")
   await expect(s).toBeVisible()
+  await settled(s)
   return s
 }
 
@@ -41,7 +42,8 @@ async function addSalesperson(api: Api, prefix: string, label: string) {
 }
 
 async function roleIds(db: typeof import("../support/db"), userId: string): Promise<string[]> {
-  return (await db.select("user_roles", `user_id=eq.${userId}`, "role_id")).map((r: { role_id: string }) => r.role_id)
+  // Removing a role soft-deletes the row (deleted_at), so count live grants only.
+  return (await db.select("user_roles", `user_id=eq.${userId}&deleted_at=is.null`, "role_id")).map((r: { role_id: string }) => r.role_id)
 }
 
 test.describe("users", () => {
@@ -95,6 +97,7 @@ test.describe("users", () => {
     await page.goto("/users")
     await page.getByRole("button", { name: `Edit ${staff.fullName}` }).click()
     let s = sheet(page, `Edit ${staff.fullName}`)
+    await settled(s)
     await s.getByRole("checkbox", { name: /Admin/ }).check()
     await s.getByRole("button", { name: "Save" }).click()
     await expect(toast(page, `${staff.fullName} updated.`)).toBeVisible()
@@ -102,6 +105,7 @@ test.describe("users", () => {
 
     await page.getByRole("button", { name: `Edit ${staff.fullName}` }).click()
     s = sheet(page, `Edit ${staff.fullName}`)
+    await settled(s)
     await s.getByRole("checkbox", { name: /Admin/ }).uncheck()
     await s.getByRole("button", { name: "Save" }).click()
     await expect(toast(page, `${staff.fullName} updated.`)).toBeVisible()

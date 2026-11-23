@@ -86,7 +86,20 @@ test.describe("owners", () => {
   }
 
   test("@regression OWN-06 invalid email rejected; Unicode name stored intact", async ({ page, e2e, db }) => {
+    // The Unicode create goes first: the create form keeps an unsent draft
+    // (IndexedDB), so a blocked submit with a bad email would be restored into
+    // the next form and block that one too.
+    const name = `Zoë 😀 ராஜ் ${e2e.prefix}`
+    const phone = randomPhone()
     let s = await openAddOwner(page)
+    await s.getByLabel(/^Full name/).fill(name)
+    await s.getByLabel(/^Phone/).fill(phone.slice(3))
+    await s.getByRole("button", { name: "Create owner" }).click()
+    await expect(toast(page, "Owner created")).toBeVisible()
+    expect((await db.one("owners", `phone=eq.${encodeURIComponent(phone)}`, "full_name")).full_name).toBe(name)
+    await expect(s).toBeHidden()
+
+    s = await openAddOwner(page)
     await s.getByLabel(/^Full name/).fill("Owner bad email")
     await s.getByLabel(/^Phone/).fill(randomPhone().slice(3))
     await s.getByLabel("Email").fill("not-an-email")
@@ -94,17 +107,6 @@ test.describe("owners", () => {
     // type="email": the browser blocks the submit.
     expect(await s.getByLabel("Email").evaluate((el) => (el as HTMLInputElement).validity.valid)).toBe(false)
     await expect(s).toBeVisible()
-
-    const name = `Zoë 😀 ராஜ் ${e2e.prefix}`
-    const phone = randomPhone()
-    await page.reload()
-    await page.getByRole("button", { name: "Add owner" }).click()
-    s = sheet(page, "Add owner")
-    await s.getByLabel(/^Full name/).fill(name)
-    await s.getByLabel(/^Phone/).fill(phone.slice(3))
-    await s.getByRole("button", { name: "Create owner" }).click()
-    await expect(toast(page, "Owner created")).toBeVisible()
-    expect((await db.one("owners", `phone=eq.${encodeURIComponent(phone)}`, "full_name")).full_name).toBe(name)
   })
 
   test("@regression OWN-07 HTML in name and notes is shown as text", async ({ page, api, e2e }) => {

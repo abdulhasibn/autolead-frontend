@@ -106,7 +106,7 @@ test.describe("finance", () => {
     expect(await db.select("finance_entries", `recorded_by=eq.${e2e.userId}&deleted_at=is.null`, "id")).toHaveLength(2)
   })
 
-  for (const amount of ["0", "-5", "abc"]) {
+  for (const amount of ["0", "abc"]) {
     test(`@regression FIN-07 amount "${amount}" is rejected`, async ({ page, e2e }) => {
       await unlock(page, e2e.financeKey)
       await page.goto("/finance/entries")
@@ -118,6 +118,18 @@ test.describe("finance", () => {
       await expect(d.getByLabel("Amount")).toHaveAttribute("aria-invalid", "true")
     })
   }
+
+  // The amount field strips everything but digits and a decimal point as you
+  // type, so "-5" becomes "5" and there is nothing to mark invalid (same as
+  // LEAD-05 / VEH-05). Don't submit: "5" is a valid amount.
+  test('@regression FIN-07 amount "-5" keeps digits only', async ({ page, e2e }) => {
+    await unlock(page, e2e.financeKey)
+    await page.goto("/finance/entries")
+    await page.getByRole("button", { name: "Add expense" }).click()
+    const field = dialog(page, "Add expense").getByLabel("Amount")
+    await field.fill("-5")
+    await expect(field).toHaveValue(/^[\d,.]*$/)
+  })
 
   test("@regression FIN-07 party > 120, note > 1000 and 11 tags are refused (API)", async ({ api, e2e }) => {
     const fin = await finSession(api, e2e.financeKey)
@@ -269,6 +281,8 @@ test.describe("finance", () => {
     const form = page.getByRole("form", { name: "Record sale" })
     await form.getByLabel("Finalised price").fill("450000")
     await form.getByRole("button", { name: "Save sale" }).click()
+    // A price below what the buyer paid asks whether that payment was wrong or a real overpayment.
+    await page.getByRole("alertdialog").getByRole("button", { name: /Entered wrong: reduce it to/ }).click()
     await expect(form).toBeHidden()
     // Money received from the buyer must not exceed the new price.
     await expect

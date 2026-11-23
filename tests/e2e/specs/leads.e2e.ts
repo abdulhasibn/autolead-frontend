@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test"
 import { test, expect, bug, missingUi } from "../fixtures"
 import { randomPhone, type Vehicle } from "../support/api"
-import { dialog, pick, toast } from "../support/ui"
+import { dialog, pick, settled, toast } from "../support/ui"
 
 /** "KA12EX1234" -> "KA 12 EX 1234" as the CRM prints plates. */
 const plate = (reg: string) => reg.replace(/^([A-Z]{2})(\d{2})([A-Z]{1,3})(\d{4})$/, "$1 $2 $3 $4")
@@ -272,7 +272,9 @@ test.describe("leads", () => {
     await api.convert(lead.id)
     await page.goto(`/leads/${lead.id}`)
     await page.getByRole("button", { name: "Undo sale" }).click()
-    await dialog(page, "Undo this sale?").getByRole("button", { name: "Undo sale" }).click()
+    const undo = dialog(page, "Undo this sale?")
+    await settled(undo) // a click during the open animation is lost
+    await undo.getByRole("button", { name: "Undo sale" }).click()
     await expect(toast(page, "Sale undone. The lead is back to booking confirmed.")).toBeVisible()
     // DATA-02
     expect((await db.one("leads", `id=eq.${lead.id}`, "status")).status).toBe("booking_confirmed")
@@ -295,7 +297,9 @@ test.describe("leads", () => {
     await api.call("POST", "/finance/lock", undefined, fin)
     await page.goto(`/leads/${lead.id}`)
     await page.getByRole("button", { name: "Undo sale" }).click()
-    await dialog(page, "Undo this sale?").getByRole("button", { name: "Undo sale" }).click()
+    const undo = dialog(page, "Undo this sale?")
+    await settled(undo) // a click during the open animation is lost
+    await undo.getByRole("button", { name: "Undo sale" }).click()
     await expect(page.getByText(/Remove the sale in Finance first/).first()).toBeVisible()
     expect((await db.one("leads", `id=eq.${lead.id}`, "status")).status).toBe("converted")
   })
