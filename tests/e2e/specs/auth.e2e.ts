@@ -1,5 +1,8 @@
-import { test, expect, bug, missingUi, signIn } from "../fixtures"
+import { test, expect, bug, signIn } from "../fixtures"
 import { Api } from "../support/api"
+import { register } from "../support/db"
+import { createStaff, SALES_ROLE_ID } from "../support/provision"
+import { toast } from "../support/ui"
 
 const INVALID = "Invalid email or password. Please try again."
 
@@ -76,17 +79,69 @@ test.describe("auth", () => {
     }
 
     test("@regression AUTH-12 forgot password leads to a reset form", async ({ page }) => {
-      // The link exists but is href="#"; the flow is only in the API.
       bug("MF-3")
       await page.goto("/login")
       await page.getByRole("link", { name: "Forgot password?" }).click()
       await expect(page.getByRole("heading", { name: /reset|forgot/i })).toBeVisible()
     })
-    test("@regression AUTH-13 reset with a wrong code (no UI yet)", async () => {
-      missingUi("MF-3")
+    // An address with no account: the form answers as if a code was sent, and
+    // no email goes out, so this never touches a real inbox or a real account.
+    test("@regression AUTH-13 a wrong reset code is refused with a clear message", async ({ page, e2e }) => {
+      await page.goto("/forgot-password")
+      await page.getByLabel("Email address").fill(`${e2e.prefix}-nobody@example.com`)
+      await page.getByRole("button", { name: "Send code" }).click()
+      await expect(page.getByRole("heading", { name: "Enter the code" })).toBeVisible()
+      // Format is checked before anything is sent.
+      await page.getByLabel("6-digit code").fill("12")
+      await page.getByLabel("New password", { exact: true }).fill("Correct-Horse-42")
+      await page.getByLabel("Repeat new password").fill("Correct-Horse-42")
+      await page.getByRole("button", { name: "Set new password" }).click()
+      await expect(page.getByText("Enter the 6-digit code from the email")).toBeVisible()
+      // A well-formed but wrong code is refused by the server.
+      await page.getByLabel("6-digit code").fill("000000")
+      await page.getByRole("button", { name: "Set new password" }).click()
+      await expect(page.getByRole("alert").filter({ hasText: "That code is wrong or has expired" })).toBeVisible()
+      await expect(page).toHaveURL(/\/forgot-password/)
     })
-    test("@regression AUTH-14 change password rules (no UI yet)", async () => {
-      missingUi("MF-3")
+
+    // Runs on its own salesperson: changing a password signs out that user's
+    // other sessions, which must never hit the shared run accounts.
+    test("@regression AUTH-14 change password enforces its rules, then works", async ({ page, e2e }) => {
+      const u = await createStaff(e2e.prefix, `a14-${Date.now().toString(36)}`, SALES_ROLE_ID)
+      register("user", u.id)
+      await signIn(page, u.email, u.password)
+      await page.getByRole("button", { name: "User menu" }).click()
+      await page.getByRole("menuitem", { name: "Change password" }).click()
+      const d = page.getByRole("dialog", { name: "Change password" })
+      const save = () => d.getByRole("button", { name: "Change password" }).click()
+
+      await d.getByLabel("Current password").fill(u.password)
+      await d.getByLabel("New password", { exact: true }).fill("short")
+      await d.getByLabel("Repeat new password").fill("short")
+      await save()
+      await expect(d.getByText("Use at least 8 characters")).toBeVisible()
+
+      await d.getByLabel("New password", { exact: true }).fill("Correct-Horse-42")
+      await d.getByLabel("Repeat new password").fill("Correct-Horse-43")
+      await save()
+      await expect(d.getByText("The passwords don’t match")).toBeVisible()
+
+      await d.getByLabel("New password", { exact: true }).fill(u.password)
+      await d.getByLabel("Repeat new password").fill(u.password)
+      await save()
+      await expect(d.getByText("Pick a password different from the current one")).toBeVisible()
+
+      await d.getByLabel("Current password").fill("Not-My-Password-1")
+      await d.getByLabel("New password", { exact: true }).fill("Correct-Horse-42")
+      await d.getByLabel("Repeat new password").fill("Correct-Horse-42")
+      await save()
+      await expect(d.getByText("That isn’t your current password")).toBeVisible()
+
+      await d.getByLabel("Current password").fill(u.password)
+      await save()
+      await expect(toast(page, "Password changed. Your other devices were signed out.")).toBeVisible()
+      await Api.login(u.email, "Correct-Horse-42") // throws if the new password doesn't work
+      expect((await new Api().call("POST", "/auth/login", { email: u.email, password: u.password })).status).toBe(401)
     })
   })
 

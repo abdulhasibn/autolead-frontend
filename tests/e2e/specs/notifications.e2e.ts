@@ -4,6 +4,8 @@
  */
 import type { Page } from "@playwright/test"
 import { test, expect, signIn } from "../fixtures"
+import { register } from "../support/db"
+import { createStaff, SALES_ROLE_ID } from "../support/provision"
 
 test.describe.configure({ mode: "serial" })
 test.use({ storageState: { cookies: [], origins: [] } })
@@ -52,9 +54,13 @@ test.describe("notifications", () => {
     await expect.poll(() => unreadInDb(db, e2e.salesId)).toBe(0)
   })
 
+  // Its own salesperson: other tests notify the run's admin and salesperson,
+  // so they almost never have an empty list.
   test("@regression NOTIF-05 a user with no notifications sees a friendly empty state", async ({ page, e2e, db }) => {
-    test.skip((await db.select("notifications", `user_id=eq.${e2e.userId}`, "id")).length > 0, "the run's admin already has notifications")
-    await signIn(page, e2e.email, e2e.password)
+    const u = await createStaff(e2e.prefix, `n05-${Date.now().toString(36)}`, SALES_ROLE_ID)
+    register("user", u.id)
+    expect(await db.select("notifications", `user_id=eq.${u.id}`, "id")).toHaveLength(0)
+    await signIn(page, u.email, u.password)
     await bell(page).click()
     await expect(page.getByRole("dialog", { name: "Notifications" }).getByText("No notifications yet")).toBeVisible()
   })

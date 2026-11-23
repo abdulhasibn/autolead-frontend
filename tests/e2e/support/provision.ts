@@ -50,7 +50,15 @@ export async function createStaff(
     email_confirm: true,
     user_metadata: { full_name: fullName },
   })
-  await rest("POST", "/rest/v1/users", { id: authUser.id, full_name: fullName, email, showroom_id: SHOWROOM_ID })
+  // Staff without a phone are hidden from staff lists (users page, Assign
+  // lead), as the CRM requires one; give run staff a test mobile.
+  await rest("POST", "/rest/v1/users", {
+    id: authUser.id,
+    full_name: fullName,
+    email,
+    phone: randomPhone(),
+    showroom_id: SHOWROOM_ID,
+  })
   await rest("POST", "/rest/v1/user_roles", {
     user_id: authUser.id,
     role_id: roleId,
