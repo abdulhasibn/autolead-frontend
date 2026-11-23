@@ -31,10 +31,12 @@ function Scroll({ children }: { children: React.ReactNode }) {
   return <div className="overflow-x-auto">{children}</div>
 }
 
-const PNL_ROWS: Array<{ key: keyof PnlLine; label: string; tone?: boolean; strong?: boolean; count?: boolean; negate?: boolean }> = [
-  { key: "sales", label: "Sales" },
+const PNL_ROWS: Array<{ key: keyof PnlLine; label: string; tone?: boolean; strong?: boolean; count?: boolean; negate?: boolean; info?: boolean }> = [
+  { key: "sales", label: "Sales (purchased cars)" },
   { key: "costOfSales", label: "Cost of sales", negate: true },
   { key: "commissions", label: "Commissions" },
+  // The owners' cars' price: for reference, not part of sales, cost of sales or profit.
+  { key: "commissionSalesValue", label: "Commission-car sales value (owners' cars)", info: true },
   { key: "grossProfit", label: "Gross profit", tone: true, strong: true },
   { key: "laterCarCosts", label: "Later car costs", negate: true },
   { key: "otherIncome", label: "Other income" },
@@ -61,8 +63,13 @@ export function PnlTable({ report }: { report: PnlReport }) {
         </TableHeader>
         <TableBody>
           {PNL_ROWS.map((row) => (
-            <TableRow key={row.key} className={cn(row.strong && "bg-muted/40 font-semibold")}>
-              <TableCell className="sticky left-0 bg-card whitespace-nowrap">{row.label}</TableCell>
+            <TableRow key={row.key} className={cn(row.strong && "bg-muted/40 font-semibold", row.info && "text-xs text-muted-foreground italic")}>
+              <TableCell
+                className="sticky left-0 bg-card whitespace-nowrap"
+                title={row.info ? "Not included in sales or profit. We earn the commission on these cars." : undefined}
+              >
+                {row.label}
+              </TableCell>
               {[...report.buckets, report.totals].map((b, i) => (
                 <TableCell key={i} className={cn(NUM, i === report.buckets.length && "font-semibold")}>
                   {row.count ? (
@@ -190,6 +197,15 @@ export function VehicleProfitTable({ report }: { report: VehicleProfitReport }) 
             <TableCell className={NUM}><Money value={report.totals.sales} /></TableCell>
             <TableCell className={NUM}><Money value={report.totals.profit} tone signed /></TableCell>
           </TableRow>
+          {report.totals.commissionSalesValue > 0 && (
+            <TableRow>
+              <TableCell colSpan={8} className="text-xs font-normal text-muted-foreground">
+                The sale price total counts purchased cars only. Commission cars sold for{" "}
+                <Money value={report.totals.commissionSalesValue} /> (owners&rsquo; cars) are not in it; we earned{" "}
+                <Money value={report.totals.commissions} /> commission on them.
+              </TableCell>
+            </TableRow>
+          )}
         </TableFooter>
       </Table>
     </Scroll>

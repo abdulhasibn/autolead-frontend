@@ -201,6 +201,8 @@ export interface PnlLine {
   costOfSales: number
   /** Commission earned on commission cars sold. */
   commissions: number
+  /** Sale value of commission cars (owners' cars). Information only: not in sales or profit. */
+  commissionSalesValue: number
   grossProfit: number
   laterCarCosts: number
   otherIncome: number
@@ -261,7 +263,10 @@ export interface VehicleProfitReport {
   items: VehicleProfitRow[]
   totals: {
     cars: number
+    /** Purchased cars only. */
     sales: number
+    /** Commission cars' sale value, shown apart. */
+    commissionSalesValue: number
     landingCost: number
     commissions: number
     profit: number
@@ -312,7 +317,11 @@ export interface StockReport {
 export interface SummaryWindow {
   from: string
   to: string
+  /** Purchased cars only. */
   sales: number
+  /** Earned on commission cars sold in the window. */
+  commissions: number
+  commissionSalesValue: number
   netProfit: number
   businessExpenses: number
   cashIn: number
