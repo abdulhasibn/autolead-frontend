@@ -1,11 +1,14 @@
-import { isLeadStatus, LEADS_PAGE_SIZE } from "./constants"
-import type { LeadStatus } from "./types"
+import { isLeadStatus, LEAD_SOURCES, LEADS_PAGE_SIZE } from "./constants"
+import type { LeadSource, LeadStatus } from "./types"
 
 export type RawSearchParams = Record<string, string | string[] | undefined>
 
 export interface LeadsSearchParams {
   status?: LeadStatus
   vehicleId?: string
+  /** Admin only: the API gives a salesperson their own leads regardless. */
+  assignedTo?: string
+  source?: LeadSource
   q?: string
   page: number
 }
@@ -23,11 +26,15 @@ function first(value: string | string[] | undefined): string | undefined {
 export function parseLeadsSearchParams(raw: RawSearchParams): LeadsSearchParams {
   const status = first(raw.status)
   const vehicleId = first(raw.vehicleId)
+  const assignedTo = first(raw.assignedTo)
+  const source = first(raw.source)
   const page = Number(first(raw.page) ?? "1")
 
   return {
     status: isLeadStatus(status) ? status : undefined,
     vehicleId: vehicleId && GUID_REGEX.test(vehicleId) ? vehicleId : undefined,
+    assignedTo: assignedTo && GUID_REGEX.test(assignedTo) ? assignedTo : undefined,
+    source: (LEAD_SOURCES as readonly string[]).includes(source ?? "") ? (source as LeadSource) : undefined,
     q: first(raw.q),
     page: Number.isInteger(page) && page > 0 ? page : 1,
   }
@@ -43,6 +50,8 @@ export function buildLeadsHref(params: Partial<LeadsSearchParams>): string {
   if (params.q) query.set("q", params.q)
   if (params.status) query.set("status", params.status)
   if (params.vehicleId) query.set("vehicleId", params.vehicleId)
+  if (params.assignedTo) query.set("assignedTo", params.assignedTo)
+  if (params.source) query.set("source", params.source)
   if (params.page && params.page > 1) query.set("page", String(params.page))
   const qs = query.toString()
   return qs ? `/leads?${qs}` : "/leads"
