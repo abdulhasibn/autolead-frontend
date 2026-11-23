@@ -23,7 +23,21 @@ export async function DashboardMoneyRow() {
   }
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-      <Tile label="Sales this month" href="/finance" footer={<>Last month <Money value={summary.lastMonth.sales} /></>}>
+      <Tile
+        label="Sales (purchased cars) this month"
+        href="/finance"
+        footer={
+          <>
+            Last month <Money value={summary.lastMonth.sales} />
+            {summary.thisMonth.commissions > 0 && (
+              <>
+                {" "}
+                · plus <Money value={summary.thisMonth.commissions} /> commission earned
+              </>
+            )}
+          </>
+        }
+      >
         <Money value={summary.thisMonth.sales} />
       </Tile>
       <Tile label="Net profit this month" href="/finance" footer={<>Last month <Money value={summary.lastMonth.netProfit} /></>}>

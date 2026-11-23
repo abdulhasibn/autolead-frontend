@@ -6,7 +6,7 @@ import { Money } from "./money"
 type WindowKey = keyof Pick<SummaryWindow, "sales" | "netProfit" | "businessExpenses" | "cashIn" | "cashOut">
 
 const COMPARE: Array<{ key: WindowKey; label: string; lowerIsBetter?: boolean; tone?: boolean }> = [
-  { key: "sales", label: "Sales" },
+  { key: "sales", label: "Sales (purchased cars)" },
   { key: "netProfit", label: "Net profit", tone: true },
   { key: "businessExpenses", label: "Business expenses", lowerIsBetter: true },
   { key: "cashIn", label: "Cash in" },
@@ -74,6 +74,11 @@ export function MonthComparisonTiles({ summary, compact = false }: { summary: Fi
               <span>
                 vs <Money value={summary.lastMonth[c.key]} />
               </span>
+              {c.key === "sales" && summary.thisMonth.commissions > 0 && (
+                <span className="w-full">
+                  plus <Money value={summary.thisMonth.commissions} /> commission earned
+                </span>
+              )}
             </span>
           }
         >
