@@ -5,8 +5,11 @@ import userEvent from "@testing-library/user-event"
 vi.mock("next-auth/react", () => ({ useSession: () => ({ data: { user: { id: "user-1" } } }) }))
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
 vi.mock("../actions", () => ({ createOwnerAction: vi.fn() }))
+vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }))
 
 import { __resetDraftStoreForTests } from "@/lib/drafts/store"
+import { toast } from "sonner"
+import { createOwnerAction } from "../actions"
 import { CreateOwnerSheet } from "../components/create-owner-sheet"
 
 beforeEach(() => {
@@ -55,5 +58,21 @@ describe("CreateOwnerSheet", () => {
     await waitFor(() => expect(screen.getByLabelText("Full name")).toHaveValue("Kept"))
     expect(screen.getByText(/Draft from/)).toBeInTheDocument()
     expect(screen.queryByText("Enter a 10-digit mobile number")).not.toBeInTheDocument()
+  })
+
+  it("shows a duplicate phone on the phone field, not as a vague toast", async () => {
+    vi.mocked(createOwnerAction).mockResolvedValue({
+      ok: false,
+      error: { status: 409, code: "CONFLICT", message: "Owner with this phone already exists" },
+    })
+    const user = userEvent.setup()
+    render(<CreateOwnerSheet />)
+    await openSheet(user)
+    await user.type(screen.getByLabelText("Full name"), "Dup Owner")
+    await user.type(screen.getByLabelText("Phone"), "9876543210")
+    await user.click(screen.getByRole("button", { name: "Create owner" }))
+
+    expect(await screen.findByText("An owner with this phone number already exists.")).toBeInTheDocument()
+    expect(toast.error).not.toHaveBeenCalled()
   })
 })
