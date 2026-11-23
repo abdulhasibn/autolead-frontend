@@ -32,6 +32,7 @@ import {
   type CreateLeadInput,
 } from "../schemas"
 import { FormField } from "./form-field"
+import { PhoneOwnerHint } from "./phone-owner-hint"
 import { OptionSelect } from "@/components/option-select"
 import { PreferenceFields, preferenceErrors } from "./preference-fields"
 import { SegmentedChoice } from "./segmented-choice"
@@ -119,6 +120,7 @@ export function CreateLeadSheet({
     setValue,
     formState: { errors, isSubmitted },
   } = form
+  const phoneValue = useWatch({ control, name: "phone" })
   const draftKey = useDraftKey("lead:create")
   const draft = useFormDraft(form, { key: draftKey, open, step, setStep })
   const hasDraft = useHasDraft(draftKey)
@@ -237,6 +239,10 @@ export function CreateLeadSheet({
                   <FormField id="phone" label="Phone *" error={errors.phone?.message}>
                     <Input id="phone" type="tel" autoComplete="off" enterKeyHint="next" maxLength={16} placeholder="9876543210" aria-invalid={!!errors.phone} {...register("phone")} />
                   </FormField>
+                  <PhoneOwnerHint
+                    phone={phoneValue ?? ""}
+                    onUseName={(name) => setValue("fullName", name, { shouldDirty: true, shouldValidate: isSubmitted })}
+                  />
                   <FormField id="email" label="Email" error={errors.email?.message} className="sm:col-span-2">
                     <Input id="email" type="email" autoComplete="off" enterKeyHint="next" aria-invalid={!!errors.email} {...register("email")} />
                   </FormField>
