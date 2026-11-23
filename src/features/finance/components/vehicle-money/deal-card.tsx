@@ -17,8 +17,10 @@ import { formatMoney, formatMoneyInput, parseMoneyInput } from "../../logic/mone
 import { buildPayment, PAID_OPTIONS, type PaidChoice, type PaymentErrors } from "../../logic/payment"
 import { commissionPercent as commissionPercentSchema } from "../../schemas"
 import type { DealTerms, SaleModel } from "../../types"
+import { minimumAboveListedWarning } from "../../logic/price-warnings"
 import { Money } from "../money"
 import { MoneyInput } from "../money-input"
+import { PriceWarning } from "../price-warning"
 import { useSaveTransition } from "@/hooks/use-save-transition"
 
 /**
@@ -34,6 +36,7 @@ export function DealCard({
   paidToSeller,
   owedToSeller,
   owedByBuyer,
+  listedPrice,
 }: {
   vehicleId: string
   deal: DealTerms | null
@@ -44,6 +47,8 @@ export function DealCard({
   owedToSeller: number | null
   /** What the buyer still owes; null until the sale is recorded. */
   owedByBuyer: number | null
+  /** The price the car is listed at; the minimum selling price is checked against it. */
+  listedPrice: number | null
 }) {
   const commission = saleModel === "commission"
   const termsSet = commission ? deal?.commissionPercent != null : deal?.purchaseRate != null
@@ -144,6 +149,9 @@ export function DealCard({
               <dt className="text-xs text-muted-foreground">Minimum selling price</dt>
               <dd><Money value={deal.minimumSellingPrice} /></dd>
             </div>
+            <div className="col-span-2 empty:hidden">
+              <PriceWarning>{minimumAboveListedWarning(deal.minimumSellingPrice, listedPrice)}</PriceWarning>
+            </div>
             {deal.note && <p className="col-span-2 text-xs whitespace-pre-wrap text-muted-foreground">{deal.note}</p>}
           </dl>
         ) : (
@@ -194,6 +202,7 @@ export function DealCard({
           <MoneyInput id="deal-min" value={form.minimumSellingPrice} onValueChange={(v) => setForm({ ...form, minimumSellingPrice: v })} />
         </FormField>
       </div>
+      <PriceWarning>{minimumAboveListedWarning(parseMoneyInput(form.minimumSellingPrice), listedPrice)}</PriceWarning>
       {!commission && <SellerPayment form={form} setForm={setForm} errors={errors} paidToSeller={paidToSeller} />}
       <FormField id="deal-note" label="Note (optional)">
         <Textarea id="deal-note" rows={2} maxLength={1000} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
