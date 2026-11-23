@@ -20,12 +20,15 @@ import {
   completeFollowUp,
   createLead,
   getLeads,
+  lookupContactByPhone,
   scheduleFollowUp,
   sellVehicleToLead,
   suggestVehicles,
   updateLead,
   updateLeadPreference,
 } from "./api"
+import type { ContactLookup } from "./api"
+import { normalizeIndianPhone } from "@/lib/phone"
 import {
   assignLeadSchema,
   associateVehicleSchema,
@@ -350,6 +353,22 @@ export async function markVehicleSoldAction(input: unknown): Promise<ActionResul
       revalidateLeads()
     }
     return actionOk(undefined)
+  } catch (err) {
+    return actionError(err)
+  }
+}
+
+/**
+ * Who already owns this phone, so the new-lead form can say the lead will be
+ * filed under that contact (an existing contact is reused, never renamed).
+ * Not a mobile yet: nothing to look up.
+ */
+export async function lookupContactByPhoneAction(phone: string): Promise<ActionResult<ContactLookup>> {
+  try {
+    await requireSession()
+    const normalized = normalizeIndianPhone(String(phone ?? ""))
+    if (normalized === null) return actionOk({ exists: false, contact: null })
+    return actionOk(await lookupContactByPhone(normalized))
   } catch (err) {
     return actionError(err)
   }

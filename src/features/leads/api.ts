@@ -45,6 +45,16 @@ export async function getLeads(
   return serverApiClient.get<Page<LeadReadModel>>(`/leads?${query}`)
 }
 
+/** Who already owns a phone. `contact` is named for admins only (see GET /leads/contact-lookup). */
+export interface ContactLookup {
+  exists: boolean
+  contact: { id: string; fullName: string } | null
+}
+
+export async function lookupContactByPhone(phone: string): Promise<ContactLookup> {
+  return serverApiClient.get<ContactLookup>(`/leads/contact-lookup?${new URLSearchParams({ phone })}`)
+}
+
 export async function getLead(id: string): Promise<LeadReadModel> {
   return serverApiClient.get<LeadReadModel>(`/leads/${id}`)
 }
