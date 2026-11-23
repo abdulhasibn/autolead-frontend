@@ -7,6 +7,7 @@ import {
   LEAD_SOURCES,
   SELECTABLE_LEAD_SOURCES,
   LEAD_STATUSES,
+  MAX_BUDGET,
   PREFERRED_COLOUR_MAX_LENGTH,
   PREFERRED_COLOURS_MAX,
   PREFERRED_YEAR_MAX,
@@ -192,6 +193,21 @@ export const leadPreferenceFormSchema = z
 
 export type LeadPreferenceFormInput = z.input<typeof leadPreferenceFormSchema>
 
+/** Max budget as typed: digits with optional commas, empty = unknown. */
+const budgetFormField = z
+  .string()
+  .trim()
+  .transform((value) => value.replace(/[,\s]/g, ""))
+  .refine(
+    (value) => value === "" || (Number.isFinite(Number(value)) && Number(value) >= 0),
+    "Enter a valid amount"
+  )
+  .refine(
+    (value) => value === "" || !Number.isFinite(Number(value)) || Number(value) <= MAX_BUDGET,
+    "Enter an amount up to ₹1,00,00,00,000"
+  )
+  .transform((value) => (value === "" ? null : Number(value)))
+
 export const createLeadFormSchema = z.object({
   fullName: z.string().trim().min(1, "Full name is required"),
   phone: indianPhoneFormSchema,
@@ -202,15 +218,7 @@ export const createLeadFormSchema = z.object({
     .transform((value) => (value === "" ? null : value)),
   source: z.enum(SELECTABLE_LEAD_SOURCES, { error: "Select a source" }),
   vehicleId: optionalText,
-  budget: z
-    .string()
-    .trim()
-    .transform((value) => value.replace(/[,\s]/g, ""))
-    .refine(
-      (value) => value === "" || (Number.isFinite(Number(value)) && Number(value) >= 0),
-      "Enter a valid amount"
-    )
-    .transform((value) => (value === "" ? null : Number(value))),
+  budget: budgetFormField,
   preferredVehicle: optionalText,
   purchaseTimeline: optionalText,
   currentVehicle: optionalText,
@@ -236,15 +244,7 @@ export const editLeadFormSchema = z.object({
     .pipe(z.union([z.literal(""), z.email("Enter a valid email address")]))
     .transform((value) => (value === "" ? null : value)),
   source: z.enum(LEAD_SOURCES, { error: "Select a source" }),
-  budget: z
-    .string()
-    .trim()
-    .transform((value) => value.replace(/[,\s]/g, ""))
-    .refine(
-      (value) => value === "" || (Number.isFinite(Number(value)) && Number(value) >= 0),
-      "Enter a valid amount"
-    )
-    .transform((value) => (value === "" ? null : Number(value))),
+  budget: budgetFormField,
   purchaseTimeline: optionalText,
   currentVehicle: optionalText,
   financeRequired: yesNoUnknown,
