@@ -74,6 +74,10 @@ export const BUGS: Record<string, string> = {
 export const UNFILED: Record<string, string> = {
   "NEW-1":
     "Lead budget >= 1e10 returns 503 DB_UNAVAILABLE (numeric field overflow); the UI shows 'Service temporarily unavailable' instead of a field error",
+  "NEW-2":
+    "Ledger: picking the Purchase tag before the car leaves the purpose as 'Car cost', so a payment to the seller inflates landing cost and the deal stays unpaid",
+  "NEW-3":
+    "A booked buyer's token stays on the car after they back out (lost / vehicle_unavailable) and is counted as the next buyer's payment; Dues shows no refund owed",
 }
 
 /** Annotate the running test with the issue(s) it is expected to expose. */
