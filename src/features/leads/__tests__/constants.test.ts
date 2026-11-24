@@ -17,10 +17,18 @@ describe("lead status rules", () => {
   })
 
   it("mirrors the backend transition table", () => {
-    expect(getNextLeadStatuses("new")).toEqual(["not_now", "booking_confirmed", "lost"])
+    expect(getNextLeadStatuses("new")).toEqual([
+      "in_progress",
+      "not_now",
+      "booking_confirmed",
+      "lost",
+    ])
+    expect(getNextLeadStatuses("in_progress")).toEqual(["not_now", "booking_confirmed", "lost"])
+    expect(getNextLeadStatuses("not_now")).toContain("in_progress")
     expect(getNextLeadStatuses("booking_confirmed")).toEqual(["converted", "lost"])
     expect(getNextLeadStatuses("vehicle_unavailable")).toEqual([
       "new",
+      "in_progress",
       "not_now",
       "booking_confirmed",
       "lost",

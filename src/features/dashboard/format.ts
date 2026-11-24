@@ -18,6 +18,7 @@ export const TASK_TYPE_LABELS: Record<string, string> = {
 
 export const LEAD_STATUS_LABELS: Record<string, string> = {
   new: "New",
+  in_progress: "In progress",
   not_now: "Not now",
   booking_confirmed: "Booking confirmed",
   converted: "Converted",

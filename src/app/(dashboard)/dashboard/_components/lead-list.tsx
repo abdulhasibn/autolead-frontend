@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils"
 
 const STATUS_COLORS: Record<string, string> = {
   new: "bg-[#DBEAFE] text-[#1D4ED8]",
+  in_progress: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400",
   not_now: "bg-warning-muted text-warning",
   booking_confirmed: "bg-success-muted text-success",
   converted: "bg-success-muted text-success",

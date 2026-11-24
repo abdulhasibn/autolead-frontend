@@ -13,6 +13,7 @@ import type {
 
 export const LEAD_STATUSES = [
   "new",
+  "in_progress",
   "not_now",
   "booking_confirmed",
   "converted",
@@ -149,6 +150,7 @@ export const LEADS_SEARCH_SCAN_LIMIT = 100
 
 export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   new: "New",
+  in_progress: "In progress",
   not_now: "Not now",
   booking_confirmed: "Booking confirmed",
   converted: "Converted",
@@ -159,6 +161,7 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
 /** Pill colors for each status; matches the dashboard palette. */
 export const LEAD_STATUS_BADGE_CLASSES: Record<LeadStatus, string> = {
   new: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  in_progress: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400",
   not_now: "bg-warning-muted text-warning",
   booking_confirmed: "bg-accent text-primary",
   converted: "bg-success-muted text-success",
@@ -197,12 +200,14 @@ export const FOLLOW_UP_OUTCOME_LABELS: Record<FollowUpOutcome, string> = {
 }
 
 const ALLOWED_TRANSITIONS: Record<LeadStatus, readonly LeadStatus[]> = {
-  new: ["not_now", "booking_confirmed", "lost", "vehicle_unavailable"],
-  not_now: ["new", "booking_confirmed", "lost", "vehicle_unavailable"],
+  new: ["in_progress", "not_now", "booking_confirmed", "lost", "vehicle_unavailable"],
+  // Never back to "new": "new" means nobody has reached the customer yet.
+  in_progress: ["not_now", "booking_confirmed", "lost", "vehicle_unavailable"],
+  not_now: ["new", "in_progress", "booking_confirmed", "lost", "vehicle_unavailable"],
   booking_confirmed: ["converted", "lost", "vehicle_unavailable"],
   converted: [],
   lost: [],
-  vehicle_unavailable: ["new", "not_now", "booking_confirmed", "lost"],
+  vehicle_unavailable: ["new", "in_progress", "not_now", "booking_confirmed", "lost"],
 }
 
 /** Set by the backend when another lead buys this lead's vehicle. */
