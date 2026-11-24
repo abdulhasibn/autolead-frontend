@@ -6,6 +6,27 @@ Status values: **open** (failing, not yet picked up) · **in progress** (fix PR 
 
 ---
 
+## 2026-11-24 (final branches): BE-77 follow-up cases FIN-34 to FIN-37
+
+### Suite changes
+- `finance.e2e.ts`: FIN-34 (Change lead on a payment of a sold car moves it to another lead: sold lead's received drops to 0, the other lead is owed it back), FIN-35 (re-assigning one of two unassigned payments through Change lead leaves the other unassigned; the Assign to lead dialog itself has no amount, it always takes all unassigned entries, so "partial" is covered per entry), FIN-36 (Remove sale with buyer payments deletes the sold lead's sale and refund entries; the other lead's payment and refund stay, owed 30,000), FIN-37 (Drop car with a paying buyer shows the refund-owed warning).
+
+### Results
+Backend `feat/buyer-payments-by-lead` da8a632 (:4012), CRM `feat/buyer-payments-by-lead` 434011e (`next dev` :3007), dev DB: finance project 43 passed (42 specs + auth setup), 2 skipped (FIN-17, FIN-19, key-changing), 0 failed, 0 flaky. 8.7 min. No app bugs found.
+
+---
+
+## 2026-11-24 (later): buyer payments belong to the lead (BE-77)
+
+### Suite changes
+- `finance.e2e.ts`: FIN-29 (AC 3: another booked lead's token isn't counted for the buyer; they are owed it back), FIN-30 (AC 4: Record refund from Refunds owed is prefilled, nothing owed after, Dues no longer lists it, cash flow `outRefundsToBuyers` +50,000), FIN-31 (AC 8: Remove sale keeps another lead's token as owed back), FIN-32 / FIN-32b (AC 12: warning when marking a paying lead Lost with finance unlocked; none when locked, change still saves), FIN-33 (AC 9, open-car part: an entry with no lead is "Unassigned buyer money", listed in Dues with no lead, Assign to lead moves it to that buyer's refund owed). FIN-33 makes the legacy entry by PATCHing `leadId: null` on a fresh entry; the sold-car legacy numbers (AC 9, second half) are not covered.
+- FIN-28: `bug("NEW-3")` removed; NEW-3 removed from `support/bugs.ts` (nothing else references it).
+
+### Results
+Run against the unmerged backend `feat/buyer-payments-by-lead` (efbd6a5) and CRM `feat/buyer-payments-by-lead` (8e9dd1a), dev DB: finance project 39 passed (38 specs + auth setup), 2 skipped (FIN-17, FIN-19, key-changing), 0 failed, 0 flaky. FIN-28 passes. FIN-23 (NEW-2) also passed on this CRM build.
+
+---
+
 ## 2026-11-24: money invariants across write paths (exploratory session)
 
 ### Suite changes
