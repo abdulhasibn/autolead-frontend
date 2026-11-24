@@ -6,6 +6,16 @@ Status values: **open** (failing, not yet picked up) · **in progress** (fix PR 
 
 ---
 
+## 2026-11-24 (final branches): BE-77 follow-up cases FIN-34 to FIN-37
+
+### Suite changes
+- `finance.e2e.ts`: FIN-34 (Change lead on a payment of a sold car moves it to another lead: sold lead's received drops to 0, the other lead is owed it back), FIN-35 (re-assigning one of two unassigned payments through Change lead leaves the other unassigned; the Assign to lead dialog itself has no amount, it always takes all unassigned entries, so "partial" is covered per entry), FIN-36 (Remove sale with buyer payments deletes the sold lead's sale and refund entries; the other lead's payment and refund stay, owed 30,000), FIN-37 (Drop car with a paying buyer shows the refund-owed warning).
+
+### Results
+Backend `feat/buyer-payments-by-lead` da8a632 (:4012), CRM `feat/buyer-payments-by-lead` 434011e (`next dev` :3007), dev DB: finance project 43 passed (42 specs + auth setup), 2 skipped (FIN-17, FIN-19, key-changing), 0 failed, 0 flaky. 8.7 min. No app bugs found.
+
+---
+
 ## 2026-11-24 (later): buyer payments belong to the lead (BE-77)
 
 ### Suite changes
