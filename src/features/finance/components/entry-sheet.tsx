@@ -177,8 +177,8 @@ function EntryForm(props: EntrySheetProps) {
         current: v.purpose,
         userPicked: userPickedPurpose.current,
         carChanged: true,
-        // A "Purchase" tag picked before the car still means a payment to the seller.
-        purchaseTagAdded: purchaseTagPicked,
+        // A "Purchase" tag already picked still means a payment to the seller, unless the admin chose a purpose.
+        purchaseTagAdded: purchaseTagPicked && !userPickedPurpose.current,
       })
     )
   }
