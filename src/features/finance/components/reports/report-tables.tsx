@@ -260,7 +260,7 @@ export function DuesTable({ report }: { report: DuesReport }) {
 const STATUS_LABEL: Record<string, string> = { open: "Open", linked: "Linked", dropped: "Dropped", sold: "Sold" }
 
 export function StockTable({ report }: { report: StockReport }) {
-  if (report.items.length === 0) return <p className="px-4 py-8 text-center text-xs text-subtle-foreground">No money tied up in unsold cars.</p>
+  if (report.items.length === 0) return <p className="px-4 py-8 text-center text-xs text-subtle-foreground">No cash paid out on unsold cars.</p>
   return (
     <Scroll>
       <Table>
@@ -269,8 +269,9 @@ export function StockTable({ report }: { report: StockReport }) {
             <TableHead>Car</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Terms</TableHead>
+            <TableHead className="text-right">Paid to seller</TableHead>
             <TableHead className="text-right">Costs</TableHead>
-            <TableHead className="text-right">Landing cost</TableHead>
+            <TableHead className="text-right">Paid out</TableHead>
             <TableHead className="text-right">Current quote</TableHead>
             <TableHead className="text-right">Listed price</TableHead>
           </TableRow>
@@ -283,8 +284,9 @@ export function StockTable({ report }: { report: StockReport }) {
                 {STATUS_LABEL[r.status] ?? r.status}
               </TableCell>
               <TableCell className={NUM}><TermsCell row={r} /></TableCell>
+              <TableCell className={NUM}><Money value={r.paidToSeller} /></TableCell>
               <TableCell className={NUM}><Money value={r.costs} /></TableCell>
-              <TableCell className={NUM}><Money value={r.landingCost} className="font-semibold" /></TableCell>
+              <TableCell className={NUM}><Money value={r.moneyInStock} className="font-semibold" /></TableCell>
               <TableCell className={NUM}><Money value={r.currentQuote} /></TableCell>
               <TableCell className={NUM}><Money value={r.listedPrice} /></TableCell>
             </TableRow>
@@ -292,8 +294,8 @@ export function StockTable({ report }: { report: StockReport }) {
         </TableBody>
         <TableFooter>
           <TableRow>
-            <TableCell colSpan={4}>
-              Money in stock · {report.totals.cars} {report.totals.cars === 1 ? "car" : "cars"}
+            <TableCell colSpan={5}>
+              Paid out on unsold cars · {report.totals.cars} {report.totals.cars === 1 ? "car" : "cars"}
             </TableCell>
             <TableCell className={NUM}><Money value={report.totals.moneyInStock} /></TableCell>
             <TableCell colSpan={2} />

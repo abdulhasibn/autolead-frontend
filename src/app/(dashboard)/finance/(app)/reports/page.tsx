@@ -142,7 +142,7 @@ async function ReportBody({ filters }: { filters: ReportFilters }) {
       return (
         <>
           <TruncatedBanner truncated={report.truncated} />
-          <Tile label="Money in stock" footer={`${report.totals.cars} unsold ${report.totals.cars === 1 ? "car" : "cars"}`}>
+          <Tile label="Paid out on unsold cars" footer={`${report.totals.cars} unsold ${report.totals.cars === 1 ? "car" : "cars"}`}>
             <Money value={report.totals.moneyInStock} />
           </Tile>
           <SectionCard title="Unsold cars" total={report.items.length}><StockTable report={report} /></SectionCard>
