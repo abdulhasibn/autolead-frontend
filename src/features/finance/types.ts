@@ -92,6 +92,20 @@ export interface EntryBody {
   party: string | null
   note: string | null
   showroomId: string | null
+  /**
+   * Deal terms for a car with no deal yet, saved with a payment to the seller
+   * (else `422 DEAL_TERMS_REQUIRED`). Ignored when the car already has terms.
+   */
+  deal?: EntryDealTerms | null
+  /** Save even if the seller ends up paid above what they're owed. */
+  keepOverpayment?: boolean
+}
+
+/** The minimum deal sent with a payment to the seller: the field matching the car's sale model. */
+export interface EntryDealTerms {
+  purchaseRate: number | null
+  commissionPercent: number | null
+  purchasedOn: string | null
 }
 
 export type EntryPatch = Partial<Omit<EntryBody, "kind">>
@@ -109,6 +123,16 @@ export interface DealTerms {
   minimumSellingPrice: number | null
   note: string | null
 }
+
+/** `PUT` body: the terms plus a payment made with them (saved as a `purchase` entry). */
+export interface SetDealBody extends DealTerms {
+  sellerPayment?: { amount: number; paidOn: string } | null
+  /** Save even if the seller ends up paid above the rate. */
+  keepOverpayment?: boolean
+}
+
+/** How far payments to the seller have got; `no_terms` while "owed to seller" is unknown. */
+export type SellerPaymentStatus = "no_terms" | "none" | "part" | "full" | "overpaid"
 
 export interface VehicleSale {
   finalisedPrice: number
@@ -165,8 +189,12 @@ export interface CarMoney extends VehicleDealState {
   profit: number | null
   owedToSeller: number | null
   owedByBuyer: number | null
-  /** `purchaseRateMissing`: the purchase rate or commission % isn't entered. */
-  flags: { purchaseRateMissing: boolean; saleRecorded: boolean }
+  sellerPaymentStatus: SellerPaymentStatus
+  /**
+   * `purchaseRateMissing`: the purchase rate or commission % isn't entered.
+   * `paidWithoutTerms`: money went to the seller but those terms are missing.
+   */
+  flags: { purchaseRateMissing: boolean; saleRecorded: boolean; paidWithoutTerms: boolean }
 }
 
 export interface VehicleMoneySummary {

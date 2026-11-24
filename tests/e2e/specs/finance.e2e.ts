@@ -240,6 +240,51 @@ test.describe("finance", () => {
     await expect(page.getByText(/above the listed price|higher than the listed/i)).toBeVisible()
   })
 
+  test("@regression FIN-21 a payment to the seller on a car with no deal saves the deal with it", async ({ page, api, e2e }) => {
+    const v = await api.createVehicle(e2e.prefix, { acquisitionType: "dealership_purchase" })
+    await unlock(page, e2e.financeKey)
+    await page.goto(`/vehicles/${v.id}?tab=money`)
+    await page.getByRole("button", { name: "Add expense" }).click()
+    const d = dialog(page, "Add expense")
+    // The "Purchase" tag preselects "Payment to seller"; the car has no deal, so the form asks for it.
+    await d.getByRole("group", { name: "Tags" }).getByRole("button", { name: "Purchase" }).click()
+    const deal = d.getByRole("group", { name: "Deal with the seller" })
+    await expect(deal).toBeVisible()
+    await d.getByLabel("Amount").fill("880000")
+    await deal.getByLabel("Purchase rate").fill("880000")
+    await d.getByRole("button", { name: "Add", exact: true }).click()
+    await expect(d).toBeHidden()
+
+    const card = page.locator("section[aria-label='Deal']")
+    await expect(card.getByTestId("seller-payment-status")).toHaveText("Fully paid")
+    const fin = await finSession(api, e2e.financeKey)
+    expect(await api.ok("GET", `/finance/vehicles/${v.id}`, undefined, fin)).toMatchObject({
+      deal: { purchaseRate: 880000 },
+      paidToSeller: 880000,
+      owedToSeller: 0,
+      landingCost: 880000,
+      sellerPaymentStatus: "full",
+    })
+  })
+
+  test("@regression FIN-21b paying the seller above the rate asks first; going back saves nothing", async ({ page, api, e2e }) => {
+    const v = await api.createVehicle(e2e.prefix, { acquisitionType: "dealership_purchase" })
+    const fin = await finSession(api, e2e.financeKey)
+    await api.ok("PUT", `/finance/vehicles/${v.id}`, { purchaseRate: 880000, sellerPayment: { amount: 880000, paidOn: today() } }, fin)
+    await unlock(page, e2e.financeKey)
+    await page.goto(`/vehicles/${v.id}?tab=money`)
+    await page.getByRole("button", { name: "Add expense" }).click()
+    const d = dialog(page, "Add expense")
+    await d.getByRole("group", { name: "Tags" }).getByRole("button", { name: "Purchase" }).click()
+    await expect(d.getByText(/fully paid/)).toBeVisible()
+    await d.getByLabel("Amount").fill("10000")
+    await d.getByRole("button", { name: "Add", exact: true }).click()
+    const confirm = page.getByRole("alertdialog", { name: "Pay the seller more than they’re owed?" })
+    await expect(confirm).toBeVisible()
+    await confirm.getByRole("button", { name: "Check the amount" }).click()
+    expect((await api.ok("GET", `/finance/vehicles/${v.id}`, undefined, fin)).paidToSeller).toBe(880000)
+  })
+
   async function bookedCar(api: Api, e2e: { prefix: string; financeKey: string }) {
     const v = await api.createVehicle(e2e.prefix)
     const lead = await api.createLead(e2e.prefix, { vehicleId: v.id })

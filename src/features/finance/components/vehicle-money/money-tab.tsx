@@ -45,6 +45,8 @@ export function MoneyTab({
           owedToSeller={money.owedToSeller}
           owedByBuyer={money.owedByBuyer}
           listedPrice={money.listedPrice}
+          sellerPaymentStatus={money.sellerPaymentStatus}
+          paidWithoutTerms={money.flags.paidWithoutTerms}
         />
         <SaleCard
           vehicleId={money.vehicleId}

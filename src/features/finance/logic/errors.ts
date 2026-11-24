@@ -39,6 +39,10 @@ export function financeErrorMessage(error: Pick<ActionError, "code" | "message" 
       return "This car has no buyer yet. Confirm a lead’s booking or record the sale first, or save it as “Other car income”."
     case "SALE_PAYMENT_TRIMMED_PRICE_NOT_SAVED":
       return "The buyer’s payment was reduced, but the price wasn’t saved. Press Save again."
+    case "DEAL_TERMS_REQUIRED":
+      return "Enter the deal with the seller first: a payment to the seller is recorded against the purchase rate (commission % for a commission car)."
+    case "SELLER_PAID_ABOVE_RATE":
+      return "That pays the seller more than they’re owed. Check the amount."
     case "NOT_FOUND":
       return "That record no longer exists."
     case "FORBIDDEN":

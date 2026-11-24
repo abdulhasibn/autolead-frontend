@@ -54,11 +54,11 @@ describe("buildAcquisition — bought outright", () => {
     expect(buildAcquisition(form({ purchaseRate: "500000", paid: "part", paidAmount: "500000" }), "purchase").ok).toBe(false)
   })
 
-  it("allows a part payment before the price is known", () => {
+  it("needs the price before a part payment: payments to the seller are tied to the deal", () => {
     const result = buildAcquisition(form({ paid: "part", paidAmount: "50000" }), "purchase")
     expect(result).toEqual({
-      ok: true,
-      payload: { purchaseRate: null, commissionPercent: null, purchasedOn: null, payment: { amount: 50000, paidOn: TODAY } },
+      ok: false,
+      errors: { purchaseRate: "Enter the purchase price to record a payment" },
     })
   })
 })

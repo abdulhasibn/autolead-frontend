@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { CircleCheck, Loader2, Pencil } from "lucide-react"
+import { CircleAlert, CircleCheck, Loader2, Pencil } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { Input } from "@/components/ui/input"
 import { DatePicker, pastDateYears } from "@/components/ui/date-picker"
 import { Textarea } from "@/components/ui/textarea"
@@ -16,7 +17,8 @@ import { financeErrorMessage } from "../../logic/errors"
 import { formatMoney, formatMoneyInput, parseMoneyInput } from "../../logic/money"
 import { buildPayment, PAID_OPTIONS, type PaidChoice, type PaymentErrors } from "../../logic/payment"
 import { commissionPercent as commissionPercentSchema } from "../../schemas"
-import type { DealTerms, SaleModel } from "../../types"
+import { sellerStatusLabel } from "../../logic/seller-payment"
+import type { DealTerms, SaleModel, SellerPaymentStatus } from "../../types"
 import { minimumAboveListedWarning } from "../../logic/price-warnings"
 import { Money } from "../money"
 import { MoneyInput } from "../money-input"
@@ -27,7 +29,8 @@ import { useSaveTransition } from "@/hooks/use-save-transition"
  * Terms agreed with the owner: a purchase rate for a car we buy outright, or
  * a commission % for a car we sell for them. PUT replaces these fields; the
  * listed price is edited in its own panel. For a purchase car the form also
- * takes a payment to the seller, saved as a "payment to seller" entry.
+ * takes a payment to the seller, saved with the deal in one request as a
+ * "payment to seller" entry. The paid status comes from those entries.
  */
 export function DealCard({
   vehicleId,
@@ -37,6 +40,8 @@ export function DealCard({
   owedToSeller,
   owedByBuyer,
   listedPrice,
+  sellerPaymentStatus,
+  paidWithoutTerms,
 }: {
   vehicleId: string
   deal: DealTerms | null
@@ -49,6 +54,10 @@ export function DealCard({
   owedByBuyer: number | null
   /** The price the car is listed at; the minimum selling price is checked against it. */
   listedPrice: number | null
+  /** Worked out from the payment-to-seller entries. */
+  sellerPaymentStatus: SellerPaymentStatus
+  /** Money went to the seller but the purchase rate (commission %) is missing. */
+  paidWithoutTerms: boolean
 }) {
   const commission = saleModel === "commission"
   const termsSet = commission ? deal?.commissionPercent != null : deal?.purchaseRate != null
@@ -56,10 +65,12 @@ export function DealCard({
   const { isPending, run: startTransition, refresh } = useSaveTransition()
   const [form, setForm] = useState(() => toForm(deal))
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [overpaid, setOverpaid] = useState<{ input: Record<string, unknown>; message: string } | null>(null)
+  const statusLabel = commission ? null : sellerStatusLabel({ sellerPaymentStatus })
 
-  function toForm(d: DealTerms | null) {
+  function toForm(d: DealTerms | null, prefillRate: number | null = null) {
     return {
-      purchaseRate: formatMoneyInput(d?.purchaseRate),
+      purchaseRate: formatMoneyInput(d?.purchaseRate ?? prefillRate),
       commissionPercent: d?.commissionPercent == null ? DEFAULT_COMMISSION_PERCENT : String(d.commissionPercent),
       purchasedOn: d?.purchasedOn ?? "",
       ownerExpectedPrice: formatMoneyInput(d?.ownerExpectedPrice),
@@ -96,31 +107,81 @@ export function DealCard({
     Object.assign(next, paymentErrors)
     setErrors(next)
     if (Object.keys(next).length) return
+    save({
+      purchaseRate,
+      commissionPercent: percent,
+      purchasedOn: form.purchasedOn || null,
+      ownerExpectedPrice,
+      minimumSellingPrice,
+      note: form.note.trim() || null,
+      payment,
+    })
+  }
+
+  function save(input: Record<string, unknown>) {
     startTransition(async () => {
-      const result = await setDealAction(vehicleId, {
-        purchaseRate,
-        commissionPercent: percent,
-        purchasedOn: form.purchasedOn || null,
-        ownerExpectedPrice,
-        minimumSellingPrice,
-        note: form.note.trim() || null,
-        payment,
-      })
+      const result = await setDealAction(vehicleId, input)
       if (!result.ok) {
+        if (result.error.code === "SELLER_PAID_ABOVE_RATE") {
+          const paid = Number(result.error.details?.paidToSeller ?? 0)
+          const limit = Number(result.error.details?.owedLimit ?? 0)
+          setOverpaid({
+            input,
+            message: `The seller would have been paid ${formatMoney(paid)} against a purchase rate of ${formatMoney(limit)}. Save it only if they really were paid more; otherwise check the rate or the payments in Entries.`,
+          })
+          return
+        }
         toast.error(financeErrorMessage(result.error))
         return
       }
-      toast.success(payment ? "Deal and payment to the seller saved." : "Deal saved.")
+      setOverpaid(null)
+      toast.success(input.payment ? "Deal and payment to the seller saved." : "Deal saved.")
       refresh(() => setEditing(false))
     })
+  }
+
+  const overpayDialog = (
+    <ConfirmDialog
+      open={overpaid !== null}
+      onOpenChange={(open) => !open && setOverpaid(null)}
+      title="Seller paid more than the rate?"
+      description={overpaid?.message ?? ""}
+      confirmLabel="Save anyway"
+      pendingLabel="Saving…"
+      cancelLabel="Go back"
+      pending={isPending}
+      onConfirm={() => overpaid && save({ ...overpaid.input, keepOverpayment: true })}
+    />
+  )
+
+  function startEditing(prefillRate: number | null = null) {
+    setForm(toForm(deal, prefillRate))
+    setErrors({})
+    setEditing(true)
   }
 
   if (!editing) {
     return (
       <section aria-label="Deal" className="rounded-xl border border-border p-4">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold">{commission ? "Deal with the owner" : "Deal with the seller"}</h3>
-          <Button variant="outline" size="sm" onClick={() => { setForm(toForm(deal)); setErrors({}); setEditing(true) }}>
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            {commission ? "Deal with the owner" : "Deal with the seller"}
+            {statusLabel && (
+              <span
+                data-testid="seller-payment-status"
+                className={
+                  sellerPaymentStatus === "overpaid"
+                    ? "rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400"
+                    : sellerPaymentStatus === "full"
+                      ? "rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                      : "rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                }
+              >
+                {statusLabel}
+              </span>
+            )}
+          </h3>
+          <Button variant="outline" size="sm" onClick={() => startEditing()}>
             <Pencil /> {deal ? "Edit" : "Add deal"}
           </Button>
         </div>
@@ -154,6 +215,19 @@ export function DealCard({
             </div>
             {deal.note && <p className="col-span-2 text-xs whitespace-pre-wrap text-muted-foreground">{deal.note}</p>}
           </dl>
+        ) : paidWithoutTerms ? (
+          <div role="alert" className="mt-2 space-y-2 rounded-lg bg-amber-500/10 p-3 text-sm">
+            <p className="flex items-start gap-2">
+              <CircleAlert className="mt-0.5 size-4 shrink-0 text-amber-600" />
+              <span>
+                {formatMoney(paidToSeller)} has been paid to the {commission ? "owner" : "seller"}, but there’s no{" "}
+                {commission ? "commission %" : "purchase rate"}. What’s owed and the profit can’t be worked out.
+              </span>
+            </p>
+            <Button size="sm" onClick={() => startEditing(commission ? null : paidToSeller)}>
+              {commission ? "Set commission %" : "Set purchase rate"}
+            </Button>
+          </div>
         ) : (
           <p className="mt-2 text-sm text-muted-foreground">
             {commission
@@ -164,6 +238,7 @@ export function DealCard({
         {commission && termsSet && owedToSeller !== null && (
           <OwnerPayout vehicleId={vehicleId} owed={owedToSeller} paid={paidToSeller} owedByBuyer={owedByBuyer} />
         )}
+        {overpayDialog}
       </section>
     )
   }
@@ -211,6 +286,7 @@ export function DealCard({
         <Button type="button" variant="outline" onClick={() => setEditing(false)} disabled={isPending}>Cancel</Button>
         <Button type="submit" disabled={isPending}>{isPending && <Loader2 className="animate-spin" />}Save deal</Button>
       </div>
+      {overpayDialog}
     </form>
   )
 }
@@ -235,6 +311,7 @@ function SellerPayment<F extends PaymentForm>({
   const settled = due !== null && due <= 0 && paidToSeller > 0
   return (
     <div className="space-y-3">
+      {!settled && (
       <FormField id="deal-paid" label={paidToSeller > 0 ? "Paid to the seller now" : "Paid to the seller"} error={errors.paid}>
         <SegmentedChoice
           id="deal-paid"
@@ -244,7 +321,8 @@ function SellerPayment<F extends PaymentForm>({
           options={PAID_OPTIONS}
         />
       </FormField>
-      {form.paid !== "none" && (
+      )}
+      {!settled && form.paid !== "none" && (
         <div className="grid gap-3 sm:grid-cols-2">
           {form.paid === "part" && (
             <FormField id="deal-paid-amount" label="Amount paid" error={errors.paidAmount}>

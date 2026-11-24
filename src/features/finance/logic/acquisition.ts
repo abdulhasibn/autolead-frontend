@@ -80,7 +80,8 @@ export function buildAcquisition(form: AcquisitionForm, saleModel: SaleModel): A
   } else if (form.paid === "part") {
     const amount = parseMoneyInput(form.paidAmount)
     if (amount === null || amount <= 0) errors.paidAmount = "Enter the amount paid"
-    else if (rate !== null && amount >= rate) errors.paidAmount = "That’s the full price or more. Choose “Fully paid”."
+    else if (rate === null) errors.purchaseRate ??= "Enter the purchase price to record a payment"
+    else if (amount >= rate) errors.paidAmount = "That’s the full price or more. Choose “Fully paid”."
     else payment = { amount, paidOn: form.paidOn }
   }
 
