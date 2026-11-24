@@ -293,7 +293,7 @@ test.describe("finance", () => {
   // The picker lists only the 10 newest cars in the whole dev DB, so search by plate first.
   async function pickCar(page: Page, d: Locator, plate: string) {
     await d.getByRole("button", { name: "Car (optional)" }).click()
-    await page.getByRole("textbox", { name: "Search" }).fill(plate)
+    await page.getByRole("textbox", { name: "Search", exact: true }).fill(plate)
     await page.getByRole("option", { name: new RegExp(plate) }).click()
   }
 

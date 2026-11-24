@@ -10,7 +10,7 @@ Status values: **open** (failing, not yet picked up) · **in progress** (fix PR 
 
 ### Suite changes
 - `finance.e2e.ts`: FIN-22 to FIN-28. Seller payments are now checked through every write path, not just the car's Money tab (FIN-21): Ledger add (car first: FIN-22; Purchase tag first: FIN-23), edit above or at the rate (FIN-24), move to another car (FIN-25), delete (FIN-26), lowering the rate (FIN-27). Each asserts the car's money and the Dues report as well as the screen acted on. FIN-28 covers a token from a buyer who backed out.
-- `leads.e2e.ts`: LEAD-27 (Mark as sold from the car to a new lead: link + book + convert) and LEAD-28 (a salesperson can't sell through someone else's lead). `/leads/:id/sell` had no E2E coverage.
+- `leads.e2e.ts`: LEAD-27 (Mark as sold from the car to a new lead: link + book + convert) and LEAD-28 (a salesperson can't sell through a lead not assigned to them). `/leads/:id/sell` had no E2E coverage.
 - `support/bugs.ts`: NEW-2 (fe#106) and NEW-3 (be#77) added to BUGS.
 
 ### Results (local, `--repeat-each 2`)
