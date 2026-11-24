@@ -103,7 +103,10 @@ export function EntryList({ entries, onEdit, onDelete, hideCar }: EntryListProps
                     )}
                   </TableCell>
                 )}
-                <TableCell className="text-xs text-muted-foreground">{PURPOSE_LABELS[entry.purpose]}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {PURPOSE_LABELS[entry.purpose]}
+                  {entry.lead && <span className="block truncate">{entry.lead.name}</span>}
+                </TableCell>
                 <TableCell className="text-right">
                   <SignedAmount entry={entry} />
                 </TableCell>
@@ -133,6 +136,7 @@ export function EntryList({ entries, onEdit, onDelete, hideCar }: EntryListProps
                 {formatYmd(entry.entryDate)}
                 {!hideCar && <> · {entry.vehicle ? entry.vehicle.label : "Business"}</>}
                 {entry.vehicle && <> · {PURPOSE_LABELS[entry.purpose]}</>}
+                {entry.lead && <> · {entry.lead.name}</>}
               </p>
               {(entry.party || entry.note) && (
                 <p className="truncate text-xs text-subtle-foreground">{[entry.party, entry.note].filter(Boolean).join(" · ")}</p>

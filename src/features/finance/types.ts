@@ -14,7 +14,7 @@ export interface VaultKeys {
 }
 
 export type EntryKind = "income" | "expense"
-export type EntryPurpose = "purchase" | "cost" | "sale" | "other" | "general"
+export type EntryPurpose = "purchase" | "cost" | "refund" | "sale" | "other" | "general"
 
 export interface FinanceTag {
   id: string
@@ -30,6 +30,12 @@ export interface FinanceVehicleRef {
   label: string
 }
 
+/** `name` is "Deleted lead" for a nameless deleted lead. */
+export interface EntryLead {
+  id: string
+  name: string
+}
+
 export interface FinanceEntry {
   id: string
   kind: EntryKind
@@ -38,6 +44,8 @@ export interface FinanceEntry {
   purpose: EntryPurpose
   tags: FinanceTag[]
   vehicle: FinanceVehicleRef | null
+  /** The buyer a `sale` payment came from or a `refund` went to; null = unassigned or not a buyer entry. */
+  lead: EntryLead | null
   party: string | null
   note: string | null
   showroomId: string
@@ -74,6 +82,8 @@ export interface EntryListParams {
   tagId?: string
   /** Comma-separated. */
   purpose?: string
+  /** Only together with `vehicleId`. */
+  leadId?: string
   minAmount?: number
   maxAmount?: number
   search?: string
@@ -99,6 +109,10 @@ export interface EntryBody {
   deal?: EntryDealTerms | null
   /** Save even if the seller ends up paid above what they're owed. */
   keepOverpayment?: boolean
+  /** The buyer: required with several current buyers (`sale`), the lead being paid back (`refund`). */
+  leadId?: string | null
+  /** Moving a `sale`/`refund` entry to another car: keep its lead. */
+  keepLead?: boolean
 }
 
 /** The minimum deal sent with a payment to the seller: the field matching the car's sale model. */
@@ -165,6 +179,29 @@ export interface CostGroup {
   count: number
 }
 
+/** A lead on a car's money rows. */
+export interface MoneyLead {
+  id: string
+  name: string | null
+  phone: string | null
+}
+
+/** One current buyer (booked lead before the sale, the sold lead after). */
+export interface BuyerRow {
+  lead: MoneyLead
+  paid: number
+  refunded: number
+  net: number
+}
+
+/** A former buyer owed money back; `lead: null` is unassigned buyer money. `owed` may be negative. */
+export interface RefundOwedRow {
+  lead: MoneyLead | null
+  paid: number
+  refunded: number
+  owed: number
+}
+
 /** A booking-confirmed lead a sale can be recorded against. */
 export interface BookedLead {
   id: string
@@ -177,6 +214,10 @@ export interface CarMoney extends VehicleDealState {
   vehicle: FinanceVehicleRef & { saleModel: SaleModel; status: string }
   /** Booking-confirmed leads while the car isn't sold; recording the sale converts one. */
   bookedLeads: BookedLead[]
+  /** Current buyers with what each paid and got back. */
+  buyers: BuyerRow[]
+  /** Former buyers owed money back, plus one `lead: null` row for unassigned money. */
+  refundsOwed: RefundOwedRow[]
   quotes: VehicleQuote[]
   currentQuote: VehicleQuote | null
   landingCost: number
@@ -259,6 +300,7 @@ export interface CashFlowLine {
   outToSellers: number
   outCarCosts: number
   outBusiness: number
+  outRefundsToBuyers: number
 }
 
 export interface CashFlowReport {
@@ -318,9 +360,19 @@ export interface DuesRow {
   owedByBuyer: number | null
 }
 
+export interface DuesRefundRow {
+  vehicle: FinanceVehicleRef
+  lead: MoneyLead | null
+  paid: number
+  refunded: number
+  owed: number
+}
+
 export interface DuesReport {
   items: DuesRow[]
-  totals: { owedToSellers: number; owedByBuyers: number }
+  /** Money owed back to buyers who left, largest first. */
+  refundsOwed: DuesRefundRow[]
+  totals: { owedToSellers: number; owedByBuyers: number; owedBackToBuyers: number }
   truncated: boolean
 }
 
@@ -368,6 +420,7 @@ export interface FinanceSummary {
   moneyInStock: number
   owedToSellers: number
   owedByBuyers: number
+  owedBackToBuyers: number
   awaitingSalePrice: number
   truncated: boolean
 }

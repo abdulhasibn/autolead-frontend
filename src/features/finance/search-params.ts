@@ -6,7 +6,7 @@ export type RawSearchParams = Record<string, string | string[] | undefined>
 export const ENTRIES_PAGE_SIZE = 25
 
 const KINDS: EntryKind[] = ["income", "expense"]
-const PURPOSES: EntryPurpose[] = ["purchase", "cost", "sale", "other", "general"]
+const PURPOSES: EntryPurpose[] = ["purchase", "cost", "refund", "sale", "other", "general"]
 const SORTS: EntrySort[] = ["date", "-date", "amount", "-amount"]
 const PERIODS: ReportPeriod[] = ["day", "week", "month", "year"]
 const PROFIT_SORTS: VehicleProfitSort[] = ["profit", "-profit", "date", "-date"]

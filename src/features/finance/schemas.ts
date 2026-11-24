@@ -55,7 +55,7 @@ export const updateTagSchema = z
   .refine((v) => Object.keys(v).length > 0)
 
 export const entryKindSchema = z.enum(["income", "expense"])
-export const entryPurposeSchema = z.enum(["purchase", "cost", "sale", "other", "general"])
+export const entryPurposeSchema = z.enum(["purchase", "cost", "refund", "sale", "other", "general"])
 
 export const entrySchema = z.object({
   kind: entryKindSchema,
@@ -77,6 +77,9 @@ export const entrySchema = z.object({
     .nullable()
     .optional(),
   keepOverpayment: z.boolean().optional(),
+  /** The buyer a `sale` payment came from / a `refund` goes to. */
+  leadId: id.nullable().optional(),
+  keepLead: z.boolean().optional(),
 })
 
 export type EntryInput = z.infer<typeof entrySchema>
@@ -93,6 +96,8 @@ export const entryFormSchema = z
     party: z.string().max(120, "Up to 120 characters"),
     note: z.string().max(1000, "Up to 1000 characters"),
     showroomId: z.string().nullable(),
+    /** "" = none picked. */
+    leadId: z.string(),
   })
   .superRefine((v, ctx) => {
     const n = parseMoneyInput(v.amount)
