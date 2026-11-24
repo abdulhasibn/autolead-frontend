@@ -31,6 +31,8 @@ describe("Stock report shows cash paid out", () => {
     expect(screen.getByRole("columnheader", { name: "Paid out" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Paid to seller" })).toBeInTheDocument()
     expect(screen.queryByRole("columnheader", { name: "Landing cost" })).not.toBeInTheDocument()
+    const headers = screen.getAllByRole("columnheader").map((h) => h.textContent)
+    expect(headers.slice(0, 3)).toEqual(["Car", "Status", "Paid out"])
     const first = screen.getByText("Honda City KA01AB1234").closest("tr") as HTMLElement
     expect(within(first).getAllByText(/3,20,000/)).toHaveLength(1)
     expect(within(first).queryByText(/5,20,000/)).not.toBeInTheDocument()
@@ -45,7 +47,9 @@ describe("Stock report shows cash paid out", () => {
 
   it("the position tile footer says cash paid out", () => {
     render(<PositionTiles summary={{ moneyInStock: 320000, owedToSellers: 0, owedByBuyers: 0 } as unknown as FinanceSummary} />)
+    expect(screen.getByText("Paid out on unsold cars")).toBeInTheDocument()
     expect(screen.getByText("Cash paid out on unsold cars")).toBeInTheDocument()
+    expect(screen.queryByText("Money in stock")).not.toBeInTheDocument()
     expect(screen.queryByText(/Landing cost of unsold cars/)).not.toBeInTheDocument()
   })
 })

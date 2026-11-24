@@ -268,10 +268,10 @@ export function StockTable({ report }: { report: StockReport }) {
           <TableRow>
             <TableHead>Car</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="text-right">Paid out</TableHead>
             <TableHead className="text-right">Terms</TableHead>
             <TableHead className="text-right">Paid to seller</TableHead>
             <TableHead className="text-right">Costs</TableHead>
-            <TableHead className="text-right">Paid out</TableHead>
             <TableHead className="text-right">Current quote</TableHead>
             <TableHead className="text-right">Listed price</TableHead>
           </TableRow>
@@ -283,10 +283,10 @@ export function StockTable({ report }: { report: StockReport }) {
               <TableCell className={cn("text-xs", r.status === "dropped" ? "text-warning" : "text-muted-foreground")}>
                 {STATUS_LABEL[r.status] ?? r.status}
               </TableCell>
+              <TableCell className={NUM}><Money value={r.moneyInStock} className="font-semibold" /></TableCell>
               <TableCell className={NUM}><TermsCell row={r} /></TableCell>
               <TableCell className={NUM}><Money value={r.paidToSeller} /></TableCell>
               <TableCell className={NUM}><Money value={r.costs} /></TableCell>
-              <TableCell className={NUM}><Money value={r.moneyInStock} className="font-semibold" /></TableCell>
               <TableCell className={NUM}><Money value={r.currentQuote} /></TableCell>
               <TableCell className={NUM}><Money value={r.listedPrice} /></TableCell>
             </TableRow>
@@ -294,11 +294,11 @@ export function StockTable({ report }: { report: StockReport }) {
         </TableBody>
         <TableFooter>
           <TableRow>
-            <TableCell colSpan={5}>
+            <TableCell colSpan={2}>
               Paid out on unsold cars · {report.totals.cars} {report.totals.cars === 1 ? "car" : "cars"}
             </TableCell>
             <TableCell className={NUM}><Money value={report.totals.moneyInStock} /></TableCell>
-            <TableCell colSpan={2} />
+            <TableCell colSpan={5} />
           </TableRow>
         </TableFooter>
       </Table>

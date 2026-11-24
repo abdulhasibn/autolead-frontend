@@ -43,7 +43,7 @@ export async function DashboardMoneyRow() {
       <Tile label="Net profit this month" href="/finance" footer={<>Last month <Money value={summary.lastMonth.netProfit} /></>}>
         <Money value={summary.thisMonth.netProfit} tone />
       </Tile>
-      <Tile label="Money in stock" href="/finance/reports?tab=stock">
+      <Tile label="Paid out on unsold cars" href="/finance/reports?tab=stock" footer="Cash paid out on unsold cars">
         <Money value={summary.moneyInStock} />
       </Tile>
       <Tile label="Owed to sellers" href="/finance/reports?tab=dues" footer={<>Owed by buyers <Money value={summary.owedByBuyers} /></>}>
