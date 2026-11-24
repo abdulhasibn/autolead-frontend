@@ -12,7 +12,7 @@ import type { LeadReadModel } from "@/features/leads/types"
 import type { VehicleDto } from "@/features/vehicles/types"
 import { formatVehicleTitle } from "@/features/vehicles/utils"
 import * as api from "./api"
-import { clearFinanceSession, setFinanceSession } from "./session"
+import { clearFinanceSession, hasFinanceSession, setFinanceSession } from "./session"
 import {
   changeKeySchema,
   createTagSchema,
@@ -355,6 +355,7 @@ export async function getBuyerMoneyAction(
   try {
     const session = await auth()
     if (!session?.user?.roles?.includes("admin")) return actionOk(null)
+    if (!(await hasFinanceSession())) return actionOk(null)
     const id = idSchema.safeParse(vehicleId)
     if (!id.success) return actionOk(null)
     const money = await api.getCarMoneySoft(id.data)

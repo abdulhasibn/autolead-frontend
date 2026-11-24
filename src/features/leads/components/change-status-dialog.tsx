@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { RefreshCw } from "lucide-react"
 import { toast } from "sonner"
@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
+import { BuyerLeavingNotice } from "@/features/finance/components/buyer-leaving-notice"
 import { useApiError } from "@/hooks/use-api-error"
 import { changeLeadStatusAction } from "../actions"
 import {
@@ -59,6 +60,7 @@ export function ChangeStatusDialog({
     reset,
     formState: { errors },
   } = form
+  const newStatus = useWatch({ control, name: "status" })
   const draft = useFormDraft(form, { key: useDraftKey("lead:status", lead.id), open })
 
   const nextStatuses = getNextLeadStatuses(lead.status)
@@ -134,6 +136,11 @@ export function ChangeStatusDialog({
               )}
             />
           </FormField>
+          <BuyerLeavingNotice
+            vehicleId={lead.vehicleId}
+            leadId={lead.id}
+            active={open && lead.status === "booking_confirmed" && Boolean(newStatus) && newStatus !== "converted"}
+          />
           <FormField id="status-notes" label="Notes">
             <Textarea id="status-notes" rows={3} {...register("notes")} />
           </FormField>
