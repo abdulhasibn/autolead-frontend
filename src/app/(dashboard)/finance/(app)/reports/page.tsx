@@ -13,6 +13,7 @@ import {
   CashFlowTable,
   DuesTable,
   PnlTable,
+  RefundsOwedTable,
   StockTable,
   VehicleProfitTable,
 } from "@/features/finance/components/reports/report-tables"
@@ -129,11 +130,15 @@ async function ReportBody({ filters }: { filters: ReportFilters }) {
       return (
         <>
           <TruncatedBanner truncated={report.truncated} />
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
             <Tile label="Owed to sellers"><Money value={report.totals.owedToSellers} /></Tile>
             <Tile label="Owed by buyers"><Money value={report.totals.owedByBuyers} /></Tile>
+            <Tile label="Owed back to buyers" footer="Money from buyers who left" className="col-span-2 lg:col-span-1">
+              <Money value={report.totals.owedBackToBuyers} />
+            </Tile>
           </div>
           <SectionCard title="Who owes whom" total={report.items.length}><DuesTable report={report} /></SectionCard>
+          <SectionCard title="Owed back to buyers" total={report.refundsOwed.length}><RefundsOwedTable report={report} /></SectionCard>
         </>
       )
     }
