@@ -33,7 +33,9 @@ export default defineConfig({
   reporter: isCI ? [["blob"], ["list"]] : [["html", { open: "never" }], ["list"]],
   use: {
     baseURL,
-    trace: "on-first-retry",
+    // CI retries, so the first retry records the trace. Locally there are no
+    // retries, so keep the trace of every failed test instead.
+    trace: isCI ? "on-first-retry" : "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },

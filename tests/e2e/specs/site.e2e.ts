@@ -2,15 +2,32 @@
  * Public site (wheelsExpertsWeb), signed out. Cars come from the CRM through
  * the API, so each test lists its own car and reads the CRM side back.
  *
- * Test-drive requests are rate limited per IP, so only WEB-07 and WEB-09
- * actually send one.
+ * Test-drive and preference requests are rate limited per IP (5 an hour).
+ * Each test sends them from its own made-up IP (see beforeEach), so repeated
+ * local runs don't hit the limit. Only WEB-07 and WEB-09 actually send one.
  */
 import { test, expect } from "../fixtures"
 import { randomPhone } from "../support/api"
 
 const OPEN_LEADS = "deleted_at=is.null"
 
+/** A random private address, so each test gets its own rate-limit bucket. */
+function randomPrivateIp(): string {
+  const octet = () => Math.floor(Math.random() * 254) + 1
+  return `10.${octet()}.${octet()}.${octet()}`
+}
+
 test.describe("public site", () => {
+  // The backend trusts one proxy hop, so with no proxy in front (local runs)
+  // X-Forwarded-For becomes the client IP. Behind Vercel the real IP is
+  // appended last and wins, so this changes nothing on deployed backends.
+  test.beforeEach(async ({ page }) => {
+    const ip = randomPrivateIp()
+    await page.route(/\/public\/(test-drive|preference)-requests/, (route) =>
+      route.continue({ headers: { ...route.request().headers(), "x-forwarded-for": ip } }),
+    )
+  })
+
   test("@smoke WEB-01 home page loads without errors", async ({ page, consoleErrors }) => {
     const res = await page.goto("/")
     expect(res?.status()).toBe(200)
