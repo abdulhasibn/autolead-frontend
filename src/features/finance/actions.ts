@@ -384,7 +384,10 @@ export async function getCarBuyersAction(
  * Puts the car's unassigned buyer money (older `sale`/`refund` entries with no lead) on a lead:
  * a lead-only PATCH per entry. Entries that already have a lead are left alone.
  */
-export async function assignBuyerMoneyAction(vehicleId: string, leadId: string): Promise<ActionResult<{ assigned: number }>> {
+export async function assignBuyerMoneyAction(
+  vehicleId: string,
+  leadId: string
+): Promise<ActionResult<{ assigned: number; failed: number; total: number }>> {
   return financeAction(async () => {
     const id = idSchema.safeParse(vehicleId)
     const lead = idSchema.safeParse(leadId)
@@ -395,13 +398,24 @@ export async function assignBuyerMoneyAction(vehicleId: string, leadId: string):
       unassigned.push(...page.items.filter((entry) => entry.lead === null))
       if (page.items.length === 0 || offset + page.items.length >= page.total) break
     }
+    // Payments before refunds: a refund's lead is re-checked against that lead's net.
+    const ordered = [...unassigned.filter((e) => e.purpose !== "refund"), ...unassigned.filter((e) => e.purpose === "refund")]
+    let assigned = 0
     try {
-      for (const entry of unassigned) await api.updateEntry(entry.id, { leadId: lead.data })
+      for (const entry of ordered) {
+        try {
+          await api.updateEntry(entry.id, { leadId: lead.data })
+          assigned += 1
+        } catch (err) {
+          unstable_rethrow(err)
+          // Keep going: a failed one stays unassigned, and pressing Assign again retries just those.
+        }
+      }
     } finally {
       revalidateVehicle(id.data)
       revalidateFinance()
     }
-    return actionOk({ assigned: unassigned.length })
+    return actionOk({ assigned, failed: ordered.length - assigned, total: ordered.length })
   })
 }
 

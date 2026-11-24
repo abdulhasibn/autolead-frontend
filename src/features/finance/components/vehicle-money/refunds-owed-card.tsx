@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { FormField } from "@/features/leads/components/form-field"
 import { useSaveTransition } from "@/hooks/use-save-transition"
 import { assignBuyerMoneyAction } from "../../actions"
 import { leadName } from "../../logic/buyers"
@@ -124,6 +125,11 @@ function AssignLeadDialog({
     run(async () => {
       const result = await assignBuyerMoneyAction(vehicleId, lead.id)
       if (!result.ok) return void toast.error(financeErrorMessage(result.error))
+      const { assigned, total } = result.data
+      if (result.data.failed > 0) {
+        toast.error(`Assigned ${assigned} of ${total}. Press Assign again to finish.`)
+        return refresh()
+      }
       toast.success(`Payments assigned to ${lead.label}.`)
       refresh(() => {
         setLead(null)
@@ -133,7 +139,14 @@ function AssignLeadDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !isPending && onOpenChange(o)}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (isPending) return
+        if (!o) setLead(null)
+        onOpenChange(o)
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Assign to lead</DialogTitle>
@@ -141,9 +154,18 @@ function AssignLeadDialog({
             Pick the lead who paid. If they have left this car, the money shows as a refund owed to them.
           </DialogDescription>
         </DialogHeader>
-        <LeadPicker id="assign-lead" value={lead} onChange={setLead} />
+        <FormField id="assign-lead" label="Lead">
+          <LeadPicker id="assign-lead" value={lead} onChange={setLead} />
+        </FormField>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setLead(null)
+              onOpenChange(false)
+            }}
+            disabled={isPending}
+          >
             Cancel
           </Button>
           <Button onClick={assign} disabled={!lead || isPending}>

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { CarMoney } from "../types"
 
 const assignBuyerMoneyAction = vi.fn()
+const toastError = vi.fn()
 
 vi.mock("../actions", () => ({
   assignBuyerMoneyAction: (...a: unknown[]) => assignBuyerMoneyAction(...a),
@@ -34,7 +35,7 @@ vi.mock("../components/pickers", () => ({
   ),
 }))
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn(), refresh: vi.fn(), push: vi.fn() }) }))
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: (...a: unknown[]) => toastError(...a) } }))
 
 import { RefundsOwedCard } from "../components/vehicle-money/refunds-owed-card"
 
@@ -54,7 +55,7 @@ const renderCard = (m: ReturnType<typeof money>) => render(<RefundsOwedCard mone
 
 beforeEach(() => {
   vi.clearAllMocks()
-  assignBuyerMoneyAction.mockResolvedValue({ ok: true, data: { assigned: 1 } })
+  assignBuyerMoneyAction.mockResolvedValue({ ok: true, data: { assigned: 1, failed: 0, total: 1 } })
 })
 
 describe("Refunds owed", () => {
@@ -98,5 +99,22 @@ describe("Unassigned buyer money", () => {
         "ccccccc1-cccc-4ccc-8ccc-cccccccccccc"
       )
     )
+  })
+
+  it("tells the admin when only some payments were assigned", async () => {
+    assignBuyerMoneyAction.mockResolvedValue({ ok: true, data: { assigned: 2, failed: 1, total: 3 } })
+    const user = userEvent.setup()
+    renderCard(money([{ lead: null, paid: 30000, refunded: 0, owed: 30000 }]))
+    await user.click(screen.getByRole("button", { name: "Assign to lead" }))
+    await user.click(await screen.findByRole("button", { name: "pick lead" }))
+    await user.click(screen.getByRole("button", { name: "Assign" }))
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("Assigned 2 of 3. Press Assign again to finish."))
+  })
+
+  it("labels the lead picker", async () => {
+    const user = userEvent.setup()
+    renderCard(money([{ lead: null, paid: 30000, refunded: 0, owed: 30000 }]))
+    await user.click(screen.getByRole("button", { name: "Assign to lead" }))
+    expect(await screen.findByText("Lead")).toBeInTheDocument()
   })
 })

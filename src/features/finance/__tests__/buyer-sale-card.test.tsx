@@ -115,6 +115,15 @@ describe("sale form: the chosen lead's figures", () => {
 describe("remove sale", () => {
   const sold = { finalisedPrice: 600000, soldOn: "2026-11-20", soldBy: "u1" }
 
+  it("quotes what was paid, not the net after refunds", async () => {
+    const user = userEvent.setup()
+    const sold = { finalisedPrice: 600000, soldOn: "2026-11-20", soldBy: "u1" }
+    const b: BuyerRow = { lead: { id: B, name: "Bala", phone: null }, paid: 100000, refunded: 30000, net: 70000 }
+    renderCard({ sale: sold, carSold: true, bookedLeads: [], buyers: [b], receivedFromBuyer: 70000 })
+    await user.click(screen.getByRole("button", { name: /Remove/ }))
+    expect(await screen.findByText(/₹1,00,000 received from the buyer will also be deleted/)).toBeInTheDocument()
+  })
+
   it("says payments from other buyers stay as refunds owed, and calls the server once", async () => {
     const user = userEvent.setup()
     renderCard({ sale: sold, carSold: true, bookedLeads: [], buyers: [buyer(B, "Bala", 100000)], receivedFromBuyer: 100000 })

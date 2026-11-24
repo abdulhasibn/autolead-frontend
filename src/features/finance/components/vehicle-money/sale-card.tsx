@@ -149,7 +149,8 @@ export function SaleCard({
   }
 
   /** The sold lead's payments: what Remove deletes with the sale. */
-  const soldLeadPaid = receivedForSale(buyers, "", true, receivedFromBuyer)
+  // Remove deletes the sold lead's payments (gross paid); their refunds, if any, stay.
+  const soldLeadPaid = buyers.length === 1 ? (buyers[0]?.paid ?? 0) : receivedFromBuyer
 
   if (editing) {
     const price = parseMoneyInput(form.price)

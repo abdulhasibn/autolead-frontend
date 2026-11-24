@@ -44,7 +44,7 @@ import type {
 import { useCarBuyers, type CarBuyers } from "../use-car-buyers"
 import { useVehicleMoney } from "../use-vehicle-money"
 import { MoneyInput } from "./money-input"
-import { VehiclePicker } from "./pickers"
+import { LeadPicker, VehiclePicker } from "./pickers"
 import type { PickerOption } from "./search-picker"
 import { TagMultiSelect } from "./tag-multi-select"
 import { useSaveTransition } from "@/hooks/use-save-transition"
@@ -147,11 +147,12 @@ function EntryForm(props: EntrySheetProps) {
   // Buyer payments and refunds belong to a lead: look up who the car's buyers are.
   const isBuyerPayment = hasCar && kind === "income" && purpose === "sale"
   const isRefund = hasCar && kind === "expense" && purpose === "refund"
-  const carBuyers = useCarBuyers(
+  const buyersLookup = useCarBuyers(
     vehicleId,
     isBuyerPayment || isRefund,
     props.carBuyers && defaultVehicle ? { vehicleId: defaultVehicle.id, ...props.carBuyers } : undefined
   )
+  const carBuyers = buyersLookup.data
   const buyerChoices = useMemo(() => (carBuyers ? buyerOptions(carBuyers.buyers) : []), [carBuyers])
   const refundChoices = useMemo(
     () => (carBuyers ? refundTargets(carBuyers.buyers, carBuyers.refundsOwed) : []),
@@ -164,8 +165,18 @@ function EntryForm(props: EntrySheetProps) {
       ? entry.lead
       : null
   const [leadError, setLeadError] = useState<string | null>(null)
+  // Editing a buyer payment or refund: an admin may put it on any existing lead (e.g. on a sold car).
+  const [changingLead, setChangingLead] = useState(false)
+  const [pickedLead, setPickedLead] = useState<PickerOption | null>(null)
+  const canChangeLead = Boolean(entry) && sameCarAndPurpose
+  const searchLeads = (changingLead && canChangeLead) || buyersLookup.failed
   const [forfeit, setForfeit] = useState<{ body: EntryBody; values: EntryFormValues } | null>(null)
-  const refundable = refundChoices.find((c) => c.id === leadId)?.owed ?? null
+  // The refund being edited is already taken off what that buyer can still be refunded.
+  const refundable =
+    refundChoices.find((c) => c.id === leadId)?.owed != null
+      ? (refundChoices.find((c) => c.id === leadId)?.owed ?? 0) +
+        (entry?.purpose === "refund" && sameCarAndPurpose && entry.lead?.id === leadId ? entry.amount : 0)
+      : null
 
   // A payment to the seller is tied to the car's deal: look the deal up, and
   // ask for the minimum terms with the payment when the car has none.
@@ -204,6 +215,7 @@ function EntryForm(props: EntrySheetProps) {
     userPickedPurpose.current = false
     setValue("purpose", defaultPurpose(next, hasCar))
     setValue("leadId", "")
+    setPickedLead(null)
     setLeadError(null)
   }
 
@@ -212,6 +224,7 @@ function EntryForm(props: EntrySheetProps) {
     setValue("vehicleId", option?.id ?? null)
     // The lead belonged to the old car's buyers.
     setValue("leadId", "")
+    setPickedLead(null)
     setLeadError(null)
     const v = getValues()
     setValue(
@@ -314,7 +327,8 @@ function EntryForm(props: EntrySheetProps) {
     const terms = dealTerms()
     if (terms === "invalid") return
     const buyerLine = Boolean(values.vehicleId) && (values.purpose === "sale" || values.purpose === "refund")
-    if (buyerLine && !values.leadId && carBuyers) {
+    const editingSameLine = Boolean(entry) && entry?.purpose === values.purpose && entry?.vehicle?.id === values.vehicleId
+    if (buyerLine && !values.leadId && carBuyers && !editingSameLine) {
       if (values.purpose === "refund") return setLeadError("Pick the buyer this refund goes to")
       if (carBuyers.buyers.length > 1) return setLeadError("Pick who paid")
     }
@@ -330,7 +344,11 @@ function EntryForm(props: EntrySheetProps) {
       note: values.note.trim() || null,
       showroomId: values.vehicleId ? null : values.showroomId,
       ...(terms ? { deal: terms } : {}),
-      ...(buyerLine && values.leadId ? { leadId: values.leadId } : {}),
+      // On edit, send the lead only when it changed (or the entry moves car): an unchanged lead would make
+      // the server re-check a refund on every note or date edit.
+      ...(buyerLine && values.leadId && (!editingSameLine || values.leadId !== (entry?.lead?.id ?? ""))
+        ? { leadId: values.leadId }
+        : {}),
     }
     // Buyer money turned into "Other income" is kept for good: it stops being owed back.
     if (entry?.purpose === "sale" && body.purpose === "other") return setForfeit({ body, values })
@@ -422,6 +440,7 @@ function EntryForm(props: EntrySheetProps) {
                 userPickedPurpose.current = true
                 if (v !== purpose) {
                   setValue("leadId", "")
+                  setPickedLead(null)
                   setLeadError(null)
                 }
                 setValue("purpose", v as EntryFormValues["purpose"])
@@ -462,8 +481,30 @@ function EntryForm(props: EntrySheetProps) {
             label={isRefund ? "Refund to" : "Paid by"}
             error={leadError ?? undefined}
           >
-            {formerLead ? (
-              <p data-testid="entry-paid-by-readonly" className="rounded-lg bg-muted px-3 py-2 text-sm">
+            {searchLeads ? (
+              <>
+                {buyersLookup.failed && (
+                  <p className="text-xs text-destructive">
+                    Couldn’t load this car’s buyers. Search for the lead, or{" "}
+                    <button type="button" className="underline" onClick={buyersLookup.retry}>
+                      try again
+                    </button>
+                    .
+                  </p>
+                )}
+                <LeadPicker
+                  id="entry-lead"
+                  value={pickedLead}
+                  onChange={(o) => {
+                    setPickedLead(o)
+                    setValue("leadId", o?.id ?? "")
+                    setLeadError(null)
+                  }}
+                  invalid={Boolean(leadError)}
+                />
+              </>
+            ) : formerLead ? (
+              <p id="entry-lead" data-testid="entry-paid-by-readonly" className="rounded-lg bg-muted px-3 py-2 text-sm">
                 {formerLead.name} · no longer a buyer
               </p>
             ) : (
@@ -489,13 +530,33 @@ function EntryForm(props: EntrySheetProps) {
                 }
               />
             )}
+            {canChangeLead && (
+              <button
+                type="button"
+                className="text-xs font-medium text-primary hover:underline"
+                onClick={() => {
+                  const next = !changingLead
+                  setChangingLead(next)
+                  setPickedLead(null)
+                  setLeadError(null)
+                  // "Keep current lead" goes back to the entry's own lead.
+                  if (!next) setValue("leadId", entry?.lead?.id ?? "")
+                }}
+              >
+                {changingLead ? "Keep current lead" : "Change lead"}
+              </button>
+            )}
             {isRefund && refundable !== null && (
               <p className="text-xs text-subtle-foreground">At most {formatMoney(refundable)} can be refunded to this buyer.</p>
             )}
-            {isBuyerPayment && carBuyers && buyerChoices.length === 0 && !formerLead && (
+            {isBuyerPayment && carBuyers && buyerChoices.length === 0 && !formerLead && !searchLeads && (
               <p className="text-xs text-subtle-foreground">
-                This car has no buyer yet. Confirm a lead’s booking first, or save it as “Other car income”.
+                No current buyer is shown for this car. If it isn’t sold yet, confirm a lead’s booking first, or save it
+                as “Other car income”.
               </p>
+            )}
+            {isRefund && carBuyers && refundChoices.length === 0 && !searchLeads && (
+              <p className="text-xs text-subtle-foreground">Nobody on this car has money to refund.</p>
             )}
           </FormField>
         )}

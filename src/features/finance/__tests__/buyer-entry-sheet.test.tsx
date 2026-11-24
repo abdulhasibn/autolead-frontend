@@ -28,6 +28,11 @@ vi.mock("@/components/option-select", () => ({
   ),
 }))
 vi.mock("../components/pickers", () => ({
+  LeadPicker: (p: { onChange: (o: { id: string; label: string }) => void }) => (
+    <button type="button" onClick={() => p.onChange({ id: C_ID, label: "Chitra" })}>
+      search lead
+    </button>
+  ),
   VehiclePicker: (p: { onChange: (o: { id: string; label: string } | null) => void }) => (
     <button type="button" onClick={() => p.onChange({ id: CAR_ID, label: "Maruti Swift" })}>
       pick car
@@ -43,6 +48,7 @@ import { EntrySheet } from "../components/entry-sheet"
 const CAR_ID = "11111111-1111-4111-8111-111111111111"
 const A_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 const B_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+const C_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
 const CAR = { id: CAR_ID, label: "Maruti Swift" }
 
 const buyer = (id: string, name: string, paid: number): BuyerRow => ({
@@ -132,7 +138,51 @@ describe("Payment from buyer: Paid by", () => {
     await user.type(screen.getByLabelText("Amount"), "45000")
     await user.click(screen.getByRole("button", { name: "Save" }))
     await waitFor(() => expect(updateEntryAction).toHaveBeenCalledTimes(1))
-    expect(updateEntryAction.mock.calls[0]?.[1]).toMatchObject({ amount: 45000, leadId: A_ID })
+    // Unchanged lead: not sent, so the server doesn't re-check it.
+    expect(updateEntryAction.mock.calls[0]?.[1]).toMatchObject({ amount: 45000 })
+    expect(updateEntryAction.mock.calls[0]?.[1]).not.toHaveProperty("leadId")
+  })
+
+  it("Change lead: any existing lead can be picked and is sent on its own", async () => {
+    const user = userEvent.setup()
+    renderSheet({ entry: saleEntry({ id: A_ID, name: "Asha" }), carBuyers: { buyers: [BUYER_B], refundsOwed: [] } })
+    await user.click(await screen.findByRole("button", { name: "Change lead" }))
+    await user.click(screen.getByRole("button", { name: "search lead" }))
+    await user.click(screen.getByRole("button", { name: "Save" }))
+    await waitFor(() => expect(updateEntryAction).toHaveBeenCalledTimes(1))
+    expect(updateEntryAction.mock.calls[0]?.[1]).toMatchObject({ leadId: C_ID })
+  })
+
+  it("Keep current lead goes back to the entry's lead", async () => {
+    const user = userEvent.setup()
+    renderSheet({ entry: saleEntry({ id: A_ID, name: "Asha" }), carBuyers: { buyers: [BUYER_B], refundsOwed: [] } })
+    await user.click(await screen.findByRole("button", { name: "Change lead" }))
+    await user.click(screen.getByRole("button", { name: "search lead" }))
+    await user.click(screen.getByRole("button", { name: "Keep current lead" }))
+    await user.click(screen.getByRole("button", { name: "Save" }))
+    await waitFor(() => expect(updateEntryAction).toHaveBeenCalledTimes(1))
+    expect(updateEntryAction.mock.calls[0]?.[1]).not.toHaveProperty("leadId")
+  })
+
+  it("is not offered on a new payment", () => {
+    renderSheet({ carBuyers: { buyers: [BUYER_A], refundsOwed: [] } })
+    expect(screen.queryByRole("button", { name: "Change lead" })).toBeNull()
+  })
+
+  it("a failed buyer lookup shows an error with a retry and a lead search instead of loading forever", async () => {
+    getCarBuyersAction.mockResolvedValueOnce({ ok: false, error: { status: 500, code: "X", message: "x" } })
+    const user = userEvent.setup()
+    renderSheet({ defaultVehicle: null, lockVehicle: false })
+    await user.click(screen.getByRole("button", { name: "pick car" }))
+    expect(await screen.findByText(/couldn’t load this car’s buyers/i)).toBeInTheDocument()
+    getCarBuyersAction.mockResolvedValue({ ok: true, data: { buyers: [BUYER_B], refundsOwed: [] } })
+    await user.click(screen.getByRole("button", { name: "try again" }))
+    await waitFor(() => expect(screen.getByLabelText("entry-lead")).toHaveValue(B_ID))
+  })
+
+  it("says when the car has no current buyer", async () => {
+    renderSheet({ carBuyers: { buyers: [], refundsOwed: [] } })
+    expect(await screen.findByText(/no current buyer is shown for this car/i)).toBeInTheDocument()
   })
 })
 
@@ -166,6 +216,27 @@ describe("Refund to buyer", () => {
     await user.click(screen.getByRole("button", { name: "Add" }))
     expect(await screen.findByText("Pick the buyer this refund goes to")).toBeInTheDocument()
     expect(createEntryAction).not.toHaveBeenCalled()
+  })
+
+  const refundEntry = (): FinanceEntry => ({ ...saleEntry({ id: A_ID, name: "Asha" }, "refund"), kind: "expense", amount: 20000 }) as FinanceEntry
+
+  it("editing a refund: the hint adds back the refund being edited, and a note edit sends no lead", async () => {
+    const user = userEvent.setup()
+    // 50,000 paid, 20,000 already refunded (this entry): 30,000 left by the server's figure.
+    renderSheet({
+      defaultKind: "expense",
+      entry: refundEntry(),
+      carBuyers: { buyers: [], refundsOwed: [{ lead: BUYER_A.lead, paid: 50000, refunded: 20000, owed: 30000 }] },
+    })
+    expect(await screen.findByText(/at most ₹50,000 can be refunded/i)).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Save" }))
+    await waitFor(() => expect(updateEntryAction).toHaveBeenCalledTimes(1))
+    expect(updateEntryAction.mock.calls[0]?.[1]).not.toHaveProperty("leadId")
+  })
+
+  it("explains when nobody has money to refund", async () => {
+    renderSheet({ defaultKind: "expense", prefill: { purpose: "refund" }, carBuyers: { buyers: [], refundsOwed: [] } })
+    expect(await screen.findByText("Nobody on this car has money to refund.")).toBeInTheDocument()
   })
 
   it("offers Refund to buyer as an expense purpose with its hint", () => {

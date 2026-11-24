@@ -101,21 +101,38 @@ describe("buyer-leaving lookup", () => {
 })
 
 describe("assign unassigned buyer money", () => {
-  it("patches only the entries that have no lead", async () => {
+  const sale = (id: string) => ({ id, purpose: "sale", lead: null })
+  const refund = (id: string) => ({ id, purpose: "refund", lead: null })
+
+  it("patches only the entries that have no lead, payments before refunds", async () => {
     api.getEntries.mockResolvedValue({
-      items: [
-        { id: "e1", lead: null },
-        { id: "e2", lead: { id: "other", name: "Other" } },
-        { id: "e3", lead: null },
-      ],
-      total: 3,
+      items: [refund("r1"), { id: "e2", purpose: "sale", lead: { id: "other", name: "Other" } }, sale("e3"), sale("e1")],
+      total: 4,
     })
     api.updateEntry.mockResolvedValue({})
     const result = await assignBuyerMoneyAction(CAR, LEAD)
-    expect(result).toEqual({ ok: true, data: { assigned: 2 } })
+    expect(result).toEqual({ ok: true, data: { assigned: 3, failed: 0, total: 3 } })
     expect(api.updateEntry.mock.calls).toEqual([
-      ["e1", { leadId: LEAD }],
       ["e3", { leadId: LEAD }],
+      ["e1", { leadId: LEAD }],
+      ["r1", { leadId: LEAD }],
     ])
+  })
+
+  it("keeps going when one entry fails and says how many were done", async () => {
+    api.getEntries.mockResolvedValue({ items: [sale("e1"), sale("e2"), sale("e3")], total: 3 })
+    api.updateEntry.mockResolvedValueOnce({}).mockRejectedValueOnce(new Error("boom")).mockResolvedValueOnce({})
+    const result = await assignBuyerMoneyAction(CAR, LEAD)
+    expect(result).toEqual({ ok: true, data: { assigned: 2, failed: 1, total: 3 } })
+    expect(api.updateEntry).toHaveBeenCalledTimes(3)
+  })
+
+  it("reads every page of entries (past 100)", async () => {
+    const page = (from: number, n: number) => Array.from({ length: n }, (_, i) => sale(`e${from + i}`))
+    api.getEntries.mockResolvedValueOnce({ items: page(0, 100), total: 130 }).mockResolvedValueOnce({ items: page(100, 30), total: 130 })
+    api.updateEntry.mockResolvedValue({})
+    const result = await assignBuyerMoneyAction(CAR, LEAD)
+    expect(api.getEntries.mock.calls.map((c) => c[0].offset)).toEqual([0, 100])
+    expect(result).toEqual({ ok: true, data: { assigned: 130, failed: 0, total: 130 } })
   })
 })
