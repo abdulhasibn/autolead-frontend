@@ -60,6 +60,8 @@ export interface DashboardSummary {
   today: CardList<FollowUpCard>
   pipeline: {
     new: number
+    /** Missing from a backend older than the in_progress status. */
+    in_progress?: number
     not_now: number
     booking_confirmed: number
   }

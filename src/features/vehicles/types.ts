@@ -55,7 +55,7 @@ export interface VehicleDto {
   /** Signed URL of the cover (`front`) photo, valid for ~10 minutes. */
   frontImageUrl: string | null
   frontImageUrlExpiresAt: string | null
-  /** Active leads (new / not_now / booking_confirmed) on this vehicle. */
+  /** Active leads (new / in_progress / not_now / booking_confirmed) on this vehicle. */
   linkedLeadCount: number
 }
 

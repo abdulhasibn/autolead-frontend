@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils"
 interface PipelineCardProps {
   pipeline: {
     new: number
+    in_progress?: number
     not_now: number
     booking_confirmed: number
   }
@@ -15,6 +16,13 @@ const SEGMENTS = [
     color: "bg-[#3B82F6]",
     textColor: "text-[#1D4ED8]",
     dotColor: "bg-[#3B82F6]",
+  },
+  {
+    key: "in_progress" as const,
+    label: "In progress",
+    color: "bg-[#8B5CF6]",
+    textColor: "text-[#6D28D9]",
+    dotColor: "bg-[#8B5CF6]",
   },
   {
     key: "not_now" as const,
@@ -33,7 +41,13 @@ const SEGMENTS = [
 ]
 
 export function PipelineCard({ pipeline }: PipelineCardProps) {
-  const total = pipeline.new + pipeline.not_now + pipeline.booking_confirmed
+  const counts = {
+    new: pipeline.new,
+    in_progress: pipeline.in_progress ?? 0,
+    not_now: pipeline.not_now,
+    booking_confirmed: pipeline.booking_confirmed,
+  }
+  const total = counts.new + counts.in_progress + counts.not_now + counts.booking_confirmed
 
   return (
     <div className="bg-card rounded-xl border border-border p-4">
@@ -47,7 +61,7 @@ export function PipelineCard({ pipeline }: PipelineCardProps) {
         <>
           <div className="flex h-2.5 rounded-full overflow-hidden gap-px bg-muted">
             {SEGMENTS.map((seg) => {
-              const pct = total > 0 ? (pipeline[seg.key] / total) * 100 : 0
+              const pct = total > 0 ? (counts[seg.key] / total) * 100 : 0
               if (pct === 0) return null
               return (
                 <div
@@ -68,7 +82,7 @@ export function PipelineCard({ pipeline }: PipelineCardProps) {
                   <span className="text-xs text-muted-foreground">{seg.label}</span>
                 </div>
                 <span className={cn("text-xs font-semibold font-mono-data", seg.textColor)}>
-                  {pipeline[seg.key]}
+                  {counts[seg.key]}
                 </span>
               </div>
             ))}

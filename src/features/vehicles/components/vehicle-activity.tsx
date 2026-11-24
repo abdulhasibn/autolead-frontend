@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { VEHICLE_STATUS_LABELS, VEHICLE_STATUS_STYLES } from "../constants"
 import type { VehicleStatusHistoryItem } from "../types"
 
-const ACTIVE_LEAD = new Set(["new", "not_now", "booking_confirmed"])
+const ACTIVE_LEAD = new Set(["new", "in_progress", "not_now", "booking_confirmed"])
 
 /** Leads pointing at this vehicle, active ones first. */
 export function VehicleLeadsList({ leads }: { leads: LeadReadModel[] }) {
