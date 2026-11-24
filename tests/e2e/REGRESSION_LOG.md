@@ -11,13 +11,14 @@ Status values: **open** (failing, not yet picked up) · **in progress** (fix PR 
 ### Suite changes
 - `finance.e2e.ts`: FIN-22 to FIN-28. Seller payments are now checked through every write path, not just the car's Money tab (FIN-21): Ledger add (car first: FIN-22; Purchase tag first: FIN-23), edit above or at the rate (FIN-24), move to another car (FIN-25), delete (FIN-26), lowering the rate (FIN-27). Each asserts the car's money and the Dues report as well as the screen acted on. FIN-28 covers a token from a buyer who backed out.
 - `leads.e2e.ts`: LEAD-27 (Mark as sold from the car to a new lead: link + book + convert) and LEAD-28 (a salesperson can't sell through someone else's lead). `/leads/:id/sell` had no E2E coverage.
-- `support/bugs.ts`: UNFILED NEW-2 and NEW-3.
+- `support/bugs.ts`: NEW-2 (fe#106) and NEW-3 (be#77) added to BUGS.
 
 ### Results (local, `--repeat-each 2`)
 - FIN-22, 24, 25, 26, 27 and LEAD-27, 28: passed 2/2.
-- **FIN-23: open** (NEW-2). Ledger: picking the Purchase tag before the car leaves Purpose on "Car cost", so the payment counts as a cost and the seller shows as unpaid.
-- **FIN-28: open** (NEW-3). A booked buyer's token stays on the car after they're marked lost; the next buyer's sale form counts it as already received.
-- Details and repro steps: `~/Projects/autoLead/docs/test-plans/exploratory/2026-11-24/bugs.md`.
+- **FIN-23: open** (NEW-2, [fe#106](https://github.com/abdulhasibn/autolead-frontend/issues/106)). Ledger: picking the Purchase tag before the car leaves Purpose on "Car cost", so the payment counts as a cost and the seller shows as unpaid.
+- **FIN-28: open** (NEW-3, [be#77](https://github.com/abdulhasibn/autoLeadBackend/issues/77)). Product decision: a lost buyer's token is a refund owed to them and never counts towards the next buyer. A booked buyer's token stays on the car after they're marked lost; the next buyer's sale form counts it as already received.
+- Details and repro steps are in the issues (from the exploratory session notes, 2026-11-24).
+- Review follow-ups: car picker is searched by plate (it lists only the 10 newest cars); FIN-23 also saves and checks paidToSeller; FIN-28 checks the positive "will be recorded" line. Not covered: LEAD-27's "awaiting sale price" in Finance (leads project runs in parallel; kept out of the shared vault); LEAD-28 covers a lead not assigned to the salesperson only.
 
 ## 2026-11-23: WEB-07 alert check and FIN-08b row uniqueness
 

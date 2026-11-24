@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test"
+import type { Locator, Page } from "@playwright/test"
 import { test, expect, bug } from "../fixtures"
 import type { Api } from "../support/api"
 import { register } from "../support/db"
@@ -290,15 +290,19 @@ test.describe("finance", () => {
   // written from the Ledger, by editing, moving or deleting an entry, or by
   // changing the rate; each must move the car's Deal card and the Dues report.
 
+  // The picker lists only the 10 newest cars in the whole dev DB, so search by plate first.
+  async function pickCar(page: Page, d: Locator, plate: string) {
+    await d.getByRole("button", { name: "Car (optional)" }).click()
+    await page.getByRole("textbox", { name: "Search" }).fill(plate)
+    await page.getByRole("option", { name: new RegExp(plate) }).click()
+  }
+
   async function ledgerExpense(page: Page, plate: string, opts: { tagFirst?: boolean } = {}) {
     await page.goto("/finance/entries")
     await page.getByRole("button", { name: "Add expense" }).click()
     const d = dialog(page, "Add expense")
     const tag = () => d.getByRole("group", { name: "Tags" }).getByRole("button", { name: "Purchase" }).click()
-    const car = async () => {
-      await d.getByRole("button", { name: "Car (optional)" }).click()
-      await page.getByRole("option", { name: new RegExp(plate) }).click()
-    }
+    const car = () => pickCar(page, d, plate)
     if (opts.tagFirst) {
       await tag()
       await car()
@@ -357,6 +361,12 @@ test.describe("finance", () => {
     // inflates the landing cost and the seller still shows as unpaid.
     await expect(d.getByRole("combobox", { name: "Purpose" })).toHaveText(/Payment to seller/)
     await expect(d.getByRole("group", { name: "Deal with the seller" })).toBeVisible()
+    await d.getByLabel("Amount").fill("300000")
+    await d.getByRole("group", { name: "Deal with the seller" }).getByLabel("Purchase rate").fill("880000")
+    await d.getByRole("button", { name: "Add", exact: true }).click()
+    await expect(d).toBeHidden()
+    const fin = await finSession(api, e2e.financeKey)
+    expect(await api.ok("GET", `/finance/vehicles/${v.id}`, undefined, fin)).toMatchObject({ paidToSeller: 300000, costs: 0 })
   })
 
   test("@regression FIN-24 editing a seller payment above the rate asks first; the exact rate is fully paid", async ({ page, api, e2e }) => {
@@ -387,8 +397,7 @@ test.describe("finance", () => {
     await api.ok("PUT", `/finance/vehicles/${a.id}`, { purchaseRate: 880000, sellerPayment: { amount: 880000, paidOn: today() } }, fin)
     await unlock(page, e2e.financeKey)
     const d = await editLedgerEntry(page, a.registrationNumber)
-    await d.getByRole("button", { name: "Car (optional)" }).click()
-    await page.getByRole("option", { name: new RegExp(b.registrationNumber) }).click()
+    await pickCar(page, d, b.registrationNumber)
     // Still a payment to the seller; car B has no deal, so the form asks for it.
     await expect(d.getByRole("combobox", { name: "Purpose" })).toHaveText(/Payment to seller/)
     await d.getByRole("group", { name: "Deal with the seller" }).getByLabel("Purchase rate").fill("900000")
@@ -427,8 +436,9 @@ test.describe("finance", () => {
     await unlock(page, e2e.financeKey)
     await page.goto(`/vehicles/${v.id}?tab=money`)
     await page.locator("section[aria-label='Deal']").getByRole("button", { name: "Edit" }).click()
-    await page.getByLabel("Purchase rate").fill("400000")
-    await page.getByRole("button", { name: /^Save/ }).first().click()
+    const form = page.getByRole("form", { name: "Edit deal" })
+    await form.getByLabel("Purchase rate").fill("400000")
+    await form.getByRole("button", { name: /save/i }).click()
     const confirm = page.getByRole("alertdialog", { name: "Seller paid more than the rate?" })
     await expect(confirm).toBeVisible()
     await confirm.getByRole("button", { name: "Go back" }).click()
@@ -454,6 +464,9 @@ test.describe("finance", () => {
     // Today the form tells the admin the new buyer already paid the lost lead's token,
     // and "Fully paid" records only ₹5,50,000 from them while Dues shows nothing owed.
     await expect(form).not.toContainText("₹50,000 already received")
+    // A lost buyer's token is a refund owed to them; it never counts towards the next buyer.
+    await form.getByRole("button", { name: "Fully paid" }).or(form.getByRole("radio", { name: "Fully paid" })).click()
+    await expect(form).toContainText("₹6,00,000 will be recorded as received from the buyer.")
   })
 
   async function bookedCar(api: Api, e2e: { prefix: string; financeKey: string }) {

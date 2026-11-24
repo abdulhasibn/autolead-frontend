@@ -539,7 +539,7 @@ test.describe("leads", () => {
     expect(hist.map((h: { to_status: string }) => h.to_status)).toEqual(["new", "booking_confirmed", "converted"])
   })
 
-  test("@regression LEAD-28 a salesperson can't sell a car through a lead that isn't theirs", async ({ api, salesApi, e2e, db }) => {
+  test("@regression LEAD-28 a salesperson can't sell a car through a lead not assigned to them", async ({ api, salesApi, e2e, db }) => {
     const v = await api.createVehicle(e2e.prefix)
     const lead = await api.createLead(e2e.prefix)
     const res = await salesApi.call("POST", `/leads/${lead.id}/sell`, { vehicleId: v.id })

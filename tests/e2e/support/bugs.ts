@@ -65,6 +65,8 @@ export const BUGS: Record<string, string> = {
   "ENV-2": "https://github.com/abdulhasibn/autoLeadBackend/issues/45",
   "ENV-3": "https://github.com/abdulhasibn/wheels-experts-web/issues/9",
   "ENV-4": "https://github.com/abdulhasibn/wheels-experts-web/issues/10",
+  "NEW-2": "https://github.com/abdulhasibn/autolead-frontend/issues/106",
+  "NEW-3": "https://github.com/abdulhasibn/autoLeadBackend/issues/77",
 }
 
 /**
@@ -74,10 +76,6 @@ export const BUGS: Record<string, string> = {
 export const UNFILED: Record<string, string> = {
   "NEW-1":
     "Lead budget >= 1e10 returns 503 DB_UNAVAILABLE (numeric field overflow); the UI shows 'Service temporarily unavailable' instead of a field error",
-  "NEW-2":
-    "Ledger: picking the Purchase tag before the car leaves the purpose as 'Car cost', so a payment to the seller inflates landing cost and the deal stays unpaid",
-  "NEW-3":
-    "A booked buyer's token stays on the car after they back out (lost / vehicle_unavailable) and is counted as the next buyer's payment; Dues shows no refund owed",
 }
 
 /** Annotate the running test with the issue(s) it is expected to expose. */
