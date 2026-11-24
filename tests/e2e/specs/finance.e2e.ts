@@ -2,7 +2,7 @@ import type { Locator, Page } from "@playwright/test"
 import { test, expect, bug } from "../fixtures"
 import type { Api } from "../support/api"
 import { register } from "../support/db"
-import { dialog, toast } from "../support/ui"
+import { dialog, pick, toast } from "../support/ui"
 
 // One vault, one lockout counter: the "finance" project runs this file in
 // order in one worker (fullyParallel: false). Not "serial" mode, because a
@@ -446,7 +446,6 @@ test.describe("finance", () => {
   })
 
   test("@regression FIN-28 a token from a buyer who backed out is not counted as the next buyer's payment", async ({ page, api, e2e }) => {
-    bug("NEW-3")
     const v = await api.createVehicle(e2e.prefix, { acquisitionType: "dealership_purchase" })
     const first = await api.createLead(e2e.prefix, { vehicleId: v.id })
     await api.ok("POST", `/leads/${first.id}/status`, { status: "booking_confirmed" })
@@ -461,12 +460,205 @@ test.describe("finance", () => {
     await page.locator("section[aria-label='Sale']").getByRole("button", { name: "Record sale" }).click()
     const form = page.getByRole("form", { name: "Record sale" })
     await form.getByLabel("Finalised price").fill("600000")
-    // Today the form tells the admin the new buyer already paid the lost lead's token,
-    // and "Fully paid" records only ₹5,50,000 from them while Dues shows nothing owed.
+    // The lost lead's token is not the new buyer's: nothing is "already received".
     await expect(form).not.toContainText("₹50,000 already received")
     // A lost buyer's token is a refund owed to them; it never counts towards the next buyer.
     await form.getByRole("button", { name: "Fully paid" }).or(form.getByRole("radio", { name: "Fully paid" })).click()
     await expect(form).toContainText("₹6,00,000 will be recorded as received from the buyer.")
+  })
+
+  // BE-77: a buyer's payment belongs to the lead who paid it.
+  async function bookLead(api: Api, e2e: { prefix: string }, vehicleId: string) {
+    const lead = await api.createLead(e2e.prefix, { vehicleId })
+    await api.ok("POST", `/leads/${lead.id}/status`, { status: "booking_confirmed" })
+    return lead
+  }
+
+  async function buyerToken(api: Api, fin: Record<string, string>, vehicleId: string, leadId: string, amount: number) {
+    return api.ok(
+      "POST",
+      "/finance/entries",
+      { kind: "income", amount, entryDate: today(), tagIds: [], vehicleId, purpose: "sale", leadId, note: "Token" },
+      fin
+    )
+  }
+
+  const carMoney = (api: Api, fin: Record<string, string>, id: string) => api.ok("GET", `/finance/vehicles/${id}`, undefined, fin)
+
+  async function duesRefunds(api: Api, fin: Record<string, string>, vehicleId: string) {
+    const r = await api.ok("GET", "/finance/reports/dues", undefined, fin)
+    return (r.refundsOwed as { vehicle: { id: string }; lead: { id: string } | null; owed: number }[]).filter(
+      (x) => x.vehicle.id === vehicleId
+    )
+  }
+
+  const saleSection = (page: Page) => page.locator("section[aria-label='Sale']")
+
+  test("@regression FIN-29 a token paid by another booked lead is not counted for the buyer; they are owed it back", async ({ page, api, e2e }) => {
+    const v = await api.createVehicle(e2e.prefix, { acquisitionType: "dealership_purchase" })
+    const a = await bookLead(api, e2e, v.id)
+    const b = await bookLead(api, e2e, v.id)
+    const fin = await finSession(api, e2e.financeKey)
+    await buyerToken(api, fin, v.id, b.id, 100000)
+
+    await unlock(page, e2e.financeKey)
+    await page.goto(`/vehicles/${v.id}?tab=money`)
+    await saleSection(page).getByRole("button", { name: "Record sale" }).click()
+    const form = page.getByRole("form", { name: "Record sale" })
+    await form.getByRole("radiogroup", { name: "Buyer's lead" }).getByRole("radio", { name: new RegExp(a.fullName) }).check()
+    await form.getByLabel("Finalised price").fill("500000")
+    await expect(form).not.toContainText("already received")
+    await form.getByRole("button", { name: "Part paid" }).or(form.getByRole("radio", { name: "Part paid" })).click()
+    await form.getByLabel("Amount received").fill("450000")
+    await expect(form).toContainText("₹50,000 will still be owed by the buyer.")
+    await form.getByRole("button", { name: "Save sale" }).click()
+    await expect(toast(page, /The lead is converted and the car marked sold/)).toBeVisible({ timeout: 30_000 })
+
+    const money = await carMoney(api, fin, v.id)
+    expect(money).toMatchObject({ owedByBuyer: 50000 })
+    expect(money.refundsOwed).toMatchObject([{ lead: { id: b.id }, paid: 100000, refunded: 0, owed: 100000 }])
+    const refunds = page.getByTestId("refunds-owed")
+    await expect(refunds).toContainText(b.fullName)
+    await expect(refunds).toContainText("₹1,00,000")
+    await expect(refunds).not.toContainText(a.fullName)
+  })
+
+  test("@regression FIN-30 recording a refund from Refunds owed prefills it and clears what is owed back", async ({ page, api, e2e }) => {
+    const v = await api.createVehicle(e2e.prefix, { acquisitionType: "dealership_purchase" })
+    const a = await bookLead(api, e2e, v.id)
+    const fin = await finSession(api, e2e.financeKey)
+    await buyerToken(api, fin, v.id, a.id, 50000)
+    await api.ok("POST", `/leads/${a.id}/status`, { status: "lost", notes: "Backed out" })
+    const flow = async () =>
+      (await api.ok("GET", `/finance/reports/cash-flow?from=${today()}&to=${today()}&period=day`, undefined, fin)).totals
+        .outRefundsToBuyers as number
+    const flowBefore = await flow()
+
+    await unlock(page, e2e.financeKey)
+    await page.goto("/finance/reports?tab=dues")
+    const dueRow = page.getByRole("row").filter({ hasText: v.registrationNumber })
+    await expect(dueRow).toContainText(a.fullName)
+    await expect(dueRow).toContainText("₹50,000")
+
+    await page.goto(`/vehicles/${v.id}?tab=money`)
+    const refunds = page.getByTestId("refunds-owed")
+    await expect(refunds).toContainText(a.fullName)
+    await refunds.getByRole("button", { name: "Record refund" }).click()
+    const d = dialog(page, "Add expense")
+    await expect(d.getByRole("combobox", { name: "Purpose" })).toHaveText(/Refund to buyer/)
+    await expect(d.getByRole("combobox", { name: "Refund to" })).toContainText(a.fullName)
+    await expect(d.getByLabel("Amount")).toHaveValue(/^50,?000(\.00)?$/)
+    await d.getByRole("button", { name: "Add", exact: true }).click()
+    await expect(d).toBeHidden()
+
+    await expect(page.getByTestId("refunds-owed")).toHaveCount(0)
+    const money = await carMoney(api, fin, v.id)
+    expect(money.refundsOwed).toEqual([])
+    expect(await duesRefunds(api, fin, v.id)).toEqual([])
+    await page.goto("/finance/reports?tab=dues")
+    await expect(page.getByText("Who owes whom")).toBeVisible()
+    await expect(page.getByRole("row").filter({ hasText: v.registrationNumber })).toHaveCount(0)
+    expect(await flow()).toBe(flowBefore + 50000)
+  })
+
+  test("@regression FIN-31 removing the sale with buyer payments keeps another lead's token as owed back", async ({ page, api, e2e }) => {
+    const v = await api.createVehicle(e2e.prefix, { acquisitionType: "dealership_purchase" })
+    const a = await bookLead(api, e2e, v.id)
+    const b = await bookLead(api, e2e, v.id)
+    const fin = await finSession(api, e2e.financeKey)
+    await buyerToken(api, fin, v.id, b.id, 50000)
+
+    await unlock(page, e2e.financeKey)
+    await page.goto(`/vehicles/${v.id}?tab=money`)
+    const sale = saleSection(page)
+    await sale.getByRole("button", { name: "Record sale" }).click()
+    const form = page.getByRole("form", { name: "Record sale" })
+    await form.getByRole("radiogroup", { name: "Buyer's lead" }).getByRole("radio", { name: new RegExp(a.fullName) }).check()
+    await form.getByLabel("Finalised price").fill("500000")
+    await form.getByRole("button", { name: "Fully paid" }).or(form.getByRole("radio", { name: "Fully paid" })).click()
+    await form.getByRole("button", { name: "Save sale" }).click()
+    await expect(toast(page, /The lead is converted and the car marked sold/)).toBeVisible({ timeout: 30_000 })
+    await expect.poll(async () => (await carMoney(api, fin, v.id)).owedByBuyer).toBe(0)
+
+    await sale.getByRole("button", { name: /remove/i }).click()
+    const confirm = page.getByRole("alertdialog")
+    await expect(confirm).toContainText("Payments from other buyers stay as refunds owed.")
+    await confirm.getByRole("button", { name: "Remove sale" }).click()
+    await expect(toast(page, "Sale removed.")).toBeVisible()
+
+    const entries = await api.ok("GET", `/finance/entries?vehicleId=${v.id}`, undefined, fin)
+    expect(entries.items).toHaveLength(1)
+    expect(entries.items[0]).toMatchObject({ amount: 50000, lead: { id: b.id } })
+    expect((await carMoney(api, fin, v.id)).refundsOwed).toMatchObject([{ lead: { id: b.id }, owed: 50000 }])
+    await expect(page.getByTestId("refunds-owed")).toContainText(b.fullName)
+  })
+
+  test("@regression FIN-33 buyer money tied to no lead is unassigned, listed in Dues, and Assign to lead moves it to that buyer", async ({ page, api, e2e }) => {
+    // Older entries have no lead; the API can't create one directly, so clear the lead of a fresh entry.
+    const v = await api.createVehicle(e2e.prefix, { acquisitionType: "dealership_purchase" })
+    const a = await bookLead(api, e2e, v.id)
+    const fin = await finSession(api, e2e.financeKey)
+    const entry = await buyerToken(api, fin, v.id, a.id, 50000)
+    await api.ok("PATCH", `/finance/entries/${entry.id}`, { leadId: null }, fin)
+    await api.ok("POST", `/leads/${a.id}/status`, { status: "lost", notes: "Backed out" })
+
+    const money = await carMoney(api, fin, v.id)
+    expect(money.receivedFromBuyer).toBe(0)
+    expect(money.refundsOwed).toMatchObject([{ lead: null, owed: 50000 }])
+    expect(await duesRefunds(api, fin, v.id)).toMatchObject([{ lead: null, owed: 50000 }])
+
+    await unlock(page, e2e.financeKey)
+    await page.goto(`/vehicles/${v.id}?tab=money`)
+    const unassigned = page.getByTestId("unassigned-buyer-money")
+    await expect(unassigned).toContainText("₹50,000")
+    await unassigned.getByRole("button", { name: "Assign to lead" }).click()
+    const d = dialog(page, "Assign to lead")
+    await d.getByRole("combobox").or(d.getByRole("button", { name: /lead/i })).first().click()
+    await page.getByRole("textbox", { name: "Search", exact: true }).fill(a.fullName)
+    await page.getByRole("option", { name: new RegExp(a.fullName) }).click()
+    await d.getByRole("button", { name: "Assign", exact: true }).click()
+    await expect(page.getByTestId("unassigned-buyer-money")).toHaveCount(0)
+    await expect(page.getByTestId("refunds-owed")).toContainText(a.fullName)
+    expect((await carMoney(api, fin, v.id)).refundsOwed).toMatchObject([{ lead: { id: a.id }, owed: 50000 }])
+  })
+
+  async function openChangeStatusToLost(page: Page, leadId: string) {
+    await page.goto(`/leads/${leadId}`)
+    await page.getByRole("button", { name: "Change status" }).click()
+    const d = dialog(page, "Change status")
+    await pick(d, "New status", "Lost")
+    return d
+  }
+
+  test("@regression FIN-32 marking a paying lead Lost with finance unlocked warns, and still saves", async ({ page, api, e2e, db }) => {
+    const v = await api.createVehicle(e2e.prefix, { acquisitionType: "dealership_purchase" })
+    const a = await bookLead(api, e2e, v.id)
+    const fin = await finSession(api, e2e.financeKey)
+    await buyerToken(api, fin, v.id, a.id, 50000)
+
+    await unlock(page, e2e.financeKey)
+    const d = await openChangeStatusToLost(page, a.id)
+    await expect(d.getByTestId("buyer-leaving-warning")).toContainText(
+      "₹50,000 was received from this buyer. It will show in Dues as a refund owed."
+    )
+    await d.getByLabel("Notes").fill("Backed out")
+    await d.getByRole("button", { name: "Save" }).or(d.locator("button[type=submit]")).first().click()
+    await expect.poll(async () => (await db.one("leads", `id=eq.${a.id}`, "status")).status).toBe("lost")
+    await expect.poll(async () => (await carMoney(api, fin, v.id)).refundsOwed.length).toBe(1)
+  })
+
+  test("@regression FIN-32b marking a paying lead Lost with finance locked shows no warning and saves", async ({ page, api, e2e, db }) => {
+    const v = await api.createVehicle(e2e.prefix, { acquisitionType: "dealership_purchase" })
+    const a = await bookLead(api, e2e, v.id)
+    const fin = await finSession(api, e2e.financeKey)
+    await buyerToken(api, fin, v.id, a.id, 50000)
+
+    const d = await openChangeStatusToLost(page, a.id)
+    await d.getByLabel("Notes").fill("Backed out")
+    await expect(d.getByTestId("buyer-leaving-warning")).toHaveCount(0)
+    await d.locator("button[type=submit]").click()
+    await expect.poll(async () => (await db.one("leads", `id=eq.${a.id}`, "status")).status).toBe("lost")
+    await expect(d.getByTestId("buyer-leaving-warning")).toHaveCount(0)
   })
 
   async function bookedCar(api: Api, e2e: { prefix: string; financeKey: string }) {
