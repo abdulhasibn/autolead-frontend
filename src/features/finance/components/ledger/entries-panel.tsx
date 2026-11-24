@@ -9,6 +9,7 @@ import { deleteEntryAction } from "../../actions"
 import { financeErrorMessage } from "../../logic/errors"
 import { formatMoney } from "../../logic/money"
 import type { EntryKind, FinanceEntry, FinanceTag, FinanceVehicleRef, ShowroomOption } from "../../types"
+import type { CarBuyers } from "../../use-car-buyers"
 import { EntrySheet } from "../entry-sheet"
 import { EntryList } from "./entry-list"
 import { useSaveTransition } from "@/hooks/use-save-transition"
@@ -19,6 +20,8 @@ interface EntriesPanelProps {
   showrooms: ShowroomOption[]
   /** Fixed car (a car's Money tab): prefilled on new entries, picker hidden. */
   vehicle?: FinanceVehicleRef
+  /** The fixed car's buyers (from its Money tab), for "Paid by". */
+  carBuyers?: CarBuyers
   /** Render the add buttons here (car tab) instead of via `AddEntryButtons`. */
   showAddButtons?: boolean
   emptyMessage: string
@@ -26,7 +29,7 @@ interface EntriesPanelProps {
 }
 
 /** Entries list plus the add/edit sheet and delete confirmation. */
-export function EntriesPanel({ entries, tags, showrooms, vehicle, showAddButtons, emptyMessage, footer }: EntriesPanelProps) {
+export function EntriesPanel({ entries, tags, showrooms, vehicle, carBuyers, showAddButtons, emptyMessage, footer }: EntriesPanelProps) {
   const [sheet, setSheet] = useState<{ open: boolean; entry: FinanceEntry | null; kind: EntryKind }>({
     open: false,
     entry: null,
@@ -78,6 +81,7 @@ export function EntriesPanel({ entries, tags, showrooms, vehicle, showAddButtons
         entry={sheet.entry}
         defaultKind={sheet.kind}
         defaultVehicle={vehicle ?? null}
+        carBuyers={carBuyers}
         lockVehicle={Boolean(vehicle) && !sheet.entry}
         tags={tags}
         showrooms={showrooms}

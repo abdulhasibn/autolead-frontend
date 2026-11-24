@@ -75,7 +75,7 @@ describe("sale card: price below the minimum selling price", () => {
         receivedFromBuyer={0}
         minimumSellingPrice={500000}
         carSold
-        bookedLeads={[]}
+        bookedLeads={[]} buyers={[]}
       />,
     )
     await user.click(screen.getByRole("button", { name: "Record sale" }))
@@ -89,7 +89,7 @@ describe("sale card: price below the minimum selling price", () => {
   it("is quiet when the price meets the minimum", async () => {
     const user = userEvent.setup()
     render(
-      <SaleCard vehicleId="v1" sale={null} suggestedPrice={500000} receivedFromBuyer={0} minimumSellingPrice={500000} carSold bookedLeads={[]} />,
+      <SaleCard vehicleId="v1" sale={null} suggestedPrice={500000} receivedFromBuyer={0} minimumSellingPrice={500000} carSold bookedLeads={[]} buyers={[]} />,
     )
     await user.click(screen.getByRole("button", { name: "Record sale" }))
 

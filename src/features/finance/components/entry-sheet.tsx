@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2 } from "lucide-react"
@@ -152,8 +152,11 @@ function EntryForm(props: EntrySheetProps) {
     isBuyerPayment || isRefund,
     props.carBuyers && defaultVehicle ? { vehicleId: defaultVehicle.id, ...props.carBuyers } : undefined
   )
-  const buyerChoices = carBuyers ? buyerOptions(carBuyers.buyers) : []
-  const refundChoices = carBuyers ? refundTargets(carBuyers.buyers, carBuyers.refundsOwed) : []
+  const buyerChoices = useMemo(() => (carBuyers ? buyerOptions(carBuyers.buyers) : []), [carBuyers])
+  const refundChoices = useMemo(
+    () => (carBuyers ? refundTargets(carBuyers.buyers, carBuyers.refundsOwed) : []),
+    [carBuyers]
+  )
   // An entry whose lead is no longer a buyer of its car: shown read-only, kept as is.
   const sameCarAndPurpose = Boolean(entry && entry.purpose === purpose && entry.vehicle?.id === vehicleId)
   const formerLead =

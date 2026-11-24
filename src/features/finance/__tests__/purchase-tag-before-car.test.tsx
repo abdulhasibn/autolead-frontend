@@ -11,6 +11,7 @@ vi.mock("../actions", () => ({
   createEntryAction: (...a: unknown[]) => createEntryAction(...a),
   updateEntryAction: vi.fn(),
   payOwnerAction: vi.fn(),
+  getCarBuyersAction: vi.fn().mockResolvedValue({ ok: true, data: { buyers: [], refundsOwed: [] } }),
 }))
 vi.mock("../use-vehicle-money", () => ({
   useVehicleMoney: (ids: string[], enabled: boolean) =>

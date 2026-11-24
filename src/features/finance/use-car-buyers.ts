@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { getCarBuyersAction } from "./actions"
 import type { BuyerRow, RefundOwedRow } from "./types"
 
@@ -17,7 +17,12 @@ export interface CarBuyers {
  */
 export function useCarBuyers(vehicleId: string | null, enabled: boolean, initial?: { vehicleId: string } & CarBuyers): CarBuyers | null {
   const [fetched, setFetched] = useState<{ vehicleId: string; data: CarBuyers | null } | null>(null)
-  const fromInitial = initial && initial.vehicleId === vehicleId ? initial : null
+  const initialBuyers = initial && initial.vehicleId === vehicleId ? initial.buyers : null
+  const initialRefunds = initial && initial.vehicleId === vehicleId ? initial.refundsOwed : null
+  const fromInitial = useMemo(
+    () => (initialBuyers && initialRefunds ? { buyers: initialBuyers, refundsOwed: initialRefunds } : null),
+    [initialBuyers, initialRefunds]
+  )
 
   useEffect(() => {
     if (!enabled || !vehicleId || fromInitial) return
@@ -33,6 +38,6 @@ export function useCarBuyers(vehicleId: string | null, enabled: boolean, initial
   }, [vehicleId, enabled, fromInitial])
 
   if (!enabled || !vehicleId) return null
-  if (fromInitial) return { buyers: fromInitial.buyers, refundsOwed: fromInitial.refundsOwed }
+  if (fromInitial) return fromInitial
   return fetched?.vehicleId === vehicleId ? fetched.data : null
 }

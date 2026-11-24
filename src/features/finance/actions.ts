@@ -379,6 +379,31 @@ export async function getCarBuyersAction(
   })
 }
 
+/**
+ * Puts the car's unassigned buyer money (older `sale`/`refund` entries with no lead) on a lead:
+ * a lead-only PATCH per entry. Entries that already have a lead are left alone.
+ */
+export async function assignBuyerMoneyAction(vehicleId: string, leadId: string): Promise<ActionResult<{ assigned: number }>> {
+  return financeAction(async () => {
+    const id = idSchema.safeParse(vehicleId)
+    const lead = idSchema.safeParse(leadId)
+    if (!id.success || !lead.success) return validationError()
+    const unassigned: FinanceEntry[] = []
+    for (let offset = 0; ; offset += 100) {
+      const page = await api.getEntries({ vehicleId: id.data, purpose: "sale,refund", limit: 100, offset })
+      unassigned.push(...page.items.filter((entry) => entry.lead === null))
+      if (page.items.length === 0 || offset + page.items.length >= page.total) break
+    }
+    try {
+      for (const entry of unassigned) await api.updateEntry(entry.id, { leadId: lead.data })
+    } finally {
+      revalidateVehicle(id.data)
+      revalidateFinance()
+    }
+    return actionOk({ assigned: unassigned.length })
+  })
+}
+
 export async function addQuoteAction(vehicleId: string, input: unknown): Promise<ActionResult<VehicleQuote>> {
   return financeAction(async () => {
     const id = idSchema.safeParse(vehicleId)
