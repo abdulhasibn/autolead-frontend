@@ -111,6 +111,16 @@ describe("Unassigned buyer money", () => {
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("Assigned 2 of 3. Press Assign again to finish."))
   })
 
+  it("quotes the first server error when every entry fails to assign", async () => {
+    assignBuyerMoneyAction.mockResolvedValue({ ok: true, data: { assigned: 0, failed: 2, total: 2, firstError: "Refund exceeds payments." } })
+    const user = userEvent.setup()
+    renderCard(money([{ lead: null, paid: 30000, refunded: 0, owed: 30000 }]))
+    await user.click(screen.getByRole("button", { name: "Assign to lead" }))
+    await user.click(await screen.findByRole("button", { name: "pick lead" }))
+    await user.click(screen.getByRole("button", { name: "Assign" }))
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("Assigned 0 of 2: Refund exceeds payments."))
+  })
+
   it("labels the lead picker", async () => {
     const user = userEvent.setup()
     renderCard(money([{ lead: null, paid: 30000, refunded: 0, owed: 30000 }]))

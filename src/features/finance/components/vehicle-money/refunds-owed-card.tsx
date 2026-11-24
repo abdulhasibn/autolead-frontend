@@ -127,6 +127,11 @@ function AssignLeadDialog({
       if (!result.ok) return void toast.error(financeErrorMessage(result.error))
       const { assigned, total } = result.data
       if (result.data.failed > 0) {
+        const { firstError } = result.data
+        if (assigned === 0 && firstError) {
+          toast.error(`Assigned 0 of ${total}: ${firstError}`)
+          return refresh()
+        }
         toast.error(`Assigned ${assigned} of ${total}. Press Assign again to finish.`)
         return refresh()
       }

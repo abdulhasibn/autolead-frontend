@@ -387,7 +387,7 @@ export async function getCarBuyersAction(
 export async function assignBuyerMoneyAction(
   vehicleId: string,
   leadId: string
-): Promise<ActionResult<{ assigned: number; failed: number; total: number }>> {
+): Promise<ActionResult<{ assigned: number; failed: number; total: number; firstError?: string }>> {
   return financeAction(async () => {
     const id = idSchema.safeParse(vehicleId)
     const lead = idSchema.safeParse(leadId)
@@ -401,6 +401,7 @@ export async function assignBuyerMoneyAction(
     // Payments before refunds: a refund's lead is re-checked against that lead's net.
     const ordered = [...unassigned.filter((e) => e.purpose !== "refund"), ...unassigned.filter((e) => e.purpose === "refund")]
     let assigned = 0
+    let firstError: string | undefined
     try {
       for (const entry of ordered) {
         try {
@@ -408,6 +409,7 @@ export async function assignBuyerMoneyAction(
           assigned += 1
         } catch (err) {
           unstable_rethrow(err)
+          if (err instanceof ApiError && !firstError) firstError = err.message
           // Keep going: a failed one stays unassigned, and pressing Assign again retries just those.
         }
       }
@@ -415,7 +417,7 @@ export async function assignBuyerMoneyAction(
       revalidateVehicle(id.data)
       revalidateFinance()
     }
-    return actionOk({ assigned, failed: ordered.length - assigned, total: ordered.length })
+    return actionOk({ assigned, failed: ordered.length - assigned, total: ordered.length, firstError })
   })
 }
 

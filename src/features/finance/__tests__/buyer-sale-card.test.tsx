@@ -121,7 +121,7 @@ describe("remove sale", () => {
     const b: BuyerRow = { lead: { id: B, name: "Bala", phone: null }, paid: 100000, refunded: 30000, net: 70000 }
     renderCard({ sale: sold, carSold: true, bookedLeads: [], buyers: [b], receivedFromBuyer: 70000 })
     await user.click(screen.getByRole("button", { name: /Remove/ }))
-    expect(await screen.findByText(/₹1,00,000 received from the buyer will also be deleted/)).toBeInTheDocument()
+    expect(await screen.findByText(/payments \(₹1,00,000 received\) and any refunds paid back to them will also be deleted/)).toBeInTheDocument()
   })
 
   it("says payments from other buyers stay as refunds owed, and calls the server once", async () => {
@@ -130,7 +130,7 @@ describe("remove sale", () => {
     await user.click(screen.getByRole("button", { name: /Remove/ }))
     const dialog = await screen.findByRole("alertdialog")
     expect(within(dialog).getByText(/Payments from other buyers stay as refunds owed\./)).toBeInTheDocument()
-    expect(within(dialog).getByText(/₹1,00,000 received from the buyer will also be deleted/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/payments \(₹1,00,000 received\) and any refunds paid back to them will also be deleted/)).toBeInTheDocument()
     await user.click(within(dialog).getByRole("button", { name: "Remove sale" }))
     await waitFor(() => expect(removeSaleAction).toHaveBeenCalledWith("v1"))
   })

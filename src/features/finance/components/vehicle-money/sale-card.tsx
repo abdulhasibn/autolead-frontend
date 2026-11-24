@@ -149,7 +149,7 @@ export function SaleCard({
   }
 
   /** The sold lead's payments: what Remove deletes with the sale. */
-  // Remove deletes the sold lead's payments (gross paid); their refunds, if any, stay.
+  // Remove deletes the sold lead's payments (gross paid); their refunds, if any, are deleted too.
   const soldLeadPaid = buyers.length === 1 ? (buyers[0]?.paid ?? 0) : receivedFromBuyer
 
   if (editing) {
@@ -309,7 +309,7 @@ export function SaleCard({
         title="Remove this sale?"
         description={
           soldLeadPaid > 0
-            ? `Use this only for a price recorded by mistake. The car stays sold; to undo the sale itself, use Undo sale on the buyer’s lead. The ${formatMoney(soldLeadPaid)} received from the buyer will also be deleted from Entries. Payments from other buyers stay as refunds owed. Profit goes back to “—” until a sale is recorded again.`
+            ? `Use this only for a price recorded by mistake. The car stays sold; to undo the sale itself, use Undo sale on the buyer’s lead. The buyer’s payments (${formatMoney(soldLeadPaid)} received) and any refunds paid back to them will also be deleted from Entries. Payments from other buyers stay as refunds owed. Profit goes back to “—” until a sale is recorded again.`
             : "Use this only for a price recorded by mistake. The car stays sold; to undo the sale itself, use Undo sale on the buyer’s lead. Payments from other buyers stay as refunds owed. Profit goes back to “—” until a sale is recorded again."
         }
         confirmLabel="Remove sale"
