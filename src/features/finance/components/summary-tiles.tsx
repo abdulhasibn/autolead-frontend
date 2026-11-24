@@ -92,7 +92,7 @@ export function MonthComparisonTiles({ summary, compact = false }: { summary: Fi
 export function PositionTiles({ summary }: { summary: FinanceSummary }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-      <Tile label="Money in stock" href="/finance/reports?tab=stock" footer="Landing cost of unsold cars">
+      <Tile label="Paid out on unsold cars" href="/finance/reports?tab=stock" footer="Cash paid out on unsold cars">
         <Money value={summary.moneyInStock} />
       </Tile>
       <Tile label="Owed to sellers" href="/finance/reports?tab=dues" footer="Still to pay sellers and owners">

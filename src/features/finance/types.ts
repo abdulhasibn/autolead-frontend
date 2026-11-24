@@ -332,6 +332,10 @@ export interface StockRow {
   commissionPercent: number | null
   costs: number
   landingCost: number
+  /** Cash paid to the seller/owner so far. */
+  paidToSeller: number
+  /** Cash actually paid out on the car: paidToSeller + costs (not the agreed rate). */
+  moneyInStock: number
   currentQuote: number | null
   listedPrice: number | null
 }
