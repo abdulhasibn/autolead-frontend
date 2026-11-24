@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2 } from "lucide-react"
@@ -13,10 +13,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { FormField } from "@/features/leads/components/form-field"
 import { OptionSelect } from "@/components/option-select"
 import { SegmentedChoice } from "@/features/leads/components/segmented-choice"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { createEntryAction, updateEntryAction } from "../actions"
+import { parsePercent } from "../logic/acquisition"
 import { todayIST } from "../logic/dates"
 import { financeErrorMessage } from "../logic/errors"
-import { formatMoneyInput, parseMoneyInput } from "../logic/money"
+import { formatMoney, formatMoneyInput, parseMoneyInput } from "../logic/money"
 import {
   isPurchaseTagName,
   nextPurpose,
@@ -26,13 +28,24 @@ import {
   purposeOptions,
   defaultPurpose,
 } from "../logic/purpose"
-import { entryFormSchema, type EntryFormValues } from "../schemas"
-import type { EntryKind, FinanceEntry, FinanceTag, FinanceVehicleRef, ShowroomOption } from "../types"
+import { commissionPercent as commissionPercentSchema, entryFormSchema, type EntryFormValues } from "../schemas"
+import type {
+  EntryBody,
+  EntryDealTerms,
+  EntryKind,
+  FinanceEntry,
+  FinanceTag,
+  FinanceVehicleRef,
+  ShowroomOption,
+  VehicleMoneySummary,
+} from "../types"
+import { useVehicleMoney } from "../use-vehicle-money"
 import { MoneyInput } from "./money-input"
 import { VehiclePicker } from "./pickers"
 import type { PickerOption } from "./search-picker"
 import { TagMultiSelect } from "./tag-multi-select"
 import { useSaveTransition } from "@/hooks/use-save-transition"
+import { termsMissing, sellerPaymentLine } from "../logic/seller-payment"
 
 export interface EntrySheetProps {
   open: boolean
@@ -117,7 +130,34 @@ function EntryForm(props: EntrySheetProps) {
   const kind = useWatch({ control, name: "kind" })
   const vehicleId = useWatch({ control, name: "vehicleId" })
   const purpose = useWatch({ control, name: "purpose" })
+  const tagIds = useWatch({ control, name: "tagIds" })
+  const entryDate = useWatch({ control, name: "entryDate" })
   const hasCar = Boolean(vehicleId)
+
+  // A payment to the seller is tied to the car's deal: look the deal up, and
+  // ask for the minimum terms with the payment when the car has none.
+  const sellerPayment = kind === "expense" && purpose === "purchase" && hasCar
+  const summaries = useVehicleMoney(vehicleId ? [vehicleId] : [], sellerPayment)
+  const summary: VehicleMoneySummary | null = (vehicleId && summaries?.get(vehicleId)) || null
+  // The server said the deal is missing although the lookup didn't (e.g. it failed).
+  const [serverWantsDeal, setServerWantsDeal] = useState(false)
+  const alreadyPaymentHere = entry?.purpose === "purchase" && entry.vehicle?.id === vehicleId
+  const needsDeal =
+    sellerPayment && !alreadyPaymentHere && (serverWantsDeal || (summary !== null && termsMissing(summary)))
+  const commissionCar = summary?.saleModel === "commission"
+  const [deal, setDeal] = useState({ rate: "", percent: "", purchasedOn: "" })
+  const [dealErrors, setDealErrors] = useState<{ rate?: string; percent?: string }>({})
+  const [overpaid, setOverpaid] = useState<{ body: EntryBody; message: string } | null>(null)
+
+  // New payment on a car with a deal: start from what is still owed.
+  const owed = summary?.owedToSeller ?? null
+  useEffect(() => {
+    if (!entry && sellerPayment && owed !== null && owed > 0 && getValues("amount") === "") {
+      setValue("amount", formatMoneyInput(owed))
+    }
+  }, [entry, sellerPayment, owed, getValues, setValue])
+
+  const purchaseTagPicked = tagIds.some((tid) => isPurchaseTagName(tags.find((t) => t.id === tid)?.name ?? ""))
 
   function onKindChange(next: EntryKind) {
     setValue("kind", next)
@@ -160,10 +200,73 @@ function EntryForm(props: EntrySheetProps) {
     }
   }
 
+  /** The deal fields as entered; null with errors set when they don't check out. */
+  function dealTerms(): EntryDealTerms | null | "invalid" {
+    if (!needsDeal) return null
+    const purchasedOn = deal.purchasedOn || entryDate || null
+    if (commissionCar) {
+      const percent = parsePercent(deal.percent)
+      const check = commissionPercentSchema.safeParse(percent)
+      if (percent === null || !check.success) {
+        setDealErrors({ percent: percent === null ? "Enter the commission %, e.g. 2" : check.error?.issues[0]?.message })
+        return "invalid"
+      }
+      setDealErrors({})
+      return { purchaseRate: null, commissionPercent: percent, purchasedOn }
+    }
+    const rate = parseMoneyInput(deal.rate)
+    if (rate === null || rate <= 0) {
+      setDealErrors({ rate: "Enter the purchase rate agreed with the seller" })
+      return "invalid"
+    }
+    setDealErrors({})
+    return { purchaseRate: rate, commissionPercent: null, purchasedOn }
+  }
+
+  function save(body: EntryBody, values: EntryFormValues) {
+    startTransition(async () => {
+      const result = entry
+        ? await updateEntryAction(entry.id, body, entry.vehicle?.id ?? null)
+        : await createEntryAction(body)
+      if (!result.ok) {
+        if (result.error.code === "SELLER_PAID_ABOVE_RATE") {
+          const by = Number(result.error.details?.overpaidBy ?? 0)
+          const limit = Number(result.error.details?.owedLimit ?? 0)
+          setOverpaid({
+            body,
+            message: `This pays the seller ${formatMoney(by)} more than they’re owed (${formatMoney(limit)}${
+              commissionCar ? " from the sale" : ", the purchase rate"
+            }). Save it only if they really were paid more.`,
+          })
+          return
+        }
+        if (result.error.code === "DEAL_TERMS_REQUIRED") setServerWantsDeal(true)
+        toast.error(financeErrorMessage(result.error))
+        if (result.error.code === "FINANCE_TAG_ARCHIVED" || result.error.code === "FINANCE_TAG_NOT_FOUND") {
+          refresh()
+        }
+        return
+      }
+      setOverpaid(null)
+      toast.success(
+        body.deal
+          ? "Payment and the deal with the seller saved."
+          : entry
+            ? "Entry updated."
+            : values.kind === "income"
+              ? "Income added."
+              : "Expense added."
+      )
+      refresh(() => onOpenChange(false))
+    })
+  }
+
   function submit(values: EntryFormValues) {
     const amount = parseMoneyInput(values.amount)
     if (amount === null) return
-    const body = {
+    const terms = dealTerms()
+    if (terms === "invalid") return
+    const body: EntryBody = {
       kind: values.kind,
       amount,
       entryDate: values.entryDate,
@@ -173,21 +276,9 @@ function EntryForm(props: EntrySheetProps) {
       party: values.party.trim() || null,
       note: values.note.trim() || null,
       showroomId: values.vehicleId ? null : values.showroomId,
+      ...(terms ? { deal: terms } : {}),
     }
-    startTransition(async () => {
-      const result = entry
-        ? await updateEntryAction(entry.id, body, entry.vehicle?.id ?? null)
-        : await createEntryAction(body)
-      if (!result.ok) {
-        toast.error(financeErrorMessage(result.error))
-        if (result.error.code === "FINANCE_TAG_ARCHIVED" || result.error.code === "FINANCE_TAG_NOT_FOUND") {
-          refresh()
-        }
-        return
-      }
-      toast.success(entry ? "Entry updated." : values.kind === "income" ? "Income added." : "Expense added.")
-      refresh(() => onOpenChange(false))
-    })
+    save(body, values)
   }
 
   const purposeChoices = purposeOptions(kind, hasCar)
@@ -278,6 +369,12 @@ function EntryForm(props: EntrySheetProps) {
               options={purposeChoices.map((p) => ({ value: p, label: PURPOSE_LABELS[p] }))}
             />
             <p className="text-xs text-subtle-foreground">{PURPOSE_HINTS[purpose]}</p>
+            {purpose === "cost" && purchaseTagPicked && (
+              <p role="note" className="text-xs text-amber-700 dark:text-amber-400">
+                Tagged “Purchase” but saved as a car cost: it adds to the car’s cost on top of the purchase rate. If
+                this is money paid to the seller, choose “{PURPOSE_LABELS.purchase}”.
+              </p>
+            )}
           </FormField>
         ) : (
           showrooms.length > 1 && (
@@ -299,6 +396,53 @@ function EntryForm(props: EntrySheetProps) {
           )
         )}
 
+        {sellerPayment && !needsDeal && summary && sellerPaymentLine(summary) && (
+          <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">{sellerPaymentLine(summary)}</p>
+        )}
+
+        {needsDeal && (
+          <fieldset aria-label="Deal with the seller" className="space-y-3 rounded-lg border border-primary/40 p-3">
+            <legend className="px-1 text-sm font-semibold">
+              {commissionCar ? "Deal with the owner" : "Deal with the seller"}
+            </legend>
+            <p className="text-xs text-muted-foreground">
+              This car has no deal yet. A payment to the {commissionCar ? "owner" : "seller"} is recorded against it, so
+              enter the {commissionCar ? "commission %" : "purchase rate"} too. Saved as the car’s deal.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {commissionCar ? (
+                <FormField id="entry-deal-percent" label="Our commission (%)" error={dealErrors.percent}>
+                  <Input
+                    id="entry-deal-percent"
+                    inputMode="decimal"
+                    placeholder="e.g. 2"
+                    value={deal.percent}
+                    onChange={(e) => setDeal({ ...deal, percent: e.target.value })}
+                    aria-invalid={dealErrors.percent ? true : undefined}
+                  />
+                </FormField>
+              ) : (
+                <FormField id="entry-deal-rate" label="Purchase rate" error={dealErrors.rate}>
+                  <MoneyInput
+                    id="entry-deal-rate"
+                    value={deal.rate}
+                    onValueChange={(v) => setDeal({ ...deal, rate: v })}
+                    aria-invalid={dealErrors.rate ? true : undefined}
+                  />
+                </FormField>
+              )}
+              <FormField id="entry-deal-date" label={commissionCar ? "Agreed on" : "Purchased on"}>
+                <DatePicker
+                  {...pastDateYears()}
+                  id="entry-deal-date"
+                  value={deal.purchasedOn || entryDate}
+                  onChange={(v) => setDeal({ ...deal, purchasedOn: v })}
+                />
+              </FormField>
+            </div>
+          </fieldset>
+        )}
+
         <FormField id="entry-party" label={kind === "income" ? "Received from (optional)" : "Paid to (optional)"} error={errors.party?.message}>
           <Input id="entry-party" maxLength={120} autoComplete="off" {...register("party")} />
         </FormField>
@@ -306,6 +450,17 @@ function EntryForm(props: EntrySheetProps) {
           <Textarea id="entry-note" rows={3} maxLength={1000} {...register("note")} />
         </FormField>
       </div>
+      <ConfirmDialog
+        open={overpaid !== null}
+        onOpenChange={(open) => !open && setOverpaid(null)}
+        title="Pay the seller more than they’re owed?"
+        description={overpaid?.message ?? ""}
+        confirmLabel="Save anyway"
+        pendingLabel="Saving…"
+        cancelLabel="Check the amount"
+        pending={isPending}
+        onConfirm={() => overpaid && save({ ...overpaid.body, keepOverpayment: true }, getValues())}
+      />
       <div className="sticky bottom-0 flex gap-2 border-t border-border bg-popover px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-3">
         <Button type="button" variant="outline" className="flex-1" onClick={() => onOpenChange(false)} disabled={isPending}>
           Cancel

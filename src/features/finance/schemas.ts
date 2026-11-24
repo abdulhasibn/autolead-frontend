@@ -11,6 +11,13 @@ const amount = z
   .max(9_999_999_999)
   .refine((n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-6, "Up to 2 decimals")
 
+/** Our % of the sale price on a commission car: above 0, up to 100, 2 decimals. */
+const commissionPercentField = z
+  .number()
+  .gt(0, "Enter a percentage above 0")
+  .max(100, "At most 100%")
+  .refine((n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-6, "Up to 2 decimals")
+
 const optionalText = (max: number) =>
   z
     .string()
@@ -60,6 +67,16 @@ export const entrySchema = z.object({
   party: optionalText(120),
   note: optionalText(1000),
   showroomId: id.nullable(),
+  /** Deal terms for a car with no deal yet, saved with a payment to the seller. */
+  deal: z
+    .object({
+      purchaseRate: amount.nullable(),
+      commissionPercent: commissionPercentField.nullable(),
+      purchasedOn: ymd.nullable(),
+    })
+    .nullable()
+    .optional(),
+  keepOverpayment: z.boolean().optional(),
 })
 
 export type EntryInput = z.infer<typeof entrySchema>
@@ -84,12 +101,7 @@ export const entryFormSchema = z
 
 export type EntryFormValues = z.infer<typeof entryFormSchema>
 
-/** Our % of the sale price on a commission car: above 0, up to 100, 2 decimals. */
-export const commissionPercent = z
-  .number()
-  .gt(0, "Enter a percentage above 0")
-  .max(100, "At most 100%")
-  .refine((n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-6, "Up to 2 decimals")
+export const commissionPercent = commissionPercentField
 
 /** A purchase car sends `purchaseRate`; a commission car sends `commissionPercent`. */
 export const dealSchema = z
@@ -102,6 +114,8 @@ export const dealSchema = z
     note: optionalText(1000),
     /** A payment made to the seller, saved as a `purchase` expense entry. */
     payment: z.object({ amount, paidOn: ymd }).nullable().default(null),
+    /** Save even if the seller ends up paid above the rate. */
+    keepOverpayment: z.boolean().default(false),
   })
   .refine((v) => (v.purchaseRate === null) !== (v.commissionPercent === null), {
     message: "Enter the purchase rate or the commission %",
@@ -124,6 +138,9 @@ export const acquisitionSchema = z
   })
   .refine((v) => v.purchaseRate === null || v.commissionPercent === null, {
     message: "Enter the purchase rate or the commission %, not both",
+  })
+  .refine((v) => v.payment === null || v.purchaseRate !== null, {
+    message: "Enter the purchase price to record a payment to the seller",
   })
 
 export const saleSchema = z.object({

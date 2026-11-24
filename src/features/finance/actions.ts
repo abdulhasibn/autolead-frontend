@@ -229,20 +229,8 @@ export async function setDealAction(vehicleId: string, input: unknown): Promise<
     const parsed = dealSchema.safeParse(input)
     if (!id.success || !parsed.success) return validationError(parsed.error?.issues[0]?.message)
     const { payment, ...terms } = parsed.data
-    await api.setDeal(id.data, terms)
-    if (payment) {
-      await api.createEntry({
-        kind: "expense",
-        amount: payment.amount,
-        entryDate: payment.paidOn,
-        tagIds: [],
-        vehicleId: id.data,
-        purpose: "purchase",
-        party: null,
-        note: "Paid to the seller, recorded with the deal",
-        showroomId: null,
-      })
-    }
+    // One request: the API saves the payment entry with the deal, or neither.
+    await api.setDeal(id.data, { ...terms, sellerPayment: payment })
     revalidateVehicle(id.data)
     revalidateFinance()
     return actionOk(undefined)
@@ -283,17 +271,8 @@ export async function recordAcquisitionAction(vehicleId: string, input: unknown)
     const parsed = acquisitionSchema.safeParse(input)
     if (!id.success || !parsed.success) return validationError(parsed.error?.issues[0]?.message)
     const { purchaseRate, commissionPercent, purchasedOn, payment, party } = parsed.data
-    if (purchaseRate !== null || commissionPercent !== null) {
-      await api.setDeal(id.data, {
-        purchaseRate,
-        commissionPercent,
-        purchasedOn,
-        ownerExpectedPrice: null,
-        minimumSellingPrice: null,
-        note: null,
-      })
-    }
-    if (payment) {
+    if (payment && purchaseRate !== null) {
+      // The payment needs the deal: save both in one request (the seller's name rides on the note).
       await api.createEntry({
         kind: "expense",
         amount: payment.amount,
@@ -304,6 +283,16 @@ export async function recordAcquisitionAction(vehicleId: string, input: unknown)
         party,
         note: "Paid to the seller when the car was added",
         showroomId: null,
+        deal: { purchaseRate, commissionPercent: null, purchasedOn },
+      })
+    } else if (purchaseRate !== null || commissionPercent !== null) {
+      await api.setDeal(id.data, {
+        purchaseRate,
+        commissionPercent,
+        purchasedOn,
+        ownerExpectedPrice: null,
+        minimumSellingPrice: null,
+        note: null,
       })
     }
     revalidateVehicle(id.data)

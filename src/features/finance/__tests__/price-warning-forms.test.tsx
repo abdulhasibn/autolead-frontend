@@ -28,7 +28,7 @@ const deal = (minimumSellingPrice: number | null) => ({
 
 function dealCard(minimum: number | null, listed: number | null) {
   return (
-    <DealCard vehicleId="v1" deal={deal(minimum)} saleModel="commission" paidToSeller={0} owedToSeller={null} owedByBuyer={null} listedPrice={listed} />
+    <DealCard vehicleId="v1" deal={deal(minimum)} saleModel="commission" paidToSeller={0} owedToSeller={null} owedByBuyer={null} listedPrice={listed} sellerPaymentStatus="no_terms" paidWithoutTerms={false} />
   )
 }
 

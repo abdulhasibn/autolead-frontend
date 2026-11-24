@@ -8,7 +8,7 @@ import type {
   AwaitingSalePrice,
   CarMoney,
   CashFlowReport,
-  DealTerms,
+  SetDealBody,
   DuesReport,
   EntryBody,
   EntryListParams,
@@ -240,7 +240,7 @@ export async function getCarMoneySoft(vehicleId: string): Promise<CarMoney | nul
 }
 
 /** PUT replaces the deal fields. `listedPrice` is never sent, so the listed-price panel stays its only editor. */
-export async function setDeal(vehicleId: string, body: DealTerms): Promise<VehicleDealState> {
+export async function setDeal(vehicleId: string, body: SetDealBody): Promise<VehicleDealState> {
   return financeRequest("PUT", `/finance/vehicles/${vehicleId}`, { body })
 }
 
