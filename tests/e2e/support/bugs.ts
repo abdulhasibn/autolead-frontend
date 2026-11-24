@@ -65,6 +65,8 @@ export const BUGS: Record<string, string> = {
   "ENV-2": "https://github.com/abdulhasibn/autoLeadBackend/issues/45",
   "ENV-3": "https://github.com/abdulhasibn/wheels-experts-web/issues/9",
   "ENV-4": "https://github.com/abdulhasibn/wheels-experts-web/issues/10",
+  "NEW-2": "https://github.com/abdulhasibn/autolead-frontend/issues/106",
+  "NEW-3": "https://github.com/abdulhasibn/autoLeadBackend/issues/77",
 }
 
 /**

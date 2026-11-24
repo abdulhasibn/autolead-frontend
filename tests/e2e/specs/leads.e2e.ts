@@ -518,4 +518,33 @@ test.describe("leads", () => {
     await expect(page.getByText(/closed|no longer|refresh|cannot|can't/i).first()).toBeVisible()
     expect((await db.one("leads", `id=eq.${lead.id}`, "status")).status).toBe("lost")
   })
+
+  // "Mark as sold" on the car screen (POST /leads/:id/sell) had no E2E coverage.
+  test("@regression LEAD-27 Mark as sold on a car sells it to a new lead that had no car", async ({ page, api, e2e, db }) => {
+    const v = await api.createVehicle(e2e.prefix)
+    const lead = await api.createLead(e2e.prefix)
+    await page.goto(`/vehicles/${v.id}`)
+    await page.getByRole("button", { name: "Mark as sold" }).click()
+    const d = dialog(page, "Mark as sold")
+    await settled(d)
+    await d.getByRole("combobox", { name: "Lead" }).click()
+    await page.getByRole("combobox", { name: "Search…" }).fill(lead.phone.slice(-6))
+    await page.getByRole("option", { name: new RegExp(lead.fullName) }).click()
+    await expect(d).toContainText("Confirm the booking")
+    await d.getByRole("button", { name: "Mark as sold" }).click()
+    await expect(toast(page, `Sold to ${lead.fullName}.`)).toBeVisible()
+    expect(await db.one("leads", `id=eq.${lead.id}`, "status,vehicle_id")).toEqual({ status: "converted", vehicle_id: v.id })
+    expect(await db.one("vehicles", `id=eq.${v.id}`, "status,sold_lead_id")).toEqual({ status: "sold", sold_lead_id: lead.id })
+    const hist = await db.select("lead_status_history", `lead_id=eq.${lead.id}&order=changed_at.asc`, "from_status,to_status")
+    expect(hist.map((h: { to_status: string }) => h.to_status)).toEqual(["new", "booking_confirmed", "converted"])
+  })
+
+  test("@regression LEAD-28 a salesperson can't sell a car through a lead not assigned to them", async ({ api, salesApi, e2e, db }) => {
+    const v = await api.createVehicle(e2e.prefix)
+    const lead = await api.createLead(e2e.prefix)
+    const res = await salesApi.call("POST", `/leads/${lead.id}/sell`, { vehicleId: v.id })
+    expect(res.status).toBe(404)
+    expect((await db.one("leads", `id=eq.${lead.id}`, "status")).status).toBe("new")
+    expect((await db.one("vehicles", `id=eq.${v.id}`, "status")).status).toBe("open")
+  })
 })
