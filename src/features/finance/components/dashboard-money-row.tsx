@@ -46,7 +46,18 @@ export async function DashboardMoneyRow() {
       <Tile label="Paid out on unsold cars" href="/finance/reports?tab=stock" footer="Cash paid out on unsold cars">
         <Money value={summary.moneyInStock} />
       </Tile>
-      <Tile label="Owed to sellers" href="/finance/reports?tab=dues" footer={<>Owed by buyers <Money value={summary.owedByBuyers} /></>}>
+      <Tile label="Owed to sellers" href="/finance/reports?tab=dues" footer={
+          <>
+            Owed by buyers <Money value={summary.owedByBuyers} />
+            {summary.owedBackToBuyers > 0 && (
+              <>
+                {" "}
+                · owed back to buyers <Money value={summary.owedBackToBuyers} />
+              </>
+            )}
+          </>
+        }
+      >
         <Money value={summary.owedToSellers} />
       </Tile>
     </div>

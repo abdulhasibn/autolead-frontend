@@ -5,6 +5,7 @@ import { EntriesPanel } from "../ledger/entries-panel"
 import type { CarMoney, EntryPage, FinanceTag, ShowroomOption } from "../../types"
 import { DealCard } from "./deal-card"
 import { NumbersCard } from "./numbers-card"
+import { RefundsOwedCard } from "./refunds-owed-card"
 import { QuotesCard } from "./quotes-card"
 import { SaleCard } from "./sale-card"
 
@@ -56,8 +57,10 @@ export function MoneyTab({
           minimumSellingPrice={money.deal?.minimumSellingPrice ?? null}
           carSold={money.vehicle.status === "sold"}
           bookedLeads={money.bookedLeads}
+          buyers={money.buyers}
         />
       </div>
+      <RefundsOwedCard money={money} tags={tags} showrooms={showrooms} />
       <QuotesCard vehicleId={money.vehicleId} quotes={money.quotes} />
       <section aria-label="Entries for this car" className="rounded-xl border border-border">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-muted px-4 py-3">
@@ -73,6 +76,7 @@ export function MoneyTab({
             tags={tags}
             showrooms={showrooms}
             vehicle={money.vehicle}
+            carBuyers={{ buyers: money.buyers, refundsOwed: money.refundsOwed }}
             showAddButtons
             emptyMessage="No money in or out on this car yet."
           />

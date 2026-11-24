@@ -257,14 +257,18 @@ export async function recordSale(
     soldOn: string
     leadId: string | null
     keepOverpayment?: boolean
+    /** "adjust": the server cuts the sale lead's payments down to the price (they were entered wrong). */
+    buyerPayments?: "adjust"
     buyerPayment?: { amount: number; paidOn: string } | null
   }
 ): Promise<VehicleDealState> {
   return financeRequest("POST", `/finance/vehicles/${vehicleId}/sale`, { body })
 }
 
-export async function removeSale(vehicleId: string): Promise<void> {
-  return financeRequest("DELETE", `/finance/vehicles/${vehicleId}/sale`)
+/** `withBuyerPayments`: also deletes the sold lead's payments; other buyers' money stays owed back. */
+export async function removeSale(vehicleId: string, options: { withBuyerPayments?: boolean } = {}): Promise<void> {
+  const query = options.withBuyerPayments ? "?withBuyerPayments=true" : ""
+  return financeRequest("DELETE", `/finance/vehicles/${vehicleId}/sale${query}`)
 }
 
 export async function addQuote(

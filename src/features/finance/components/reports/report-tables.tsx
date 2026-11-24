@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import { formatBucketLabel, formatYmd } from "../../logic/dates"
+import { leadName } from "../../logic/buyers"
 import type { CashFlowReport, DuesReport, PnlLine, PnlReport, SaleModel, StockReport, VehicleProfitReport } from "../../types"
 import { Money } from "../money"
 
@@ -106,6 +107,7 @@ export function CashFlowTable({ report }: { report: CashFlowReport }) {
             <TableHead className="text-right">Other in</TableHead>
             <TableHead className="text-right">To sellers</TableHead>
             <TableHead className="text-right">Car costs</TableHead>
+            <TableHead className="text-right">Refunds to buyers</TableHead>
             <TableHead className="text-right">Business</TableHead>
             <TableHead className="text-right">Net</TableHead>
             <TableHead className="text-right">Running net</TableHead>
@@ -119,6 +121,7 @@ export function CashFlowTable({ report }: { report: CashFlowReport }) {
               <TableCell className={NUM}><Money value={b.inOther} /></TableCell>
               <TableCell className={NUM}><Money value={b.outToSellers} /></TableCell>
               <TableCell className={NUM}><Money value={b.outCarCosts} /></TableCell>
+              <TableCell className={NUM}><Money value={b.outRefundsToBuyers} /></TableCell>
               <TableCell className={NUM}><Money value={b.outBusiness} /></TableCell>
               <TableCell className={NUM}><Money value={b.net} tone signed /></TableCell>
               <TableCell className={NUM}><Money value={b.cumulative} tone /></TableCell>
@@ -132,6 +135,7 @@ export function CashFlowTable({ report }: { report: CashFlowReport }) {
             <TableCell className={NUM}><Money value={report.totals.inOther} /></TableCell>
             <TableCell className={NUM}><Money value={report.totals.outToSellers} /></TableCell>
             <TableCell className={NUM}><Money value={report.totals.outCarCosts} /></TableCell>
+            <TableCell className={NUM}><Money value={report.totals.outRefundsToBuyers} /></TableCell>
             <TableCell className={NUM}><Money value={report.totals.outBusiness} /></TableCell>
             <TableCell className={NUM}><Money value={report.totals.net} tone signed /></TableCell>
             <TableCell />
@@ -253,6 +257,47 @@ export function DuesTable({ report }: { report: DuesReport }) {
       <p className="px-4 py-2 text-[11px] text-subtle-foreground">
         Negative means overpaid. A commission car’s owner is owed the sale price minus our commission and the costs we paid.
       </p>
+    </Scroll>
+  )
+}
+
+/** Buyers who left and are owed money back, largest first. */
+export function RefundsOwedTable({ report }: { report: DuesReport }) {
+  if (report.refundsOwed.length === 0) {
+    return <p className="px-4 py-8 text-center text-xs text-subtle-foreground">No buyer is owed money back.</p>
+  }
+  return (
+    <Scroll>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Car</TableHead>
+            <TableHead>Buyer</TableHead>
+            <TableHead className="text-right">Paid</TableHead>
+            <TableHead className="text-right">Refunded</TableHead>
+            <TableHead className="text-right">Owed back</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {report.refundsOwed.map((r) => (
+            <TableRow key={`${r.vehicle.id}:${r.lead?.id ?? "unassigned"}`}>
+              <TableCell className="max-w-56 truncate"><CarLink id={r.vehicle.id} label={r.vehicle.label} /></TableCell>
+              <TableCell className="max-w-48 truncate">
+                {r.lead ? leadName(r.lead) : <span className="text-warning">Unassigned (assign on the car’s Money tab)</span>}
+              </TableCell>
+              <TableCell className={NUM}><Money value={r.paid} /></TableCell>
+              <TableCell className={NUM}><Money value={r.refunded} /></TableCell>
+              <TableCell className={NUM}><Money value={r.owed} tone signed className="font-semibold" /></TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+        <TableFooter>
+          <TableRow>
+            <TableCell colSpan={4}>Owed back to buyers</TableCell>
+            <TableCell className={NUM}><Money value={report.totals.owedBackToBuyers} /></TableCell>
+          </TableRow>
+        </TableFooter>
+      </Table>
     </Scroll>
   )
 }

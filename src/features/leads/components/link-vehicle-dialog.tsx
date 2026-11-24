@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { BuyerLeavingNotice } from "@/features/finance/components/buyer-leaving-notice"
 import { useApiError } from "@/hooks/use-api-error"
 import { associateVehicleAction } from "../actions"
 import { FormField } from "./form-field"
@@ -98,6 +99,7 @@ export function LinkVehicleDialog({
             />
           </FormField>
         </form>
+        <BuyerLeavingNotice vehicleId={currentVehicleId} leadId={leadId} active={open && movesBooking && Boolean(vehicleId)} />
         <DialogFooter>
           <Button
             type="submit"

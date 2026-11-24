@@ -10,7 +10,7 @@ describe("purpose defaults", () => {
   })
 
   it("offers options that fit the kind and car", () => {
-    expect(purposeOptions("expense", true)).toEqual(["cost", "purchase"])
+    expect(purposeOptions("expense", true)).toEqual(["cost", "purchase", "refund"])
     expect(purposeOptions("income", true)).toEqual(["sale", "other"])
     expect(purposeOptions("expense", false)).toEqual(["general"])
   })

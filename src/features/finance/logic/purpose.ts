@@ -3,6 +3,7 @@ import type { EntryKind, EntryPurpose } from "../types"
 export const PURPOSE_LABELS: Record<EntryPurpose, string> = {
   purchase: "Payment to seller",
   cost: "Car cost",
+  refund: "Refund to buyer",
   sale: "Payment from buyer",
   other: "Other car income",
   general: "Business",
@@ -11,6 +12,7 @@ export const PURPOSE_LABELS: Record<EntryPurpose, string> = {
 export const PURPOSE_HINTS: Record<EntryPurpose, string> = {
   purchase: "Counts towards what we owe the seller (or the owner of a commission car)",
   cost: "Adds to landing cost (painting, service, mediator…). Commission cars: taken from the owner's payout",
+  refund: "Money paid back to a buyer. Lowers what that buyer has paid",
   sale: "Counts towards what the buyer owes",
   other: "Car income that isn't the buyer's payment",
   general: "Not tied to a car",
@@ -18,7 +20,7 @@ export const PURPOSE_HINTS: Record<EntryPurpose, string> = {
 
 export function purposeOptions(kind: EntryKind, hasCar: boolean): EntryPurpose[] {
   if (!hasCar) return ["general"]
-  return kind === "expense" ? ["cost", "purchase"] : ["sale", "other"]
+  return kind === "expense" ? ["cost", "purchase", "refund"] : ["sale", "other"]
 }
 
 export function defaultPurpose(kind: EntryKind, hasCar: boolean): EntryPurpose {

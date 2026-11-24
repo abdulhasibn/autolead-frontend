@@ -1,7 +1,15 @@
 import type { ActionError } from "@/lib/action-result"
+import { formatMoney } from "./money"
+
+function refundAbovePaidMessage(error: Pick<ActionError, "details">): string {
+  const refundable = Number(error.details?.refundable)
+  return Number.isFinite(refundable)
+    ? `That refunds more than this buyer paid. At most ${formatMoney(Math.max(0, refundable))} can still be refunded.`
+    : "That refunds more than this buyer paid."
+}
 
 /** Plain-language copy for finance error codes. Falls back to the server's message. */
-export function financeErrorMessage(error: Pick<ActionError, "code" | "message" | "status">): string {
+export function financeErrorMessage(error: Pick<ActionError, "code" | "message" | "status" | "details">): string {
   switch (error.code) {
     case "INVALID_FINANCE_KEY":
       return "That key didn't open the vault."
@@ -37,8 +45,16 @@ export function financeErrorMessage(error: Pick<ActionError, "code" | "message" 
       return "The buyer’s payments changed since this page loaded. Refreshed — check the amounts and save again."
     case "SALE_NOT_RECORDED":
       return "This car has no buyer yet. Confirm a lead’s booking or record the sale first, or save it as “Other car income”."
-    case "SALE_PAYMENT_TRIMMED_PRICE_NOT_SAVED":
-      return "The buyer’s payment was reduced, but the price wasn’t saved. Press Save again."
+    case "SALE_LEAD_REQUIRED":
+      return "Several leads have booked this car. Pick who paid."
+    case "SALE_LEAD_NOT_ON_CAR":
+      return "That lead isn’t a buyer of this car. Pick who paid again."
+    case "REFUND_LEAD_REQUIRED":
+      return "Pick the buyer this refund goes to."
+    case "REFUND_ABOVE_PAID":
+      return refundAbovePaidMessage(error)
+    case "ENTRY_FROM_NEWER_VERSION":
+      return "This entry was saved by a newer version of the app and can’t be changed here. Refresh the page."
     case "DEAL_TERMS_REQUIRED":
       return "Enter the deal with the seller first: a payment to the seller is recorded against the purchase rate (commission % for a commission car)."
     case "SELLER_PAID_ABOVE_RATE":

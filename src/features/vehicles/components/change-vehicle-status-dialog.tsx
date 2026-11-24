@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { BuyerLeavingNotice } from "@/features/finance/components/buyer-leaving-notice"
 import { useApiError } from "@/hooks/use-api-error"
 import { changeVehicleStatusAction } from "../actions"
 import type { VehicleStatus } from "../types"
@@ -119,6 +120,8 @@ export function ChangeVehicleStatusDialog({
             </div>
           </div>
         )}
+
+        <BuyerLeavingNotice vehicleId={vehicleId} active={open && dropping && leads > 0} />
 
         <div className="space-y-2">
           <Label htmlFor="status-reason">

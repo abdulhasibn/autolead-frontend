@@ -98,7 +98,20 @@ export function PositionTiles({ summary }: { summary: FinanceSummary }) {
       <Tile label="Owed to sellers" href="/finance/reports?tab=dues" footer="Still to pay sellers and owners">
         <Money value={summary.owedToSellers} />
       </Tile>
-      <Tile label="Owed by buyers" href="/finance/reports?tab=dues" footer="Sale price still to collect">
+      <Tile
+        label="Owed by buyers"
+        href="/finance/reports?tab=dues"
+        footer={
+          <>
+            Sale price still to collect
+            {summary.owedBackToBuyers > 0 && (
+              <span className="block" data-testid="owed-back-to-buyers">
+                Owed back to buyers <Money value={summary.owedBackToBuyers} />
+              </span>
+            )}
+          </>
+        }
+      >
         <Money value={summary.owedByBuyers} />
       </Tile>
       <Tile

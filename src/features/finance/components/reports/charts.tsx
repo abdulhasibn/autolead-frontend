@@ -69,6 +69,7 @@ export function PnlChart({ report }: { report: PnlReport }) {
 const cashConfig = {
   in: { label: "Money in", color: "var(--chart-1)" },
   out: { label: "Money out", color: "var(--subtle-foreground)" },
+  refunds: { label: "Refunds to buyers", color: "var(--warning)" },
   cumulative: { label: "Running net", color: "var(--foreground)" },
 } satisfies ChartConfig
 
@@ -76,10 +77,12 @@ export function CashFlowChart({ report }: { report: CashFlowReport }) {
   const data = report.buckets.map((b) => ({
     label: formatBucketLabel(b.label, report.period),
     in: b.in,
-    out: b.out,
+    // Refunds to buyers are part of `out`: they stack on top of the rest.
+    out: b.out - b.outRefundsToBuyers,
+    refunds: b.outRefundsToBuyers,
     cumulative: b.cumulative,
   }))
-  if (!hasChartData(data.flatMap((d) => [d.in, d.out, d.cumulative]))) {
+  if (!hasChartData(data.flatMap((d) => [d.in, d.out + d.refunds, d.cumulative]))) {
     return <EmptyState message="No money in or out in this period" className="h-72 justify-center" />
   }
   return (
@@ -92,7 +95,8 @@ export function CashFlowChart({ report }: { report: CashFlowReport }) {
         <ChartTooltip cursor={false} content={moneyTooltip(cashConfig)} />
         <ChartLegend content={<ChartLegendContent />} />
         <Bar dataKey="in" fill="var(--color-in)" radius={4} />
-        <Bar dataKey="out" fill="var(--color-out)" radius={4} />
+        <Bar dataKey="out" stackId="out" fill="var(--color-out)" radius={[0, 0, 4, 4]} />
+        <Bar dataKey="refunds" stackId="out" fill="var(--color-refunds)" radius={[4, 4, 0, 0]} />
         <Line dataKey="cumulative" type="monotone" stroke="var(--color-cumulative)" strokeWidth={2} dot={false} />
       </ComposedChart>
     </ChartContainer>

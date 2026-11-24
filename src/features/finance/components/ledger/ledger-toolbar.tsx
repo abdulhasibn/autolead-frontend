@@ -27,7 +27,7 @@ const SORT_OPTIONS = [
   { value: "-amount", label: "Smallest amount" },
 ]
 
-const PURPOSES: EntryPurpose[] = ["purchase", "cost", "sale", "other", "general"]
+const PURPOSES: EntryPurpose[] = ["purchase", "cost", "refund", "sale", "other", "general"]
 
 export function LedgerToolbar({
   filters,

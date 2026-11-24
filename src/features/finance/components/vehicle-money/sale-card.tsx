@@ -22,7 +22,8 @@ import { financeErrorMessage } from "../../logic/errors"
 import { formatMoney, formatMoneyInput, parseMoneyInput } from "../../logic/money"
 import { PAID_OPTIONS } from "../../logic/payment"
 import { buildSale, type BuyerPaid, type BuyerPaymentsChoice, type SaleForm, type SalePayload } from "../../logic/sale"
-import type { BookedLead, VehicleSale } from "../../types"
+import type { BookedLead, BuyerRow, VehicleSale } from "../../types"
+import { receivedForSale } from "../../logic/buyers"
 import { saleBelowMinimumWarning } from "../../logic/price-warnings"
 import { Money } from "../money"
 import { MoneyInput } from "../money-input"
@@ -52,11 +53,12 @@ export function SaleCard({
   minimumSellingPrice,
   carSold,
   bookedLeads,
+  buyers,
 }: {
   vehicleId: string
   sale: VehicleSale | null
   suggestedPrice: number | null
-  /** Sum of the car's payments from the buyer so far. */
+  /** Car-wide figure (display only): the sale uses the chosen lead's `buyers` row. */
   receivedFromBuyer: number
   /** The car's minimum selling price, if one is set; a lower sale price only warns. */
   minimumSellingPrice: number | null
@@ -64,6 +66,8 @@ export function SaleCard({
   carSold: boolean
   /** Booking-confirmed leads on this car while it isn't sold. */
   bookedLeads: BookedLead[]
+  /** Current buyers with what each has paid, net of refunds. */
+  buyers: BuyerRow[]
 }) {
   const needsLead = !carSold
   const canRecord = carSold || bookedLeads.length > 0
@@ -74,6 +78,9 @@ export function SaleCard({
   /** A price below what the buyer has paid, waiting for "reduce" or "keep" (#31). */
   const [overpaid, setOverpaid] = useState<SalePayload | null>(null)
   const { isPending, run: startTransition, refresh } = useSaveTransition()
+
+  /** What the lead this sale is for has paid so far; other leads' money never counts. */
+  const received = receivedForSale(buyers, form.leadId, carSold, receivedFromBuyer)
 
   const set = <K extends keyof SaleForm>(key: K, value: SaleForm[K]) => {
     setForm((f) => ({ ...f, [key]: value }))
@@ -97,11 +104,11 @@ export function SaleCard({
 
   function submit(event: React.FormEvent) {
     event.preventDefault()
-    const result = buildSale(form, receivedFromBuyer, needsLead)
+    const result = buildSale(form, received, needsLead)
     if (!result.ok) return setErrors(result.errors)
     // The buyer has paid more than the new price: ask whether that payment was a mistake
     // or a real overpayment, instead of silently leaving a negative "owed by buyer".
-    if (result.payload.finalisedPrice < receivedFromBuyer) return setOverpaid(result.payload)
+    if (result.payload.finalisedPrice < received) return setOverpaid(result.payload)
     save(result.payload)
   }
 
@@ -110,8 +117,8 @@ export function SaleCard({
       const saved = await recordSaleAction(vehicleId, { ...payload, buyerPayments })
       if (!saved.ok) {
         toast.error(financeErrorMessage(saved.error))
-        // Stale payments, or a trim that landed without the price: show the real numbers.
-        if (saved.error.code === "SALE_PRICE_BELOW_RECEIVED" || saved.error.code === "SALE_PAYMENT_TRIMMED_PRICE_NOT_SAVED") {
+        // Stale payments: show the real numbers.
+        if (saved.error.code === "SALE_PRICE_BELOW_RECEIVED") {
           refresh(() => setOverpaid(null))
         }
         return
@@ -120,7 +127,7 @@ export function SaleCard({
         buyerPayments === "adjust"
           ? `Sale saved and the buyer’s payment reduced to ${formatMoney(payload.finalisedPrice)}`
           : buyerPayments === "keep"
-            ? `Sale saved. The buyer is owed ${formatMoney(receivedFromBuyer - payload.finalisedPrice)} back`
+            ? `Sale saved. The buyer is owed ${formatMoney(received - payload.finalisedPrice)} back`
             : payload.payment
               ? "Sale and buyer payment recorded"
               : "Sale recorded"
@@ -141,9 +148,13 @@ export function SaleCard({
     })
   }
 
+  /** The sold lead's payments: what Remove deletes with the sale. */
+  // Remove deletes the sold lead's payments (gross paid); their refunds, if any, are deleted too.
+  const soldLeadPaid = buyers.length === 1 ? (buyers[0]?.paid ?? 0) : receivedFromBuyer
+
   if (editing) {
     const price = parseMoneyInput(form.price)
-    const due = price === null ? null : price - receivedFromBuyer
+    const due = price === null ? null : price - received
     const partAmount = parseMoneyInput(form.paidAmount)
     const firstError = errors.leadId ?? errors.price ?? errors.soldOn ?? errors.paid
     return (
@@ -187,7 +198,7 @@ export function SaleCard({
 
         <PriceWarning>{saleBelowMinimumWarning(price, minimumSellingPrice)}</PriceWarning>
 
-        <FormField id="sale-paid" label={receivedFromBuyer > 0 ? "Received from the buyer now" : "Received from the buyer"}>
+        <FormField id="sale-paid" label={received > 0 ? "Received from the buyer now" : "Received from the buyer"}>
           <SegmentedChoice
             id="sale-paid"
             aria-label="Received from the buyer"
@@ -216,7 +227,7 @@ export function SaleCard({
         )}
 
         <p className="text-xs text-muted-foreground">
-          {receivedFromBuyer > 0 && `${formatMoney(receivedFromBuyer)} already received. `}
+          {received > 0 && `${formatMoney(received)} already received${needsLead && bookedLeads.length > 1 ? " from this buyer" : ""}. `}
           {form.paid === "full" && due !== null && due > 0
             ? `${formatMoney(due)} will be recorded as received from the buyer.`
             : form.paid === "part" && due !== null && partAmount !== null && partAmount > 0 && partAmount < due
@@ -231,7 +242,7 @@ export function SaleCard({
               <AlertDialogTitle>The buyer has paid more than this price</AlertDialogTitle>
               <AlertDialogDescription>
                 {overpaid &&
-                  `${formatMoney(receivedFromBuyer)} is recorded as received from the buyer, but the new price is ${formatMoney(overpaid.finalisedPrice)}. Was the payment entered wrong, or did the buyer really pay more?`}
+                  `${formatMoney(received)} is recorded as received from the buyer, but the new price is ${formatMoney(overpaid.finalisedPrice)}. Was the payment entered wrong, or did the buyer really pay more?`}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="sm:flex-col sm:items-stretch">
@@ -240,7 +251,7 @@ export function SaleCard({
                 Entered wrong: reduce it to {overpaid && formatMoney(overpaid.finalisedPrice)}
               </Button>
               <Button variant="outline" onClick={() => overpaid && save(overpaid, "keep")} disabled={isPending}>
-                Buyer overpaid: keep it (refund {overpaid && formatMoney(receivedFromBuyer - overpaid.finalisedPrice)})
+                Buyer overpaid: keep it (refund {overpaid && formatMoney(received - overpaid.finalisedPrice)})
               </Button>
               <Button variant="ghost" onClick={() => setOverpaid(null)} disabled={isPending}>
                 Cancel
@@ -297,9 +308,9 @@ export function SaleCard({
         onOpenChange={(o) => !isPending && setConfirmRemove(o)}
         title="Remove this sale?"
         description={
-          receivedFromBuyer > 0
-            ? `Use this only for a price recorded by mistake. The car stays sold; to undo the sale itself, use Undo sale on the buyer’s lead. The ${formatMoney(receivedFromBuyer)} received from the buyer will also be deleted from Entries. Profit goes back to “—” until a sale is recorded again.`
-            : "Use this only for a price recorded by mistake. The car stays sold; to undo the sale itself, use Undo sale on the buyer’s lead. Profit goes back to “—” until a sale is recorded again."
+          soldLeadPaid > 0
+            ? `Use this only for a price recorded by mistake. The car stays sold; to undo the sale itself, use Undo sale on the buyer’s lead. The buyer’s payments (${formatMoney(soldLeadPaid)} received) and any refunds paid back to them will also be deleted from Entries. Payments from other buyers stay as refunds owed. Profit goes back to “—” until a sale is recorded again.`
+            : "Use this only for a price recorded by mistake. The car stays sold; to undo the sale itself, use Undo sale on the buyer’s lead. Payments from other buyers stay as refunds owed. Profit goes back to “—” until a sale is recorded again."
         }
         confirmLabel="Remove sale"
         pendingLabel="Removing…"

@@ -5,7 +5,7 @@ export interface ActionError {
   code: string
   message: string
   /** Extra facts from the server, e.g. `attemptsLeft` on a wrong finance key. */
-  details?: Readonly<Record<string, string | number>>
+  details?: Readonly<Record<string, string | number | string[]>>
 }
 
 /**

@@ -12,8 +12,7 @@ import type { LeadReadModel } from "@/features/leads/types"
 import type { VehicleDto } from "@/features/vehicles/types"
 import { formatVehicleTitle } from "@/features/vehicles/utils"
 import * as api from "./api"
-import { planBuyerPaymentTrim } from "./logic/sale"
-import { clearFinanceSession, setFinanceSession } from "./session"
+import { clearFinanceSession, hasFinanceSession, setFinanceSession } from "./session"
 import {
   changeKeySchema,
   createTagSchema,
@@ -30,7 +29,9 @@ import {
   vehicleIdsSchema,
 } from "./schemas"
 import type {
+  BuyerRow,
   FinanceEntry,
+  RefundOwedRow,
   FinanceTag,
   LeadOption,
   VaultKeys,
@@ -308,34 +309,18 @@ export async function recordSaleAction(vehicleId: string, input: unknown): Promi
     if (!id.success || !parsed.success) return validationError(parsed.error?.issues[0]?.message)
     const { payment, buyerPayments, ...sale } = parsed.data
     try {
-      // "adjust": the buyer's payments were entered wrong, so cut them down to the new price
-      // before saving it, leaving room for the payment sent with the sale (the API counts it
-      // too). Trim first, price second: if the save then fails, pressing Save again finishes
-      // the job (the payments already fit the price, so the API accepts it).
-      const room = Math.max(0, sale.finalisedPrice - (payment?.amount ?? 0))
-      const trimmed = buyerPayments === "adjust" ? await trimBuyerPayments(id.data, room) : false
-      try {
-        // With a lead, this also converts it: the car becomes sold and its other leads are freed.
-        // The buyer's payment travels in the same request, so it lands with the sale or not at all.
-        await api.recordSale(id.data, {
-          ...sale,
-          keepOverpayment: buyerPayments === "keep",
-          buyerPayment: payment ? { amount: payment.amount, paidOn: payment.paidOn } : null,
-        })
-      } catch (err) {
-        unstable_rethrow(err)
-        if (!trimmed) throw err
-        return {
-          ok: false,
-          error: {
-            status: 500,
-            code: "SALE_PAYMENT_TRIMMED_PRICE_NOT_SAVED",
-            message: "The buyer’s payment was reduced but the price wasn’t saved.",
-          },
-        }
-      }
+      // With a lead, this also converts it: the car becomes sold and its other leads are freed.
+      // The buyer's payment travels in the same request, so it lands with the sale or not at all.
+      // "adjust": the server cuts the sale lead's payments down to the price (other buyers' money
+      // is never touched) and undoes that if the sale then fails.
+      await api.recordSale(id.data, {
+        ...sale,
+        keepOverpayment: buyerPayments === "keep",
+        ...(buyerPayments === "adjust" ? { buyerPayments: "adjust" as const } : {}),
+        buyerPayment: payment ? { amount: payment.amount, paidOn: payment.paidOn } : null,
+      })
     } finally {
-      // A trimmed payment may have landed even if the sale then failed.
+      // A failed save may still have changed nothing, but the page numbers are cheap to refresh.
       revalidateVehicle(id.data)
       revalidateFinance()
       if (sale.leadId) revalidateLeadsAndCars()
@@ -345,42 +330,94 @@ export async function recordSaleAction(vehicleId: string, input: unknown): Promi
 }
 
 /**
- * Cuts the car's buyer payments (`sale` income entries) down to `price`, newest
- * first. Returns whether anything changed.
+ * Removes a sale recorded by mistake. The server deletes the sold lead's buyer
+ * payments with it; payments from other buyers stay as refunds owed.
  */
-async function trimBuyerPayments(vehicleId: string, price: number): Promise<boolean> {
-  const entries: FinanceEntry[] = []
-  for (let offset = 0; ; offset += 100) {
-    const page = await api.getEntries({ vehicleId, kind: "income", purpose: "sale", limit: 100, offset })
-    entries.push(...page.items)
-    if (page.items.length === 0 || entries.length >= page.total) break
-  }
-  const received = entries.reduce((sum, entry) => sum + Math.round(entry.amount * 100), 0) / 100
-  if (received <= price) return false
-  const plan = planBuyerPaymentTrim(entries, received - price)
-  for (const change of plan.update) await api.updateEntry(change.id, { amount: change.amount })
-  for (const entryId of plan.remove) await api.deleteEntry(entryId)
-  return plan.update.length + plan.remove.length > 0
-}
-
 export async function removeSaleAction(vehicleId: string): Promise<ActionResult> {
   return financeAction(async () => {
     const id = idSchema.safeParse(vehicleId)
     if (!id.success) return validationError()
-    // The buyer's payments were recorded against this sale, so they go with it —
-    // otherwise Entries and cash flow keep showing money from a sale that no longer exists.
-    // Payments first, sale last: if a delete fails, the sale (and its Remove button) is
-    // still there, so trying again finishes the job.
-    for (;;) {
-      const page = await api.getEntries({ vehicleId: id.data, kind: "income", purpose: "sale", limit: 100 })
-      if (page.items.length === 0) break
-      for (const entry of page.items) await api.deleteEntry(entry.id)
-      if (page.items.length >= page.total) break
-    }
-    await api.removeSale(id.data)
+    await api.removeSale(id.data, { withBuyerPayments: true })
     revalidateVehicle(id.data)
     revalidateFinance()
     return actionOk(undefined)
+  })
+}
+
+/**
+ * For the "a buyer is leaving" warning: what the car's current buyers have paid
+ * (net of refunds), or null when finance is locked, the caller isn't an admin or
+ * the car has no buyers. Best effort: never throws, never redirects.
+ */
+export async function getBuyerMoneyAction(
+  vehicleId: string
+): Promise<ActionResult<{ buyers: Array<{ leadId: string; net: number }>; total: number } | null>> {
+  try {
+    const session = await auth()
+    if (!session?.user?.roles?.includes("admin")) return actionOk(null)
+    if (!(await hasFinanceSession())) return actionOk(null)
+    const id = idSchema.safeParse(vehicleId)
+    if (!id.success) return actionOk(null)
+    const money = await api.getCarMoneySoft(id.data)
+    if (!money) return actionOk(null)
+    const buyers = money.buyers.map((b) => ({ leadId: b.lead.id, net: b.net }))
+    return actionOk({ buyers, total: buyers.reduce((sum, b) => sum + Math.max(0, b.net), 0) })
+  } catch (err) {
+    unstable_rethrow(err)
+    return actionOk(null)
+  }
+}
+
+/** The buyers and refunds owed of a car, for the entry sheet's "Paid by" picker. Null when unavailable. */
+export async function getCarBuyersAction(
+  vehicleId: string
+): Promise<ActionResult<{ buyers: BuyerRow[]; refundsOwed: RefundOwedRow[] } | null>> {
+  return financeAction(async () => {
+    const id = idSchema.safeParse(vehicleId)
+    if (!id.success) return validationError()
+    const money = await api.getCarMoneySoft(id.data)
+    return actionOk(money ? { buyers: money.buyers, refundsOwed: money.refundsOwed } : null)
+  })
+}
+
+/**
+ * Puts the car's unassigned buyer money (older `sale`/`refund` entries with no lead) on a lead:
+ * a lead-only PATCH per entry. Entries that already have a lead are left alone.
+ */
+export async function assignBuyerMoneyAction(
+  vehicleId: string,
+  leadId: string
+): Promise<ActionResult<{ assigned: number; failed: number; total: number; firstError?: string }>> {
+  return financeAction(async () => {
+    const id = idSchema.safeParse(vehicleId)
+    const lead = idSchema.safeParse(leadId)
+    if (!id.success || !lead.success) return validationError()
+    const unassigned: FinanceEntry[] = []
+    for (let offset = 0; ; offset += 100) {
+      const page = await api.getEntries({ vehicleId: id.data, purpose: "sale,refund", limit: 100, offset })
+      unassigned.push(...page.items.filter((entry) => entry.lead === null))
+      if (page.items.length === 0 || offset + page.items.length >= page.total) break
+    }
+    // Payments before refunds: a refund's lead is re-checked against that lead's net.
+    const ordered = [...unassigned.filter((e) => e.purpose !== "refund"), ...unassigned.filter((e) => e.purpose === "refund")]
+    let assigned = 0
+    let firstError: string | undefined
+    try {
+      for (const entry of ordered) {
+        try {
+          await api.updateEntry(entry.id, { leadId: lead.data })
+          assigned += 1
+        } catch (err) {
+          unstable_rethrow(err)
+          if (err instanceof ApiError && !firstError) firstError = err.message
+          // Keep going: a failed one stays unassigned, and pressing Assign again retries just those.
+        }
+      }
+    } finally {
+      revalidateVehicle(id.data)
+      revalidateFinance()
+    }
+    return actionOk({ assigned, failed: ordered.length - assigned, total: ordered.length, firstError })
   })
 }
 
